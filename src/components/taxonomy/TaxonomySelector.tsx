@@ -8,9 +8,10 @@ import {
   Typography,
   Paper,
   Alert,
-  SelectChangeEvent,
+  
   CircularProgress
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import useTaxonomy from '../../hooks/useTaxonomy';
 
 interface TaxonomySelectorProps {
@@ -38,7 +39,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({ onSelectionChange }
     getTaxonomyPath
   } = useTaxonomy();
 
-  const handleLayerChange = (event: SelectChangeEvent) => {
+  const handleLayerChange = (event: SelectChangeEvent<string>) => {
     const layerCode = event.target.value;
     selectLayer(layerCode);
     
@@ -52,7 +53,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({ onSelectionChange }
     }
   };
 
-  const handleCategoryChange = (event: SelectChangeEvent) => {
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const categoryCode = event.target.value;
     selectCategory(categoryCode);
     
@@ -66,7 +67,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({ onSelectionChange }
     }
   };
 
-  const handleSubcategoryChange = (event: SelectChangeEvent) => {
+  const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     const subcategoryCode = event.target.value;
     selectSubcategory(subcategoryCode);
     

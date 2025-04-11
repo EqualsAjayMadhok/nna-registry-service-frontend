@@ -20,6 +20,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -94,8 +95,8 @@ const AssetList: React.FC = () => {
     });
   };
 
-  const handleLayerChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSelectedLayer(event.target.value as string);
+  const handleLayerChange = (event: SelectChangeEvent<string>) => {
+    setSelectedLayer(event.target.value);
   };
 
   return (

@@ -24,14 +24,15 @@ export interface LayerInfo {
 }
 
 export interface TaxonomyData {
-  [key: string]: LayerInfo;
+  // Specific layer keys
   G: LayerInfo; // Songs
   S: LayerInfo; // Stars
   L: LayerInfo; // Looks
   M: LayerInfo; // Moves
   W: LayerInfo; // Worlds
-  // Additional layers as needed (V, B, P, etc.)
-  [key: string]: any;
+  
+  // Optional properties for other keys
+  [otherKey: string]: LayerInfo | undefined;
 }
 
 // Types for the taxonomy service functions

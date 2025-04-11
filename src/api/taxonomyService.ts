@@ -66,11 +66,12 @@ class TaxonomyService {
     const layers: LayerOption[] = [];
     for (const layerCode in this.taxonomyData) {
       // Skip any non-layer properties
-      if (typeof this.taxonomyData[layerCode] !== 'object' || !this.taxonomyData[layerCode].name) {
+      const layerData = this.taxonomyData[layerCode];
+      if (typeof layerData !== 'object' || layerData === null || !('name' in layerData)) {
         continue;
       }
 
-      const layer = this.taxonomyData[layerCode];
+      const layer = this.taxonomyData[layerCode] as LayerInfo;
       layers.push({
         id: layerCode,
         name: layer.name,
@@ -223,14 +224,16 @@ class TaxonomyService {
    * @param layerCode The layer code
    * @param categoryCode The category code
    * @param subcategoryCode The subcategory code
-   * @returns The formatted path or null if any component is not found
+   * @returns The formatted path or empty string if layer is not provided
    */
-  getTaxonomyPath(layerCode: string, categoryCode: string, subcategoryCode?: string): string | null {
+  getTaxonomyPath(layerCode?: string, categoryCode?: string, subcategoryCode?: string): string {
+    if (!layerCode) return '';
+    
     this.checkInitialized();
     
     const layer = this.getLayer(layerCode);
     if (!layer) {
-      return null;
+      return layerCode;
     }
     
     let path = layer.name;

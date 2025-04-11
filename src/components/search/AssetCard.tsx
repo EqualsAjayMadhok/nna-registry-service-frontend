@@ -151,7 +151,11 @@ const AssetCard: React.FC<AssetCardProps> = ({
   
   // Get taxonomy path
   const getTaxonomyLabel = () => {
-    return taxonomyService.getTaxonomyPath(asset.layer, asset.category, asset.subcategory) || asset.layer;
+    return taxonomyService.getTaxonomyPath(
+      asset?.layer,
+      asset?.category,
+      asset?.subcategory
+    );
   };
   
   // Truncate description

@@ -87,14 +87,14 @@ const createValidationSchema = (layerCode: string) => {
   const baseSchema = yup.object({
     name: yup.string().required('Name is required').max(100, 'Name must be at most 100 characters'),
     description: yup.string().required('Description is required'),
-    source: yup.string(),
+    source: yup.string().optional(),
     tags: yup.array().of(yup.string()),
     trainingData: yup.object({
       isTrainable: yup.boolean(),
       trainingDescription: yup.string().when('isTrainable', {
         is: true,
-        then: yup.string().required('Training description is required when asset is trainable'),
-        otherwise: yup.string(),
+        then: () => yup.string().required('Training description is required when asset is trainable'),
+        otherwise: () => yup.string()
       }),
       trainingRequirements: yup.string(),
     }),
@@ -103,8 +103,8 @@ const createValidationSchema = (layerCode: string) => {
       attributionRequired: yup.boolean(),
       attributionText: yup.string().when('attributionRequired', {
         is: true,
-        then: yup.string().required('Attribution text is required when attribution is required'),
-        otherwise: yup.string(),
+        then: () => yup.string().required('Attribution text is required when attribution is required'),
+        otherwise: () => yup.string()
       }),
       commercialUse: yup.boolean(),
     }),
@@ -347,7 +347,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
   };
 
   const { control, handleSubmit, formState: { errors, isValid }, watch, setValue } = useForm<AssetMetadata>({
-    resolver: yupResolver(validationSchema),
+    resolver: yupResolver(validationSchema) as any,
     defaultValues,
     mode: 'onChange'
   });

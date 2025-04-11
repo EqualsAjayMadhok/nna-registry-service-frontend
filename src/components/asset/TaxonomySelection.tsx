@@ -9,9 +9,10 @@ import {
   Divider,
   CircularProgress,
   Alert,
-  SelectChangeEvent,
+  
   Paper
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 
@@ -81,7 +82,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     fetchSubcategories();
   }, [layerCode, selectedCategoryCode]);
 
-  const handleCategoryChange = (event: SelectChangeEvent) => {
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const categoryCode = event.target.value;
     
     // Find the selected category
@@ -92,7 +93,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     }
   };
 
-  const handleSubcategoryChange = (event: SelectChangeEvent) => {
+  const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     const subcategoryCode = event.target.value;
     
     // Find the selected subcategory

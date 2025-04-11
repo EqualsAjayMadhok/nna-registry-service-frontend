@@ -19,6 +19,7 @@ import {
   IconButton,
   Collapse
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
@@ -137,21 +138,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   };
   
   // Handle filter changes
-  const handleLayerChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const value = event.target.value as string;
+  const handleLayerChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
     setSelectedLayer(value);
     setSelectedCategory('');
     setSelectedSubcategory('');
   };
   
-  const handleCategoryChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const value = event.target.value as string;
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
     setSelectedCategory(value);
     setSelectedSubcategory('');
   };
   
-  const handleSubcategoryChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSelectedSubcategory(event.target.value as string);
+  const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
+    setSelectedSubcategory(event.target.value);
   };
   
   // Handle tag selection

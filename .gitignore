@@ -35,3 +35,11 @@ pnpm-debug.log*
 .eslintcache
 .npm
 .cache
+
+# editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
