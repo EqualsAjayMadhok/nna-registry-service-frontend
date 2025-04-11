@@ -305,9 +305,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
               {files.map((file, index) => (
                 <ListItem
                   key={`${file.name}-${index}`}
-                  button
                   onClick={() => handlePreviewFile(file, index)}
-                  selected={preview && files.indexOf(file) === 0}
+                  sx={{ 
+                    cursor: 'pointer',
+                    backgroundColor: preview && files.indexOf(file) === 0 ? 'action.selected' : 'inherit'
+                  }}
                 >
                   <ListItemIcon>
                     {getFileIcon(file.type)}
