@@ -248,8 +248,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '24px' }}>
+        <div style={{ flex: 1 }}>
           {/* Dropzone */}
           <Box
             {...getRootProps()}
@@ -329,9 +329,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
               ))}
             </List>
           )}
-        </Grid>
+        </div>
 
-        <Grid item xs={12} md={6}>
+        <div style={{ flex: 1 }}>
           {/* Preview Card */}
           <Card sx={{ mb: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
@@ -377,8 +377,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </CardActions>
             )}
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
     </Paper>
   );
 };

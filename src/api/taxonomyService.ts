@@ -17,7 +17,7 @@ class TaxonomyService {
   private subcategoriesCache: Map<string, SubcategoryOption[]> = new Map();
 
   constructor() {
-    this.taxonomyData = taxonomyData as TaxonomyData;
+    this.taxonomyData = taxonomyData as unknown as TaxonomyData;
     this.initialize();
   }
 
