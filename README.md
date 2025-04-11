@@ -49,10 +49,27 @@ The application will be available at http://localhost:3000 by default.
 Build the application for production:
 
 ```
-npm run build
+npm run build:prod
 ```
 
-The build artifacts will be available in the `build` directory.
+This builds the app with optimized settings and no source maps. The build artifacts will be available in the `build` directory.
+
+### Running Tests
+
+```
+npm test
+```
+
+### Linting
+
+```
+npm run lint
+npm run lint:fix  # To automatically fix issues
+```
+
+### Deployment
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## Features
 
