@@ -87,8 +87,10 @@ const AssetRegistration: React.FC = () => {
         tags: metadata.tags,
         metadata: {
           source: metadata.source,
-          isTrainable: metadata.isTrainable,
-          trainingDescription: metadata.trainingDescription,
+          isTrainable: metadata.trainingData?.isTrainable || false,
+          trainingDescription: metadata.trainingData?.trainingDescription || '',
+          rights: metadata.rights,
+          layerSpecificData: metadata.layerSpecificData,
           // Include any other metadata fields
         },
         files
@@ -132,20 +134,15 @@ const AssetRegistration: React.FC = () => {
               Please select a layer for this asset. This will determine the categorization
               and metadata schema.
             </Typography>
-            <Typography variant="body2" color="info.main" paragraph>
-              For demo purposes, you can select any layer.
-            </Typography>
-            {/* This component is a placeholder - in real app it would have proper implementation */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This is a placeholder for the LayerSelection component.
-              <Button onClick={() => {
-                setLayerCode('G');
-                setLayerName('Songs');
+            
+            <LayerSelection 
+              onLayerSelect={(layer) => {
+                setLayerCode(layer.code);
+                setLayerName(layer.name);
                 setFormValid(true);
-              }} sx={{ ml: 2 }} variant="contained" size="small">
-                Select Songs Layer
-              </Button>
-            </Alert>
+              }}
+              selectedLayerCode={layerCode}
+            />
           </Box>
         );
       case 1:
@@ -154,22 +151,25 @@ const AssetRegistration: React.FC = () => {
             <Typography variant="body1" paragraph>
               Please select the category and subcategory for this asset within the {layerName} layer.
             </Typography>
-            <Typography variant="body2" color="info.main" paragraph>
-              For demo purposes, you can select any category.
-            </Typography>
-            {/* This component is a placeholder - in real app it would have proper implementation */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This is a placeholder for the TaxonomySelection component.
-              <Button onClick={() => {
-                setCategoryCode('001');
-                setCategoryName('Pop');
-                setSubcategoryCode('002');
-                setSubcategoryName('Teen Pop');
+            
+            <TaxonomySelection
+              layerCode={layerCode}
+              selectedCategoryCode={categoryCode}
+              selectedSubcategoryCode={subcategoryCode}
+              onCategorySelect={(category) => {
+                setCategoryCode(category.code);
+                setCategoryName(category.name);
+                // Reset subcategory when category changes
+                setSubcategoryCode('');
+                setSubcategoryName('');
+                setFormValid(false);
+              }}
+              onSubcategorySelect={(subcategory) => {
+                setSubcategoryCode(subcategory.code);
+                setSubcategoryName(subcategory.name);
                 setFormValid(true);
-              }} sx={{ ml: 2 }} variant="contained" size="small">
-                Select Pop &gt; Teen Pop
-              </Button>
-            </Alert>
+              }}
+            />
           </Box>
         );
       case 2:
@@ -178,24 +178,15 @@ const AssetRegistration: React.FC = () => {
             <Typography variant="body1" paragraph>
               Enter metadata for your {layerName} asset.
             </Typography>
-            <Typography variant="body2" color="info.main" paragraph>
-              For demo purposes, you can use any metadata.
-            </Typography>
-            {/* This component is a placeholder - in real app it would have proper implementation */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This is a placeholder for the MetadataForm component.
-              <Button onClick={() => {
-                setMetadata({
-                  name: 'Sample Asset',
-                  description: 'This is a sample asset created for demonstration purposes',
-                  source: 'Demo',
-                  tags: ['sample', 'demo', 'test'],
-                });
-                setFormValid(true);
-              }} sx={{ ml: 2 }} variant="contained" size="small">
-                Fill Demo Metadata
-              </Button>
-            </Alert>
+            
+            <MetadataForm
+              layerCode={layerCode}
+              initialData={metadata || undefined}
+              onFormChange={(data, isValid) => {
+                setMetadata(data);
+                setFormValid(isValid);
+              }}
+            />
           </Box>
         );
       case 3:
