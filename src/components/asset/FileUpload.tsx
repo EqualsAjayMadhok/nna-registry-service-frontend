@@ -212,11 +212,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }));
   };
 
+  // For now, we'll use an empty object to accept all file types
+  // This makes sure we're compatible with all browsers and versions
+  // In a production environment, you would configure this with specific allowed types
+  const createAcceptObject = () => {
+    // Accept all file types for demo purposes
+    return {}; 
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: fileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
+    accept: createAcceptObject(),
     maxSize,
-    disabled: loading || files.length >= maxFiles
+    disabled: loading || files.length >= maxFiles,
+    noClick: false,
+    noKeyboard: false,
   });
 
   const handleRemoveFile = (index: number) => {
@@ -501,6 +511,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <Typography variant="caption" color="text.secondary" align="center">
                   Max size: {formatFileSize(maxSize)}
                 </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  size="small" 
+                  sx={{ mt: 2 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // React-dropzone handles the file input click
+                    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                    if (fileInput) {
+                      fileInput.click();
+                    }
+                  }}
+                >
+                  Browse Files
+                </Button>
               </>
             )}
           </Box>
