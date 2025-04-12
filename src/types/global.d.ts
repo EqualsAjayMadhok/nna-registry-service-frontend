@@ -8,3 +8,13 @@ interface Window {
     };
   };
 }
+
+// File extension for prompt data
+interface File {
+  promptData?: {
+    isPrompt: boolean;
+    content: string;
+    metadata?: any;
+    category?: string;
+  };
+}
