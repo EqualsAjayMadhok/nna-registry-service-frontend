@@ -16,6 +16,7 @@ import TaxonomySelection from '../../components/asset/TaxonomySelection';
 import MetadataForm, { AssetMetadata } from '../../components/asset/MetadataForm';
 import FileUpload from '../../components/asset/FileUpload';
 import ReviewSubmit from '../../components/asset/ReviewSubmit';
+import assetService from '../../services/api/asset.service';
 
 // Define steps
 const steps = [
@@ -66,26 +67,56 @@ const AssetRegistration: React.FC = () => {
     setFormValid(false);
   };
 
-  // Placeholder for actual submission
+  // Submit the asset with files
   const handleSubmit = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Display success message
-      setActiveStep(steps.length);
+      if (!metadata) {
+        throw new Error('Metadata is required');
+      }
       
-      // In a real implementation, this would actually submit to the backend
-      console.log('Asset data being submitted:', {
+      // Prepare asset creation data
+      const assetData = {
+        name: metadata.name,
         layer: layerCode,
         category: categoryCode,
         subcategory: subcategoryCode,
-        metadata,
+        description: metadata.description,
+        tags: metadata.tags,
+        metadata: {
+          source: metadata.source,
+          isTrainable: metadata.isTrainable,
+          trainingDescription: metadata.trainingDescription,
+          // Include any other metadata fields
+        },
         files
+      };
+      
+      console.log('Asset data being submitted:', assetData);
+      
+      // Submit to backend (or mock in our case)
+      const result = await assetService.createAssetWithFiles(assetData, {
+        onProgress: (fileId, progress) => {
+          console.log(`File ${fileId} upload progress: ${progress}%`);
+        },
+        onComplete: (fileId, fileData) => {
+          console.log(`File ${fileId} upload complete:`, fileData);
+        },
+        onError: (fileId, error) => {
+          console.error(`File ${fileId} upload error:`, error);
+        }
       });
+      
+      console.log('Asset created successfully:', result);
+      
+      // Display success message
+      setActiveStep(steps.length);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to register asset');
+      console.error('Error creating asset:', err);
     } finally {
       setLoading(false);
     }
@@ -173,21 +204,44 @@ const AssetRegistration: React.FC = () => {
             <Typography variant="body1" paragraph>
               Upload files for your {layerName} asset.
             </Typography>
-            <Typography variant="body2" color="info.main" paragraph>
-              For demo purposes, you can proceed without uploading actual files.
-            </Typography>
-            {/* This component is a placeholder - in real app it would have proper implementation */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This is a placeholder for the FileUpload component.
-              <Button onClick={() => {
-                // Create a mock file object
-                const mockFile = new File([''], 'sample-file.mp3', { type: 'audio/mpeg' });
-                setFiles([mockFile]);
-                setFormValid(true);
-              }} sx={{ ml: 2 }} variant="contained" size="small">
-                Simulate File Upload
-              </Button>
-            </Alert>
+            
+            <FileUpload
+              onFilesChange={(newFiles) => {
+                setFiles(newFiles);
+                setFormValid(newFiles.length > 0);
+              }}
+              layerCode={layerCode}
+              initialFiles={files}
+              maxFiles={5}
+              onUploadProgress={(fileId, progress) => {
+                console.log(`File ${fileId} upload progress: ${progress}%`);
+              }}
+              onUploadComplete={(fileId, fileData) => {
+                console.log(`File ${fileId} upload complete:`, fileData);
+              }}
+              onUploadError={(fileId, error) => {
+                console.error(`File ${fileId} upload error:`, error);
+              }}
+            />
+            
+            {files.length === 0 && (
+              <Typography variant="body2" color="info.main" paragraph>
+                For demo purposes, you can also proceed without uploading actual files.
+                <Button 
+                  onClick={() => {
+                    // Create a mock file object
+                    const mockFile = new File([''], 'sample-file.mp3', { type: 'audio/mpeg' });
+                    setFiles([mockFile]);
+                    setFormValid(true);
+                  }} 
+                  sx={{ ml: 2 }} 
+                  variant="contained" 
+                  size="small"
+                >
+                  Simulate File Upload
+                </Button>
+              </Typography>
+            )}
           </Box>
         );
       case 4:

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -6,6 +6,7 @@ import {
   Divider,
   Button,
   IconButton,
+  LinearProgress,
   Grid,
   Card,
   CardMedia,
@@ -17,19 +18,29 @@ import {
   ListItemSecondaryAction,
   ListItemIcon,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
   Delete as DeleteIcon,
+  Cancel as CancelIcon,
   InsertDriveFile as FileIcon,
   AudioFile as AudioIcon,
   VideoFile as VideoIcon,
   Image as ImageIcon,
   Code as CodeIcon,
-  TextSnippet as TextIcon
+  TextSnippet as TextIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Visibility as ViewIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
+import { FileUpload as FileUploadType, FileUploadResponse } from '../../types/asset.types';
+import assetService from '../../services/api/asset.service';
 
 interface FileUploadProps {
   onFilesChange: (files: File[]) => void;
@@ -38,6 +49,9 @@ interface FileUploadProps {
   maxSize?: number; // in bytes
   layerCode?: string;
   initialFiles?: File[];
+  onUploadProgress?: (fileId: string, progress: number) => void;
+  onUploadComplete?: (fileId: string, fileData: FileUploadResponse) => void;
+  onUploadError?: (fileId: string, error: string) => void;
 }
 
 // File type icons mapping
@@ -92,16 +106,31 @@ const FileUpload: React.FC<FileUploadProps> = ({
   maxFiles = 5,
   maxSize = 104857600, // 100MB default
   layerCode,
-  initialFiles = []
+  initialFiles = [],
+  onUploadProgress,
+  onUploadComplete,
+  onUploadError
 }) => {
   const [files, setFiles] = useState<File[]>(initialFiles);
   const [preview, setPreview] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<Record<string, FileUploadType>>({});
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Use layer-specific file types if none provided
   const fileTypes = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
+
+  // Calculate overall upload progress
+  const calculateOverallProgress = () => {
+    const uploads = Object.values(uploadStatus);
+    if (uploads.length === 0) return 0;
+    
+    const totalProgress = uploads.reduce((sum, upload) => sum + upload.progress, 0);
+    return Math.round(totalProgress / uploads.length);
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (loading) return;
@@ -131,6 +160,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
         const fileUrl = URL.createObjectURL(file);
         setPreview(fileUrl);
       }
+
+      // Start upload process for each file
+      acceptedFiles.forEach(file => {
+        uploadFile(file);
+      });
     } catch (err) {
       setError('An error occurred while processing the files');
       console.error(err);
@@ -138,6 +172,45 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setLoading(false);
     }
   }, [files, loading, maxFiles, onFilesChange, preview]);
+
+  // Upload a file with progress tracking
+  const uploadFile = (file: File) => {
+    const upload = assetService.uploadFile(file, {
+      onProgress: (fileId, progress) => {
+        setUploadStatus(prev => ({
+          ...prev,
+          [fileId]: { ...prev[fileId], progress }
+        }));
+        if (onUploadProgress) {
+          onUploadProgress(fileId, progress);
+        }
+      },
+      onComplete: (fileId, fileData) => {
+        setUploadStatus(prev => ({
+          ...prev,
+          [fileId]: { ...prev[fileId], progress: 100, status: 'completed' }
+        }));
+        if (onUploadComplete) {
+          onUploadComplete(fileId, fileData);
+        }
+      },
+      onError: (fileId, errorMsg) => {
+        setUploadStatus(prev => ({
+          ...prev,
+          [fileId]: { ...prev[fileId], status: 'error', error: errorMsg }
+        }));
+        setError(errorMsg);
+        if (onUploadError) {
+          onUploadError(fileId, errorMsg);
+        }
+      }
+    });
+    
+    setUploadStatus(prev => ({
+      ...prev,
+      [upload.id]: upload
+    }));
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -148,6 +221,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleRemoveFile = (index: number) => {
     const newFiles = [...files];
+    const removedFile = newFiles[index];
     
     // If removing the file being previewed, clear the preview
     if (preview && index === 0) {
@@ -164,11 +238,31 @@ const FileUpload: React.FC<FileUploadProps> = ({
       }
     }
     
+    // Cancel any ongoing upload for this file
+    Object.entries(uploadStatus).forEach(([id, upload]) => {
+      if (upload.file === removedFile) {
+        if (upload.status === 'uploading') {
+          assetService.cancelUpload(id);
+        }
+        // Remove from upload status
+        setUploadStatus(prev => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
+      }
+    });
+    
     newFiles.splice(index, 1);
     setFiles(newFiles);
     
     // Notify parent component
     onFilesChange(newFiles);
+  };
+  
+  // Cancel file upload
+  const cancelUpload = (fileId: string) => {
+    assetService.cancelUpload(fileId);
   };
 
   const handlePreviewFile = (file: File, index: number) => {
@@ -180,6 +274,95 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setPreviewType(file.type);
     const fileUrl = URL.createObjectURL(file);
     setPreview(fileUrl);
+  };
+  
+  // Open file preview dialog
+  const openPreview = (file: File) => {
+    setPreviewFile(file);
+    setIsPreviewOpen(true);
+  };
+
+  // Render file preview dialog
+  const renderPreviewDialog = () => {
+    if (!previewFile) return null;
+    
+    const fileType = previewFile.type.split('/')[0];
+    const fileUrl = URL.createObjectURL(previewFile);
+    
+    return (
+      <Dialog
+        open={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          URL.revokeObjectURL(fileUrl);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{previewFile.name}</DialogTitle>
+        <DialogContent>
+          {fileType === 'image' && (
+            <img 
+              src={fileUrl} 
+              alt={previewFile.name} 
+              style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: '0 auto' }} 
+            />
+          )}
+          {fileType === 'video' && (
+            <video 
+              src={fileUrl} 
+              controls 
+              style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: '0 auto' }} 
+            />
+          )}
+          {fileType === 'audio' && (
+            <audio 
+              src={fileUrl} 
+              controls 
+              style={{ width: '100%', margin: '20px 0' }} 
+            />
+          )}
+          {(fileType !== 'image' && fileType !== 'video' && fileType !== 'audio') && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <FileIcon sx={{ fontSize: 80, color: 'action.active', mb: 2 }} />
+              <Typography variant="body2">
+                Preview not available for this file type ({previewFile.type || 'unknown'})
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setIsPreviewOpen(false);
+            URL.revokeObjectURL(fileUrl);
+          }}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
+  // Get status icon based on upload status
+  const getFileStatusIcon = (file: File, index: number) => {
+    const fileUpload = Object.values(uploadStatus).find(upload => upload.file === file);
+    
+    if (!fileUpload) return null;
+    
+    switch (fileUpload.status) {
+      case 'pending':
+        return <CircularProgress size={16} />;
+      case 'uploading':
+        return (
+          <IconButton edge="end" size="small" onClick={() => cancelUpload(fileUpload.id)}>
+            <CancelIcon />
+          </IconButton>
+        );
+      case 'completed':
+        return <CheckCircleIcon color="success" />;
+      case 'error':
+        return <ErrorIcon color="error" />;
+      default:
+        return null;
+    }
   };
 
   // Render file preview
@@ -248,6 +431,29 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Alert>
       )}
 
+      {/* Overall progress */}
+      {Object.keys(uploadStatus).length > 0 && (
+        <Box sx={{ mt: 1, mb: 3, position: 'relative' }}>
+          <Typography variant="body2" gutterBottom>Overall Upload Progress</Typography>
+          <LinearProgress 
+            variant="determinate" 
+            value={calculateOverallProgress()} 
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              position: 'absolute', 
+              right: 8, 
+              bottom: 0,
+              fontWeight: 'bold'
+            }}
+          >
+            {calculateOverallProgress()}%
+          </Typography>
+        </Box>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'row', gap: '24px' }}>
         <div style={{ flex: 1 }}>
           {/* Dropzone */}
@@ -302,33 +508,103 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {/* File List */}
           {files.length > 0 && (
             <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-              {files.map((file, index) => (
-                <ListItem
-                  key={`${file.name}-${index}`}
-                  onClick={() => handlePreviewFile(file, index)}
-                  sx={{ 
-                    cursor: 'pointer',
-                    backgroundColor: preview && files.indexOf(file) === 0 ? 'action.selected' : 'inherit'
-                  }}
-                >
-                  <ListItemIcon>
-                    {getFileIcon(file.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={file.name}
-                    secondary={`${formatFileSize(file.size)} • ${file.type}`}
-                    primaryTypographyProps={{ 
-                      noWrap: true,
-                      style: { maxWidth: '200px' }
+              {files.map((file, index) => {
+                const fileUpload = Object.values(uploadStatus).find(upload => upload.file === file);
+                const isUploading = fileUpload?.status === 'uploading';
+                const progress = fileUpload?.progress || 0;
+                const hasError = fileUpload?.status === 'error';
+                const isComplete = fileUpload?.status === 'completed';
+                
+                return (
+                  <ListItem
+                    key={`${file.name}-${index}`}
+                    onClick={() => handlePreviewFile(file, index)}
+                    sx={{ 
+                      cursor: 'pointer',
+                      backgroundColor: preview && files.indexOf(file) === 0 ? 'action.selected' : 'inherit',
+                      ...(hasError && { backgroundColor: 'error.light' }),
+                      ...(isComplete && { opacity: 0.8 }),
+                      position: 'relative',
                     }}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveFile(index)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
+                  >
+                    <ListItemIcon>
+                      {getFileIcon(file.type)}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography 
+                            noWrap 
+                            sx={{ maxWidth: '150px' }}
+                          >
+                            {file.name}
+                          </Typography>
+                          {getFileStatusIcon(file, index)}
+                        </Box>
+                      }
+                      secondary={
+                        <>
+                          <Typography variant="body2" component="span">
+                            {formatFileSize(file.size)} • {file.type.split('/')[1]}
+                          </Typography>
+                          {isUploading && (
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={progress} 
+                              sx={{ mt: 1, height: 4, borderRadius: 2 }} 
+                            />
+                          )}
+                          {hasError && (
+                            <Typography color="error" variant="caption" display="block">
+                              {fileUpload.error}
+                            </Typography>
+                          )}
+                        </>
+                      }
+                    />
+                    <ListItemSecondaryAction>
+                      {file.type.startsWith('image/') && (
+                        <IconButton 
+                          edge="end" 
+                          aria-label="preview"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPreview(file);
+                          }}
+                          sx={{ mr: 1 }}
+                        >
+                          <ViewIcon />
+                        </IconButton>
+                      )}
+                      {isUploading ? (
+                        <IconButton 
+                          edge="end" 
+                          aria-label="cancel" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (fileUpload) cancelUpload(fileUpload.id);
+                          }}
+                          color="warning"
+                        >
+                          <CancelIcon />
+                        </IconButton>
+                      ) : (
+                        <IconButton 
+                          edge="end" 
+                          aria-label="delete" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFile(index);
+                          }}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                );
+              })}
             </List>
           )}
         </div>
@@ -370,6 +646,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       setPreview(null);
                       setPreviewType('');
                     }
+                    // Cancel any ongoing uploads
+                    Object.entries(uploadStatus).forEach(([id, upload]) => {
+                      if (upload.status === 'uploading') {
+                        cancelUpload(id);
+                      }
+                    });
+                    setUploadStatus({});
                     setFiles([]);
                     onFilesChange([]);
                   }}
@@ -381,6 +664,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </Card>
         </div>
       </div>
+      
+      {/* Preview Dialog */}
+      {renderPreviewDialog()}
     </Paper>
   );
 };
