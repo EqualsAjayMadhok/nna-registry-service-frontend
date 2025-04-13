@@ -10,18 +10,13 @@ import {
   Divider,
   Chip,
   Paper,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  FormControlLabel,
-  Checkbox,
   InputAdornment,
   Button
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   Add as AddIcon
 } from '@mui/icons-material';
+
 
 interface MetadataFormProps {
   layerCode: string;
@@ -30,24 +25,12 @@ interface MetadataFormProps {
 }
 
 export interface AssetMetadata {
-  name: string;
+  name: string; // This will be auto-generated during submission
   description: string;
-  source?: string;
+  source?: 'ReViz' | 'User' | 'Brand';
   tags: string[];
   // Layer-specific metadata fields
   layerSpecificData?: Record<string, any>;
-  // Optional sections
-  trainingData?: {
-    isTrainable: boolean;
-    trainingDescription?: string;
-    trainingRequirements?: string;
-  };
-  rights?: {
-    license: string;
-    attributionRequired: boolean;
-    attributionText?: string;
-    commercialUse: boolean;
-  };
 }
 
 // Layer-specific validation schemas
@@ -89,25 +72,6 @@ const createValidationSchema = (layerCode: string) => {
     description: yup.string().required('Description is required'),
     source: yup.string().optional(),
     tags: yup.array().of(yup.string()),
-    trainingData: yup.object({
-      isTrainable: yup.boolean(),
-      trainingDescription: yup.string().when('isTrainable', {
-        is: true,
-        then: () => yup.string().required('Training description is required when asset is trainable'),
-        otherwise: () => yup.string()
-      }),
-      trainingRequirements: yup.string(),
-    }),
-    rights: yup.object({
-      license: yup.string().required('License is required'),
-      attributionRequired: yup.boolean(),
-      attributionText: yup.string().when('attributionRequired', {
-        is: true,
-        then: () => yup.string().required('Attribution text is required when attribution is required'),
-        otherwise: () => yup.string()
-      }),
-      commercialUse: yup.boolean(),
-    }),
   });
 
   // Add layer-specific validation
@@ -327,22 +291,11 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
   const validationSchema = createValidationSchema(layerCode);
   
   const defaultValues: AssetMetadata = {
-    name: '',
+    name: initialData?.name || 'Auto-generated NNA Name',
     description: '',
-    source: '',
+    source: 'ReViz',
     tags: [],
     layerSpecificData: {},
-    trainingData: {
-      isTrainable: false,
-      trainingDescription: '',
-      trainingRequirements: ''
-    },
-    rights: {
-      license: 'CC-BY',
-      attributionRequired: true,
-      attributionText: '',
-      commercialUse: true
-    },
     ...initialData
   };
 
@@ -394,10 +347,17 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
                 <TextField
                   {...field}
                   fullWidth
-                  label="Asset Name"
+                  label="Asset Name (Auto-generated)"
                   required
+                  disabled
                   error={!!errors.name}
-                  helperText={errors.name?.message}
+                  helperText={errors.name?.message || "Auto-generated in format LayerCode.CategoryCode.SubcategoryCode.Number (e.g., S.POP.DVA.001)"}
+                  sx={{
+                    "& .MuiInputBase-input.Mui-disabled": {
+                      WebkitTextFillColor: "#666",
+                      fontStyle: "italic"
+                    }
+                  }}
                 />
               )}
             />
@@ -426,15 +386,21 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
             <Controller
               name="source"
               control={control}
+              defaultValue="ReViz"
               render={({ field }) => (
                 <TextField
                   {...field}
                   fullWidth
                   label="Source"
-                  placeholder="Where did this asset come from? (URL, creator name, etc.)"
+                  select
+                  SelectProps={{ native: true }}
                   error={!!errors.source}
-                  helperText={errors.source?.message}
-                />
+                  helperText={errors.source?.message || "Origin of the asset"}
+                >
+                  <option value="ReViz">ReViz</option>
+                  <option value="User">User</option>
+                  <option value="Brand">Brand</option>
+                </TextField>
               )}
             />
           </Grid>
@@ -493,173 +459,35 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               {renderLayerSpecificFields(layerCode, control, errors)}
             </Grid>
           )}
-
-          {/* Training Data (Optional) */}
+          
+          {/* Information about auto-generated assets */}
           <Grid item xs={12}>
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="training-data-content"
-                id="training-data-header"
-              >
-                <Typography>Training Data (Optional)</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="trainingData.isTrainable"
-                      control={control}
-                      render={({ field }) => (
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              {...field}
-                              checked={field.value}
-                            />
-                          }
-                          label="This asset can be used for training AI models"
-                        />
-                      )}
-                    />
-                  </Grid>
-                  
-                  {watch('trainingData.isTrainable') && (
-                    <>
-                      <Grid item xs={12}>
-                        <Controller
-                          name="trainingData.trainingDescription"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              fullWidth
-                              label="Training Description"
-                              multiline
-                              rows={2}
-                              error={!!errors.trainingData?.trainingDescription}
-                              helperText={errors.trainingData?.trainingDescription?.message}
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Controller
-                          name="trainingData.trainingRequirements"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              fullWidth
-                              label="Training Requirements"
-                              multiline
-                              rows={2}
-                              error={!!errors.trainingData?.trainingRequirements}
-                              helperText={errors.trainingData?.trainingRequirements?.message}
-                            />
-                          )}
-                        />
-                      </Grid>
-                    </>
-                  )}
-                </Grid>
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
-
-          {/* Rights Information */}
-          <Grid item xs={12}>
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="rights-content"
-                id="rights-header"
-              >
-                <Typography>Rights Information</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="rights.license"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          label="License"
-                          select
-                          SelectProps={{ native: true }}
-                          error={!!errors.rights?.license}
-                          helperText={errors.rights?.license?.message}
-                        >
-                          <option value=""></option>
-                          <option value="CC0">CC0 (Public Domain)</option>
-                          <option value="CC-BY">CC-BY (Attribution)</option>
-                          <option value="CC-BY-SA">CC-BY-SA (Attribution-ShareAlike)</option>
-                          <option value="CC-BY-NC">CC-BY-NC (Attribution-NonCommercial)</option>
-                          <option value="CC-BY-ND">CC-BY-ND (Attribution-NoDerivs)</option>
-                          <option value="proprietary">Proprietary (All Rights Reserved)</option>
-                        </TextField>
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="rights.attributionRequired"
-                      control={control}
-                      render={({ field }) => (
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              {...field}
-                              checked={field.value}
-                            />
-                          }
-                          label="Attribution Required"
-                        />
-                      )}
-                    />
-                  </Grid>
-                  
-                  {watch('rights.attributionRequired') && (
-                    <Grid item xs={12}>
-                      <Controller
-                        name="rights.attributionText"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            fullWidth
-                            label="Attribution Text"
-                            error={!!errors.rights?.attributionText}
-                            helperText={errors.rights?.attributionText?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
-                  )}
-                  
-                  <Grid item xs={12}>
-                    <Controller
-                      name="rights.commercialUse"
-                      control={control}
-                      render={({ field }) => (
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              {...field}
-                              checked={field.value}
-                            />
-                          }
-                          label="Commercial Use Allowed"
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </AccordionDetails>
-            </Accordion>
+            <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1, border: '1px dashed', borderColor: 'divider' }}>
+              <Typography variant="subtitle2" color="primary" gutterBottom>
+                Auto-Generated Related Assets
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                The following assets will be automatically generated when you register this asset:
+              </Typography>
+              <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+                  <Typography variant="subtitle2" color="#607d8b">
+                    Training Data Asset
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Contains prompts, images, and videos used for training
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+                  <Typography variant="subtitle2" color="#673ab7">
+                    Rights Data Asset
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Contains licensing, attribution, and usage information
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           </Grid>
         </Grid>
       </Box>
