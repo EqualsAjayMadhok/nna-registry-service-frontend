@@ -18,11 +18,7 @@ import {
   ErrorOutline as ErrorIcon
 } from '@mui/icons-material';
 import taxonomyService from '../../api/taxonomyService';
-import {
-  generateHumanFriendlyName,
-  generateMachineFriendlyAddress,
-  formatNNAAddressForDisplay
-} from '../../utils/nnaAddressing';
+import nnaRegistryService from '../../api/nnaRegistryService';
 
 interface NNAAddressPreviewProps {
   layerCode: string;
@@ -61,31 +57,24 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     const categoryName = category?.name;
     const subcategoryName = subcategory?.name;
     
-    // Generate human-friendly name with name-based alphabetic codes
-    const humanName = generateHumanFriendlyName(
-      layerCode,
-      categoryCode,
-      subcategoryCode,
-      sequentialNumber,
-      categoryName,
-      subcategoryName
-    );
-    
-    // Get numeric codes for machine-friendly address
-    const categoryNumericCode = taxonomyService.getCategoryNumericCode(layerCode, categoryCode);
-    const subcategoryNumericCode = taxonomyService.getSubcategoryNumericCode(
-      layerCode,
-      categoryCode,
-      subcategoryCode
-    );
-    
-    // Generate machine-friendly address if we have valid numeric codes
+    // Use the NNA Registry Service to get both addresses
+    let humanName = '';
     let machineAddress = '';
-    if (categoryNumericCode > 0 && subcategoryNumericCode > 0) {
-      machineAddress = generateMachineFriendlyAddress(
+    
+    if (categoryName && subcategoryName) {
+      // Generate human-friendly name with NNA Registry Service
+      humanName = nnaRegistryService.generateHumanFriendlyName(
         layerCode,
-        categoryNumericCode,
-        subcategoryNumericCode,
+        categoryName,
+        subcategoryName,
+        sequentialNumber
+      );
+      
+      // Generate machine-friendly address with NNA Registry Service
+      machineAddress = nnaRegistryService.generateMachineFriendlyAddress(
+        layerCode,
+        categoryName,
+        subcategoryName,
         sequentialNumber
       );
     }
@@ -209,7 +198,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
             letterSpacing: '0.1em'
           }}
         >
-          {formatNNAAddressForDisplay(humanFriendlyName)}
+          {humanFriendlyName}
         </Box>
       </Box>
       
@@ -230,7 +219,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
             letterSpacing: '0.1em'
           }}
         >
-          {formatNNAAddressForDisplay(machineFriendlyAddress)}
+          {machineFriendlyAddress}
         </Box>
       </Box>
       

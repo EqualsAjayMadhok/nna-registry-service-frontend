@@ -9,19 +9,21 @@ import {
   Divider,
   CircularProgress,
   Alert,
-  
   Paper
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
+import NNAAddressPreview from './NNAAddressPreview';
+import nnaRegistryService from '../../api/nnaRegistryService';
 
 interface TaxonomySelectionProps {
   layerCode: string;
   onCategorySelect: (category: CategoryOption) => void;
-  onSubcategorySelect: (subcategory: SubcategoryOption) => void;
+  onSubcategorySelect: (subcategory: SubcategoryOption, isDoubleClick?: boolean) => void;
   selectedCategoryCode?: string;
   selectedSubcategoryCode?: string;
+  onNNAAddressChange?: (humanFriendlyName: string, machineFriendlyAddress: string, sequentialNumber: number) => void;
 }
 
 const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
@@ -29,12 +31,16 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   onCategorySelect,
   onSubcategorySelect,
   selectedCategoryCode,
-  selectedSubcategoryCode
+  selectedSubcategoryCode,
+  onNNAAddressChange
 }) => {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [sequentialNumber, setSequentialNumber] = useState<number>(1);
+  const [isUnique, setIsUnique] = useState<boolean>(true);
+  const [checkingUniqueness, setCheckingUniqueness] = useState<boolean>(false);
 
   // Fetch categories when layer changes
   useEffect(() => {
@@ -82,6 +88,94 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     fetchSubcategories();
   }, [layerCode, selectedCategoryCode]);
 
+  // Check NNA address uniqueness when taxonomy selection is complete
+  useEffect(() => {
+    const checkAddressUniqueness = async () => {
+      if (!layerCode || !selectedCategoryCode || !selectedSubcategoryCode) {
+        return;
+      }
+
+      try {
+        setCheckingUniqueness(true);
+        
+        // Get category and subcategory names
+        const category = categories.find(c => c.code === selectedCategoryCode);
+        const subcategory = subcategories.find(s => s.code === selectedSubcategoryCode);
+        
+        if (!category || !subcategory) {
+          console.error('Could not find category or subcategory');
+          return;
+        }
+        
+        // Generate human-friendly name using registry service
+        const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+          layerCode,
+          category.name,
+          subcategory.name,
+          sequentialNumber
+        );
+        
+        // Check if it already exists
+        const exists = await taxonomyService.checkNNAAddressExists(humanFriendlyName);
+        
+        if (exists) {
+          // If address exists, try to get the next available number
+          const nextNumber = taxonomyService.getNextSequentialNumber(
+            layerCode,
+            selectedCategoryCode,
+            selectedSubcategoryCode,
+            [sequentialNumber]
+          );
+          
+          setSequentialNumber(nextNumber);
+          setIsUnique(false);
+          
+          // Generate updated human-friendly name with new sequential number
+          const updatedHumanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+            layerCode,
+            category.name,
+            subcategory.name,
+            nextNumber
+          );
+          
+          // Generate machine-friendly address with new sequential number
+          const updatedMachineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+            layerCode,
+            category.name,
+            subcategory.name,
+            nextNumber
+          );
+          
+          // Notify parent component of the address change
+          if (onNNAAddressChange) {
+            onNNAAddressChange(updatedHumanFriendlyName, updatedMachineFriendlyAddress, nextNumber);
+          }
+        } else {
+          setIsUnique(true);
+          
+          // Generate machine-friendly address
+          const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+            layerCode,
+            category.name,
+            subcategory.name,
+            sequentialNumber
+          );
+          
+          // Notify parent component of the address change
+          if (onNNAAddressChange) {
+            onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, sequentialNumber);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking address uniqueness:', err);
+      } finally {
+        setCheckingUniqueness(false);
+      }
+    };
+
+    checkAddressUniqueness();
+  }, [layerCode, selectedCategoryCode, selectedSubcategoryCode, sequentialNumber, onNNAAddressChange]);
+
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const categoryCode = event.target.value;
     
@@ -89,18 +183,22 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     const selectedCategory = categories.find(cat => cat.code === categoryCode);
     
     if (selectedCategory) {
+      // Reset sequential number when category changes
+      setSequentialNumber(1);
       onCategorySelect(selectedCategory);
     }
   };
 
-  const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
+  const handleSubcategoryChange = (event: SelectChangeEvent<string>, isDoubleClick: boolean = false) => {
     const subcategoryCode = event.target.value;
     
     // Find the selected subcategory
     const selectedSubcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
     
     if (selectedSubcategory) {
-      onSubcategorySelect(selectedSubcategory);
+      // Reset sequential number when subcategory changes
+      setSequentialNumber(1);
+      onSubcategorySelect(selectedSubcategory, isDoubleClick);
     }
   };
 
@@ -170,14 +268,21 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             id="subcategory-select"
             value={selectedSubcategoryCode || ''}
             label="Subcategory"
-            onChange={handleSubcategoryChange}
+            onChange={(e) => handleSubcategoryChange(e, false)}
             disabled={loading || !selectedCategoryCode || subcategories.length === 0}
           >
             <MenuItem value="">
               <em>Select a subcategory</em>
             </MenuItem>
             {subcategories.map((subcategory) => (
-              <MenuItem key={subcategory.code} value={subcategory.code}>
+              <MenuItem 
+                key={subcategory.code} 
+                value={subcategory.code} 
+                onDoubleClick={() => {
+                  console.log(`Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`);
+                  onSubcategorySelect(subcategory, true);
+                }}
+              >
                 {subcategory.name} ({subcategory.code})
               </MenuItem>
             ))}
@@ -185,14 +290,27 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         </FormControl>
 
         {selectedCategoryCode && selectedSubcategoryCode && (
-          <Box mt={3} p={2} bgcolor="background.default" borderRadius={1}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Selected Taxonomy:
-            </Typography>
-            <Typography>
-              {taxonomyService.getTaxonomyPath(layerCode, selectedCategoryCode, selectedSubcategoryCode) || 'Invalid selection'}
-            </Typography>
-          </Box>
+          <>
+            <Box mt={3} p={2} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Selected Taxonomy:
+              </Typography>
+              <Typography>
+                {taxonomyService.getTaxonomyPath(layerCode, selectedCategoryCode, selectedSubcategoryCode) || 'Invalid selection'}
+              </Typography>
+            </Box>
+            
+            {/* NNA Address Preview */}
+            <NNAAddressPreview
+              layerCode={layerCode}
+              categoryCode={selectedCategoryCode}
+              subcategoryCode={selectedSubcategoryCode}
+              sequentialNumber={sequentialNumber}
+              isUnique={isUnique}
+              checkingUniqueness={checkingUniqueness}
+              validationError={!selectedCategoryCode || !selectedSubcategoryCode ? 'Incomplete taxonomy selection' : undefined}
+            />
+          </>
         )}
       </Box>
     </Paper>
