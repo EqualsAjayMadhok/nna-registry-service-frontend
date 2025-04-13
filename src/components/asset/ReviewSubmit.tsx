@@ -228,60 +228,66 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   </Grid>
                 )}
                 
-                {/* Training data */}
-                {assetMetadata.trainingData?.isTrainable && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Training Data:
-                    </Typography>
-                    <List dense>
-                      <ListItem disablePadding>
-                        <ListItemText primary="Asset is trainable" />
-                      </ListItem>
-                      {assetMetadata.trainingData.trainingDescription && (
-                        <ListItem disablePadding>
-                          <ListItemText 
-                            primary="Description:" 
-                            secondary={assetMetadata.trainingData.trainingDescription}
-                          />
-                        </ListItem>
-                      )}
-                      {assetMetadata.trainingData.trainingRequirements && (
-                        <ListItem disablePadding>
-                          <ListItemText 
-                            primary="Requirements:" 
-                            secondary={assetMetadata.trainingData.trainingRequirements}
-                          />
-                        </ListItem>
-                      )}
-                    </List>
-                  </Grid>
-                )}
-                
-                {/* Rights information */}
+                {/* Auto-generated assets */}
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Rights Information:
+                    Auto-generated Related Assets:
                   </Typography>
-                  <List dense>
-                    <ListItem disablePadding>
-                      <ListItemText primary={`License: ${assetMetadata.rights?.license || 'Not specified'}`} />
-                    </ListItem>
-                    <ListItem disablePadding>
-                      <ListItemText primary={`Attribution Required: ${assetMetadata.rights?.attributionRequired ? 'Yes' : 'No'}`} />
-                    </ListItem>
-                    {assetMetadata.rights?.attributionRequired && assetMetadata.rights?.attributionText && (
-                      <ListItem disablePadding>
-                        <ListItemText 
-                          primary="Attribution Text:" 
-                          secondary={assetMetadata.rights.attributionText}
-                        />
-                      </ListItem>
-                    )}
-                    <ListItem disablePadding>
-                      <ListItemText primary={`Commercial Use Allowed: ${assetMetadata.rights?.commercialUse ? 'Yes' : 'No'}`} />
-                    </ListItem>
-                  </List>
+                  <Box sx={{ mt: 1, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                    <Grid container spacing={2}>
+                      {/* Training Data Asset */}
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Chip 
+                              size="small" 
+                              label="Training Data"
+                              sx={{ bgcolor: '#607d8b', color: 'white', mr: 1 }}
+                            />
+                            <Chip 
+                              size="small" 
+                              variant="outlined"
+                              label="Auto-generated"
+                            />
+                          </Box>
+                          <Typography variant="body2">
+                            <strong>Name:</strong> T.{layerCode}.{categoryCode}.{subcategoryCode}.001.set
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Contains prompts, reference images, and videos used for training.
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      
+                      {/* Rights Data Asset */}
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Chip 
+                              size="small" 
+                              label="Rights Data"
+                              sx={{ bgcolor: '#673ab7', color: 'white', mr: 1 }}
+                            />
+                            <Chip 
+                              size="small" 
+                              variant="outlined"
+                              label="Auto-generated"
+                            />
+                          </Box>
+                          <Typography variant="body2">
+                            <strong>Name:</strong> R.{categoryCode}.{subcategoryCode}.001.json
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Contains licensing, attribution and rights information.
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                    
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                      These assets will be automatically generated when you submit this registration and will have a 1:1 mapping with your primary asset.
+                    </Typography>
+                  </Box>
                 </Grid>
               </Grid>
             </CardContent>
