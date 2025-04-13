@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
-// Auth
+// Contexts
 import { AuthProvider } from './contexts/AuthContext';
+import NotificationsProvider from './contexts/NotificationsContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -17,7 +18,13 @@ import Dashboard from './pages/Dashboard';
 import AssetList from './pages/AssetList';
 import AssetDetail from './pages/AssetDetail';
 import AssetRegistration from './pages/asset/AssetRegistration';
+import UpdateAssetPage from './pages/assets/UpdateAssetPage';
+import BatchUploadPage from './pages/assets/BatchUploadPage';
+import OrganizeAssetsPage from './pages/assets/OrganizeAssetsPage';
+import AssetAnalyticsDashboard from './pages/dashboard/AssetAnalyticsDashboard';
 import TaxonomyPage from './pages/TaxonomyPage';
+import CollectionsPage from './pages/collections/CollectionsPage';
+import CollectionDetailPage from './pages/collections/CollectionDetailPage';
 import NotFound from './pages/NotFound';
 
 // Set up Material UI theme
@@ -62,8 +69,9 @@ function App() {
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <AuthProvider>
-          <Router>
-            <Routes>
+          <NotificationsProvider>
+            <Router>
+              <Routes>
               {/* Auth Pages */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -75,15 +83,24 @@ function App() {
                 
                 {/* Asset Routes */}
                 <Route path="/assets" element={<AssetList />} />
-                <Route path="/assets/:id" element={<AssetDetail />} />
                 <Route path="/assets/new" element={<AssetRegistration />} />
+                <Route path="/assets/batch" element={<BatchUploadPage />} />
+                <Route path="/assets/organize" element={<OrganizeAssetsPage />} />
+                <Route path="/assets/analytics" element={<AssetAnalyticsDashboard />} />
+                <Route path="/assets/edit/:id" element={<UpdateAssetPage />} />
+                <Route path="/assets/:id" element={<AssetDetail />} />
                 <Route path="/taxonomy" element={<TaxonomyPage />} />
+                
+                {/* Collections Routes */}
+                <Route path="/collections" element={<CollectionsPage />} />
+                <Route path="/collections/:id" element={<CollectionDetailPage />} />
               </Route>
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </Router>
+            </Router>
+          </NotificationsProvider>
         </AuthProvider>
       </SnackbarProvider>
     </ThemeProvider>
