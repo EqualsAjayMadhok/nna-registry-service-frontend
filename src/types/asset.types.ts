@@ -1,7 +1,8 @@
 export interface Asset {
   id: string;
   name: string;
-  nnaAddress: string;
+  nnaAddress?: string;
+  address?: string; // Alternative property used in some components
   layer: string;
   category?: string;
   subcategory?: string;
@@ -10,14 +11,15 @@ export interface Asset {
   files?: AssetFile[];
   metadata?: Record<string, any>;
   order?: number;
-  version: VersionInfo;
+  version?: VersionInfo;
   versionHistory?: VersionInfo[];
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
   collectionIds?: string[]; // Collections this asset belongs to
   featured?: boolean; // Whether this asset is featured
   rights?: AssetRights; // Rights management information
+  status?: string; // Asset status - pending, processing, complete, error, etc.
 }
 
 export interface AssetFile {
@@ -94,6 +96,8 @@ export interface AssetSearchParams {
   // Pagination & sorting
   page?: number;
   limit?: number;
+  sort?: string;
+  order?: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
 }

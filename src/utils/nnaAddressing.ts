@@ -324,17 +324,9 @@ export function getNextSequentialNumber(
 export function formatNNAAddressForDisplay(address: string): string {
   if (!address) return '';
   
-  // Determine if it's human-friendly or machine-friendly
-  const isHuman = validateHumanFriendlyName(address);
-  const isMachine = validateMachineFriendlyAddress(address);
-  
-  if (!isHuman && !isMachine) {
-    return address; // Return as-is if not valid
-  }
-  
-  // Format with proper spacing
-  const parts = address.split('.');
-  return parts.join(' · ');
+  // Return the address as-is to maintain the original dot notation
+  // For NNA Registry Service, we need the exact format: S.POP.BAS.001
+  return address;
 }
 
 /**

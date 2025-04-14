@@ -28,6 +28,14 @@ export interface AssetMetadata {
   name: string; // This will be auto-generated during submission
   description: string;
   source?: 'ReViz' | 'User' | 'Brand';
+  trainingData?: {
+    isTrainable?: boolean;
+    trainingDescription?: string;
+    prompts?: any[];
+    referenceVideoUrls?: string[];
+    [key: string]: any;
+  };
+  rights?: any;
   tags: string[];
   // Layer-specific metadata fields
   layerSpecificData?: Record<string, any>;

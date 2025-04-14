@@ -24,6 +24,9 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import {
   Search as SearchIcon,
   Add as AddIcon,
+  Upload as UploadIcon,
+  FormatListNumbered as OrganizeIcon,
+  BarChart as AnalyticsIcon,
 } from '@mui/icons-material';
 import AssetService from '../services/api/asset.service';
 import { Asset, AssetSearchParams } from '../types/asset.types';
@@ -106,14 +109,40 @@ const AssetList: React.FC = () => {
           <Typography variant="h4" gutterBottom>
             Assets
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            component={Link}
-            to="/assets/new"
-          >
-            New Asset
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<AnalyticsIcon />}
+              component={Link}
+              to="/assets/analytics"
+            >
+              Analytics
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              component={Link}
+              to="/assets/batch"
+            >
+              Batch Upload
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<OrganizeIcon />}
+              component={Link}
+              to="/assets/organize"
+            >
+              Organize
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              component={Link}
+              to="/assets/new"
+            >
+              New Asset
+            </Button>
+          </Box>
         </Box>
         <Typography variant="subtitle1" color="text.secondary">
           Browse and manage digital assets

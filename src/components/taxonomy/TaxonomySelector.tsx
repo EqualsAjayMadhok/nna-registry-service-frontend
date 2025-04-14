@@ -30,6 +30,7 @@ import {
 import { SelectChangeEvent } from '@mui/material/Select';
 import useTaxonomy from '../../hooks/useTaxonomy';
 import { getAlphabeticCode } from '../../api/codeMapping';
+import { layerConfig } from '../../api/layerConfig';
 
 interface TaxonomySelectorProps {
   onSelectionChange?: (selection: {
@@ -221,7 +222,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({ onSelectionChange }
                         size="small" 
                       />
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        {layer.description}
+                        {layerConfig[layer.code]?.description || `${layer.name} layer`}
                       </Typography>
                     </Box>
                   </CardContent>

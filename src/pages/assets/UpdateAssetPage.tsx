@@ -73,6 +73,10 @@ const UpdateAssetPage: React.FC = () => {
   const handleBack = () => {
     setActiveStep(prevStep => prevStep - 1);
   };
+  
+  const handleEditStep = (step: number) => {
+    setActiveStep(step);
+  };
 
   // Handle form data changes
   const handleFormDataChange = (newData: Partial<Asset>) => {
@@ -91,9 +95,15 @@ const UpdateAssetPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Prepare update data
+      // Prepare update data that matches AssetUpdateRequest interface
       const updateData = {
-        ...formData
+        name: formData.name,
+        description: formData.description,
+        tags: formData.tags,
+        layer: formData.layer,
+        category: formData.category,
+        subcategory: formData.subcategory,
+        metadata: formData.metadata
       };
 
       // Update asset metadata
@@ -101,7 +111,8 @@ const UpdateAssetPage: React.FC = () => {
 
       // Upload new file if provided
       if (file) {
-        await assetService.updateAssetFile(id, file);
+        // Use the update method with just the file
+        await assetService.updateAsset(id, { files: [file] });
       }
 
       // Navigate to asset details
@@ -176,20 +187,36 @@ const UpdateAssetPage: React.FC = () => {
         {/* Step content */}
         {activeStep === 0 && (
           <LayerSelection
-            selectedLayer={formData.layer || ''}
-            selectedCategory={formData.category || ''}
-            selectedSubcategory={formData.subcategory || ''}
-            onLayerChange={(layer) => handleFormDataChange({ layer })}
-            onCategoryChange={(category) => handleFormDataChange({ category })}
-            onSubcategoryChange={(subcategory) => handleFormDataChange({ subcategory })}
+            selectedLayerCode={formData.layer || ''}
+            onLayerSelect={(layer) => handleFormDataChange({ layer: layer.code })}
           />
         )}
 
         {activeStep === 1 && (
           <MetadataForm
-            formData={formData}
-            onChange={handleFormDataChange}
-            mode="update"
+            layerCode={formData.layer || ''}
+            onFormChange={(data, isValid) => {
+              // Merge the metadata with the form data
+              handleFormDataChange({
+                name: data.name,
+                description: data.description,
+                tags: data.tags,
+                metadata: {
+                  ...formData.metadata,
+                  ...data.layerSpecificData,
+                  source: data.source,
+                  rights: data.rights
+                }
+              });
+            }}
+            initialData={{
+              name: formData.name || '',
+              description: formData.description || '',
+              tags: formData.tags || [],
+              source: formData.metadata?.source as any,
+              layerSpecificData: formData.metadata,
+              rights: formData.rights
+            }}
           />
         )}
 
@@ -200,10 +227,10 @@ const UpdateAssetPage: React.FC = () => {
                 <Typography variant="h6" gutterBottom>
                   Current File
                 </Typography>
-                {asset?.fileUrl ? (
+                {asset?.files && asset.files.length > 0 ? (
                   <Box sx={{ mb: 3 }}>
                     <img 
-                      src={asset.fileUrl} 
+                      src={asset.files[0].url} 
                       alt={asset.name}
                       style={{ 
                         maxWidth: '100%', 
@@ -213,7 +240,7 @@ const UpdateAssetPage: React.FC = () => {
                       }}
                     />
                     <Typography variant="body2" color="text.secondary">
-                      Original filename: {asset.originalFilename}
+                      Original filename: {asset.files[0].filename}
                     </Typography>
                   </Box>
                 ) : (
@@ -227,8 +254,9 @@ const UpdateAssetPage: React.FC = () => {
                   Upload New File (Optional)
                 </Typography>
                 <FileUpload 
-                  onFileChange={handleFileChange}
-                  selectedFile={file} 
+                  onFilesChange={(files) => handleFileChange(files.length > 0 ? files[0] : null)}
+                  initialFiles={file ? [file] : []}
+                  maxFiles={1}
                 />
                 {file && (
                   <Alert severity="warning" sx={{ mt: 2 }}>
@@ -242,12 +270,21 @@ const UpdateAssetPage: React.FC = () => {
 
         {activeStep === 3 && (
           <ReviewSubmit
-            formData={{
-              ...asset,
-              ...formData,
-              file: file
+            assetMetadata={{
+              name: formData.name || '',
+              description: formData.description || '',
+              tags: formData.tags || [],
+              source: formData.metadata?.source as any,
+              layerSpecificData: formData.metadata
             }}
-            mode="update"
+            layerCode={formData.layer || ''}
+            categoryCode={formData.category || ''}
+            subcategoryCode={formData.subcategory || ''}
+            files={file ? [file] : []}
+            onEditStep={handleEditStep}
+            onSubmit={handleSubmit}
+            loading={loading}
+            error={error}
           />
         )}
 

@@ -16,15 +16,18 @@ import {
   Upload as UploadIcon
 } from '@mui/icons-material';
 
-interface Asset {
+import { Asset as GlobalAsset } from '../../types/asset.types';
+
+// Local interface for simplified assets
+interface SimpleAsset {
   id?: string;
   name: string;
-  address: string;
+  address?: string;
 }
 
 interface TrainingDataUploadPromptProps {
   open: boolean;
-  trainingAsset: Asset | null;
+  trainingAsset: GlobalAsset | SimpleAsset | null;
   onUploadNow: () => void;
   onRemindLater: () => void;
   onClose: () => void;

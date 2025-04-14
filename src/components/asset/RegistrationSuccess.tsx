@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -9,12 +9,14 @@ import {
   CardContent,
   Divider,
   Chip,
-  useTheme
+  useTheme,
+  Avatar
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Launch as LaunchIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Upload as UploadIcon
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { Asset } from '../../types/asset.types';
@@ -24,14 +26,55 @@ import useWindowSize from 'react-use/lib/useWindowSize';
 interface RegistrationSuccessProps {
   asset: Asset;
   onRegisterAnother: () => void;
+  onUploadTrainingData?: () => void;
+  assetThumbnail?: string | null;
 }
 
 const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({
   asset,
-  onRegisterAnother
+  onRegisterAnother,
+  onUploadTrainingData,
+  assetThumbnail = null
 }) => {
   const theme = useTheme();
   const { width, height } = useWindowSize();
+  const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(assetThumbnail);
+  
+  // Generate a placeholder thumbnail based on the asset name if none is provided
+  useEffect(() => {
+    if (!assetThumbnail) {
+      // Generate a background color based on the asset name
+      const getColorFromName = (name: string) => {
+        const colors = ['#3f51b5', '#f44336', '#009688', '#673ab7', '#ff9800', '#8bc34a'];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+      };
+      
+      const bgColor = getColorFromName(asset.name);
+      const nameInitial = asset.name.charAt(0).toUpperCase();
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 200;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 100px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(nameInitial, canvas.width / 2, canvas.height / 2);
+        
+        setGeneratedThumbnail(canvas.toDataURL('image/png'));
+      }
+    }
+  }, [asset.name, assetThumbnail]);
   
   return (
     <Paper sx={{ p: 3, mb: 4, position: 'relative', overflow: 'hidden' }}>
@@ -162,14 +205,28 @@ const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({
         
         <Grid item xs={12}>
           <Box display="flex" justifyContent="center" gap={2} mt={2}>
+            {onUploadTrainingData && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<UploadIcon />}
+                onClick={onUploadTrainingData}
+                sx={{ fontWeight: 'bold' }}
+              >
+                Upload Training Data
+              </Button>
+            )}
+            
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               startIcon={<AddIcon />}
               onClick={onRegisterAnother}
             >
               Register Another Asset
             </Button>
+            
             <Button
               variant="outlined"
               startIcon={<LaunchIcon />}

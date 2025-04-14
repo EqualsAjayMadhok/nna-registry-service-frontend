@@ -60,6 +60,10 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+/**
+ * ReviewSubmit component - Final review step for asset registration
+ * Shows all entered data and previews before submission
+ */
 const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
   assetMetadata,
   layerCode,
@@ -253,6 +257,9 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                           <Typography variant="body2">
                             <strong>Name:</strong> T.{layerCode}.{categoryCode}.{subcategoryCode}.001.set
                           </Typography>
+                          <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            <strong>MFA:</strong> T.{layerCode}.001.001.001.set
+                          </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             Contains prompts, reference images, and videos used for training.
                           </Typography>
@@ -277,6 +284,9 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                           <Typography variant="body2">
                             <strong>Name:</strong> R.{categoryCode}.{subcategoryCode}.001.json
                           </Typography>
+                          <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            <strong>MFA:</strong> R.001.001.001.json
+                          </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             Contains licensing, attribution and rights information.
                           </Typography>
@@ -294,12 +304,12 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
           </Card>
         </Grid>
 
-        {/* Files */}
+        {/* Files and Preview */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="h6">Files</Typography>
+                <Typography variant="h6">Files and Preview</Typography>
                 <Button
                   startIcon={<EditIcon />}
                   size="small"
@@ -315,19 +325,70 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   No files uploaded
                 </Typography>
               ) : (
-                <List>
+                <Grid container spacing={2}>
                   {files.map((file, index) => (
-                    <ListItem key={`${file.name}-${index}`}>
-                      <ListItemIcon>
-                        {getFileIcon(file.type)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={file.name}
-                        secondary={`${formatFileSize(file.size)} • ${file.type}`}
-                      />
-                    </ListItem>
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Box sx={{ position: 'relative' }}>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            zIndex: 1,
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          Primary Asset
+                        </Box>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Box 
+                              sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                mb: 1,
+                                justifyContent: 'center',
+                                height: 120,
+                                overflow: 'hidden',
+                                bgcolor: 'background.default',
+                                borderRadius: 1
+                              }}
+                            >
+                              {file.type.startsWith('image/') ? (
+                                <Box 
+                                  component="img" 
+                                  src={URL.createObjectURL(file)} 
+                                  alt={file.name}
+                                  sx={{ 
+                                    maxHeight: '100%', 
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              ) : (
+                                <Box sx={{ fontSize: 40 }}>
+                                  {getFileIcon(file.type)}
+                                </Box>
+                              )}
+                            </Box>
+                            <Typography variant="body2" noWrap title={file.name}>
+                              {file.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatFileSize(file.size)} • {file.type}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    </Grid>
                   ))}
-                </List>
+                </Grid>
               )}
             </CardContent>
           </Card>

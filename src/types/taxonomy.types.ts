@@ -47,6 +47,7 @@ export interface CategoryOption {
   name: string;
   code: string;
   layerCode: string;
+  numericCode?: number; // Numeric code for machine-friendly address
 }
 
 export interface SubcategoryOption {
@@ -55,4 +56,5 @@ export interface SubcategoryOption {
   code: string;
   categoryCode: string;
   layerCode: string;
+  numericCode?: number; // Numeric code for machine-friendly address
 }
