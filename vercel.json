@@ -5,7 +5,7 @@
   "outputDirectory": "build",
   "env": {
     "REACT_APP_API_URL": "https://nna-registry-service-backend.vercel.app/api",
-    "REACT_APP_REAL_API_URL": "https://nna-registry-service-backend-gcp.cloud.app/api",
+    "REACT_APP_REAL_API_URL": "https://nna-registry-service-us-central1.run.app/api",
     "REACT_APP_ENV": "production",
     "REACT_APP_USE_MOCK_DATA": "true",
     "GENERATE_SOURCEMAP": "false"
