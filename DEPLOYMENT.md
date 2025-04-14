@@ -148,52 +148,99 @@ netlify deploy --prod --dir=build
   status = 200
 ```
 
-### 3. Vercel Deployment
+### 3. Vercel Deployment (Updated April 2025)
 
 #### Prerequisites
 
 - Vercel account
+- GitHub repository with your frontend code
 - Vercel CLI (optional)
 
-#### Steps
+#### Steps for NNA Registry Service
 
-1. Manual deployment:
-   - Import your GitHub repository in the Vercel dashboard
-   - Configure build settings
+1. **Updated vercel.json Configuration**:
+   
+   We've created an updated `vercel.json` configuration file with embedded environment variables:
 
-2. Using Vercel CLI:
+   ```json
+   {
+     "framework": "create-react-app",
+     "buildCommand": "npm run build",
+     "installCommand": "npm install",
+     "outputDirectory": "build",
+     "env": {
+       "REACT_APP_API_URL": "https://nna-registry-service-backend.vercel.app/api",
+       "REACT_APP_ENV": "production",
+       "REACT_APP_USE_MOCK_DATA": "true",
+       "GENERATE_SOURCEMAP": "false"
+     },
+     "routes": [
+       { "src": "/static/(.*)", "dest": "/static/$1" },
+       { "src": "/favicon.ico", "dest": "/favicon.ico" },
+       { "src": "/manifest.json", "dest": "/manifest.json" },
+       { "src": "/demo.html", "dest": "/demo.html" },
+       { "src": "/(.*)", "dest": "/index.html" }
+     ]
+   }
+   ```
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
+2. **Vercel Dashboard Deployment (Recommended)**:
 
-# Login to Vercel
-vercel login
+   a. Push your latest code to GitHub:
+   ```bash
+   git add .
+   git commit -m "Update Vercel configuration"
+   git push
+   ```
 
-# Deploy
-vercel --prod
-```
+   b. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+      - Click "Add New..." > "Project"
+      - Import your GitHub repository
+      - Select the repository containing the NNA Registry Service
 
-3. Create a `vercel.json` configuration file:
+   c. Configure project settings:
+      - Framework Preset: Create React App
+      - Root Directory: `./` (leave as default)
+      - Build and Output Settings: (leave defaults)
 
-```json
-{
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
-    }
-  ],
-  "routes": [
-    { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/manifest.json", "dest": "/manifest.json" },
-    { "src": "/robots.txt", "dest": "/robots.txt" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
-}
-```
+   d. Environment Variables:
+      Manually add these environment variables:
+      - `REACT_APP_API_URL`: https://nna-registry-service-backend.vercel.app/api
+      - `REACT_APP_ENV`: production
+      - `REACT_APP_USE_MOCK_DATA`: true
+      - `GENERATE_SOURCEMAP`: false
+
+   e. Click "Deploy"
+      - Vercel will build and deploy your application
+      - Once complete, you'll get a deployment URL to share
+
+3. **CLI Deployment (Alternative)**:
+
+   ```bash
+   # Install Vercel CLI
+   npm install -g vercel
+
+   # Login to Vercel
+   vercel login
+
+   # Deploy
+   vercel --prod
+   ```
+
+   Follow the interactive prompts to complete the deployment.
+
+4. **Post-Deployment Steps**:
+
+   a. Test the application:
+      - Verify all pages and components display correctly
+      - Test the NNA taxonomy visualization functionality
+      - Verify the asset registration workflow
+      - Check that Upload Training Data button is working properly
+
+   b. Share the URL with team members:
+      - The URL will be in the format: https://nna-registry-service.vercel.app
+
+   c. (Optional) Set up custom domain in Vercel Dashboard
 
 ### 4. Traditional Web Hosting
 

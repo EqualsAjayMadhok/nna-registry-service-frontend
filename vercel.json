@@ -1,8 +1,14 @@
 {
-  "buildCommand": "npm run build:prod",
-  "installCommand": "npm install",
   "framework": "create-react-app",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "build",
+  "env": {
+    "REACT_APP_API_URL": "https://nna-registry-service-backend.vercel.app/api",
+    "REACT_APP_ENV": "production",
+    "REACT_APP_USE_MOCK_DATA": "true",
+    "GENERATE_SOURCEMAP": "false"
+  },
   "routes": [
     {
       "src": "/static/(.*)",
