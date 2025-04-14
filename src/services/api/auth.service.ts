@@ -1,4 +1,4 @@
-import api from './api';
+import api, { apiConfig } from './api';
 import { User } from '../../contexts/AuthContext';
 import { ApiResponse } from '../../types/api.types';
 
@@ -8,7 +8,7 @@ interface AuthResponse {
 }
 
 class AuthService {
-  // Mock user data for development
+  // Mock user data for development and demo
   private mockUser: User = {
     id: 'user-1',
     username: 'demouser',
@@ -18,15 +18,9 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      console.log('Login attempt with mock data flag:', process.env.REACT_APP_USE_MOCK_DATA);
+      console.log('Login attempt with mock data:', apiConfig.useMockData);
       
-      // For development or when explicitly requested, use mock data
-      // The env var can come from different places (window.process.env or process.env)
-      const useMockData = 
-        process.env.REACT_APP_USE_MOCK_DATA === 'true' || 
-        (window as any).process?.env?.REACT_APP_USE_MOCK_DATA === 'true';
-      
-      if (useMockData) {
+      if (apiConfig.useMockData) {
         console.log('Using mock authentication data');
         
         // For demo purposes, accept any credentials
@@ -51,12 +45,7 @@ class AuthService {
 
   async register(username: string, email: string, password: string): Promise<AuthResponse> {
     try {
-      // For development or when explicitly requested, use mock data
-      const useMockData = 
-        process.env.REACT_APP_USE_MOCK_DATA === 'true' || 
-        (window as any).process?.env?.REACT_APP_USE_MOCK_DATA === 'true';
-      
-      if (useMockData) {
+      if (apiConfig.useMockData) {
         console.log('Using mock registration data');
         
         // For demo purposes, accept any registration
@@ -85,12 +74,7 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      // For development or when explicitly requested, use mock data
-      const useMockData = 
-        process.env.REACT_APP_USE_MOCK_DATA === 'true' || 
-        (window as any).process?.env?.REACT_APP_USE_MOCK_DATA === 'true';
-      
-      if (useMockData) {
+      if (apiConfig.useMockData) {
         console.log('Using mock user data');
         return this.mockUser;
       }
@@ -101,6 +85,11 @@ class AuthService {
       console.error('Error fetching current user:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to fetch user');
     }
+  }
+  
+  // Helper to toggle between mock and real API
+  toggleMockData(useMock: boolean): void {
+    apiConfig.setUseMockData(useMock);
   }
 }
 

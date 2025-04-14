@@ -1,65 +1,48 @@
-import axios from 'axios';
+import createApiClient from './axios';
 
-// Use .env variable for API URL or fallback to localhost:3001
-const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// API Configuration
+interface ApiConfig {
+  useMockData: boolean;
+  apiUrl: string;
+  realApiUrl: string;
+}
 
-// Configure axios instance
-const api = axios.create({
-  baseURL: apiUrl,
-  timeout: 30000, // 30 second timeout
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+// Get configuration from environment variables with fallbacks
+const config: ApiConfig = {
+  useMockData: process.env.REACT_APP_USE_MOCK_DATA === 'true',
+  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  realApiUrl: process.env.REACT_APP_REAL_API_URL || 'http://localhost:3000/api'
+};
+
+// For development, allow overriding mock mode via localStorage
+// This lets developers switch between mock and real API without affecting Vercel deployments
+const localStorageMockOverride = localStorage.getItem('useMockData');
+if (localStorageMockOverride !== null) {
+  config.useMockData = localStorageMockOverride === 'true';
+}
+
+// Log current API configuration
+console.log(`NNA Registry Service API Configuration:
+- Mode: ${config.useMockData ? 'Mock Data' : 'Real API'}
+- URL: ${config.useMockData ? config.apiUrl : config.realApiUrl}
+`);
+
+// Export configuration for use in other files
+export const apiConfig = {
+  useMockData: config.useMockData,
+  
+  // Enable/disable mock data mode - this allows toggling at runtime
+  setUseMockData: (useMock: boolean) => {
+    config.useMockData = useMock;
+    localStorage.setItem('useMockData', useMock.toString());
+    console.log(`API Mode changed to: ${useMock ? 'Mock Data' : 'Real API'}`);
   },
-});
+  
+  // Get current API URL based on mode
+  getApiUrl: () => config.useMockData ? config.apiUrl : config.realApiUrl
+};
 
-// Add request interceptor to include auth token in requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor to handle common errors
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Handle expired tokens, server errors, etc.
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('API Error Response:', error.response.data);
-      
-      // Handle 401 Unauthorized - token expired or invalid
-      if (error.response.status === 401) {
-        localStorage.removeItem('accessToken');
-        // Redirect to login if needed
-        // window.location.href = '/login';
-      }
-      
-      // Custom error message
-      const errorMessage = error.response.data?.message || 'An error occurred';
-      error.message = errorMessage;
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error('API No Response:', error.request);
-      error.message = 'No response from server';
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('API Error:', error.message);
-    }
-    
-    return Promise.reject(error);
-  }
-);
+// Create API client with appropriate URL based on mode
+const api = createApiClient(apiConfig.getApiUrl());
 
 export default api;

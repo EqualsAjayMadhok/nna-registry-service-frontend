@@ -1,103 +1,169 @@
 import React, { useState } from 'react';
-import { Outlet, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
-  Toolbar,
-  Typography,
-  Button,
-  IconButton,
+  CssBaseline,
+  Divider,
   Drawer,
+  IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
-  Avatar,
   Menu,
   MenuItem,
+  Toolbar,
+  Typography,
+  Badge,
   Tooltip,
-  useMediaQuery,
-  useTheme,
+  Switch,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Alert,
+  Paper
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  Storage as StorageIcon,
-  Category as CategoryIcon,
   Search as SearchIcon,
   Add as AddIcon,
-  AccountCircle,
-  Logout as LogoutIcon,
+  Collections as CollectionsIcon,
+  AccountCircle as AccountCircleIcon,
+  Notifications as NotificationsIcon,
+  ChevronLeft as ChevronLeftIcon,
+  Upload as UploadIcon,
+  ViewList as ViewListIcon,
+  Category as CategoryIcon,
+  DataObject as DataObjectIcon,
   Settings as SettingsIcon,
+  Api as ApiIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
+import { apiConfig } from '../../services/api/api';
 
+// Drawer width
 const drawerWidth = 240;
 
 const MainLayout: React.FC = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<null | HTMLElement>(null);
+  const [apiConfigOpen, setApiConfigOpen] = useState(false);
+  const [realApiUrl, setRealApiUrl] = useState(localStorage.getItem('realApiUrl') || 'http://localhost:3000/api');
 
+  // Handle drawer toggle
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  // Handle account menu
+  const handleAccountMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAccountMenuAnchor(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+  const handleAccountMenuClose = () => {
+    setAccountMenuAnchor(null);
   };
 
   const handleLogout = () => {
-    handleMenuClose();
+    handleAccountMenuClose();
     logout();
     navigate('/login');
   };
 
+  const handleProfile = () => {
+    handleAccountMenuClose();
+    navigate('/profile');
+  };
+
+  // Handle API configuration
+  const handleApiConfigOpen = () => {
+    setApiConfigOpen(true);
+  };
+
+  const handleApiConfigClose = () => {
+    setApiConfigOpen(false);
+  };
+
+  const handleApiConfigSave = () => {
+    localStorage.setItem('realApiUrl', realApiUrl);
+    // Force reload to apply the new API URL
+    window.location.reload();
+  };
+
+  // Toggle between mock and real API
+  const handleToggleMockData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const useMock = event.target.checked;
+    apiConfig.setUseMockData(useMock);
+  };
+
+  // Navigation items
+  const navigationItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    { text: 'Browse Assets', icon: <SearchIcon />, path: '/assets' },
+    { text: 'Register Asset', icon: <AddIcon />, path: '/assets/new' },
+    { text: 'Batch Upload', icon: <UploadIcon />, path: '/assets/batch' },
+    { text: 'Organize Assets', icon: <ViewListIcon />, path: '/assets/organize' },
+    { text: 'Collections', icon: <CollectionsIcon />, path: '/collections' },
+    { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy' },
+    { text: 'Asset Analytics', icon: <DataObjectIcon />, path: '/assets/analytics' },
+  ];
+
+  // Drawer content
   const drawer = (
     <div>
-      <Toolbar sx={{ justifyContent: 'center' }}>
-        <Typography variant="h6" noWrap component={RouterLink} to="/" sx={{ textDecoration: 'none', color: 'inherit' }}>
+      <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1 }}>
+        <Typography variant="h6" noWrap component="div">
           NNA Registry
         </Typography>
+        <IconButton onClick={handleDrawerToggle}>
+          <ChevronLeftIcon />
+        </IconButton>
       </Toolbar>
       <Divider />
       <List>
-        <ListItem button component={RouterLink} to="/dashboard" onClick={() => isMobile && setMobileOpen(false)}>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItem>
-
-        <ListItem button component={RouterLink} to="/assets" onClick={() => isMobile && setMobileOpen(false)}>
-          <ListItemIcon>
-            <StorageIcon />
-          </ListItemIcon>
-          <ListItemText primary="Assets" />
-        </ListItem>
-
-        <ListItem button component={RouterLink} to="/taxonomy" onClick={() => isMobile && setMobileOpen(false)}>
-          <ListItemIcon>
-            <CategoryIcon />
-          </ListItemIcon>
-          <ListItemText primary="Taxonomy" />
-        </ListItem>
+        {navigationItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => {
+                navigate(item.path);
+                if (mobileOpen) handleDrawerToggle();
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
-      <Divider />
+      
+      <Divider sx={{ mt: 'auto' }} />
+      
       <List>
-        <ListItem button component={RouterLink} to="/assets/new" onClick={() => isMobile && setMobileOpen(false)}>
-          <ListItemIcon>
-            <AddIcon />
-          </ListItemIcon>
-          <ListItemText primary="Register Asset" />
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleApiConfigOpen}>
+            <ListItemIcon><ApiIcon /></ListItemIcon>
+            <ListItemText 
+              primary="API Configuration" 
+              secondary={apiConfig.useMockData ? "Using Mock Data" : "Using Real API"}
+            />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton>
+            <ListItemIcon><SettingsIcon /></ListItemIcon>
+            <ListItemText primary="Settings" />
+          </ListItemButton>
         </ListItem>
       </List>
     </div>
@@ -105,6 +171,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
@@ -125,48 +192,59 @@ const MainLayout: React.FC = () => {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             NNA Registry Service
           </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Tooltip title="Account settings">
-              <IconButton
-                onClick={handleMenuOpen}
-                size="small"
-                sx={{ ml: 2 }}
-                aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
-                aria-haspopup="true"
-                aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
-              >
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  {user?.username?.charAt(0) || 'U'}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-          </Box>
-
+          
+          {/* Notifications */}
+          <Tooltip title="Notifications">
+            <IconButton color="inherit">
+              <Badge badgeContent={3} color="secondary">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          
+          {/* User account */}
+          <Tooltip title="Account">
+            <IconButton
+              color="inherit"
+              onClick={handleAccountMenuOpen}
+              aria-controls="account-menu"
+              aria-haspopup="true"
+            >
+              <AccountCircleIcon />
+            </IconButton>
+          </Tooltip>
           <Menu
-            anchorEl={anchorEl}
             id="account-menu"
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            anchorEl={accountMenuAnchor}
+            open={Boolean(accountMenuAnchor)}
+            onClose={handleAccountMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
           >
-            <MenuItem disabled>
-              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                {user?.username || 'User'}
-              </Typography>
+            <MenuItem onClick={handleProfile}>
+              <ListItemIcon>
+                <AccountCircleIcon fontSize="small" />
+              </ListItemIcon>
+              Profile
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
-                <LogoutIcon fontSize="small" />
+                <ChevronLeftIcon fontSize="small" />
               </ListItemIcon>
-              Sign out
+              Logout
             </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
-
+      
+      {/* Drawer - responsive */}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -197,20 +275,94 @@ const MainLayout: React.FC = () => {
           {drawer}
         </Drawer>
       </Box>
-
+      
+      {/* Main content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
+          marginTop: '64px',
         }}
       >
-        <Toolbar /> {/* This adds spacing below the AppBar */}
-        <Outlet /> {/* This renders the route's element */}
+        {/* API configuration banner when using mock data */}
+        {apiConfig.useMockData && (
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 1, 
+              mb: 2, 
+              backgroundColor: 'rgba(255, 152, 0, 0.1)', 
+              border: '1px solid rgba(255, 152, 0, 0.3)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <Typography variant="body2" color="textSecondary">
+              <strong>Using Mock Data Mode</strong> - Data is not persistent and changes will not be saved to a real backend.
+            </Typography>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              color="warning"
+              onClick={handleApiConfigOpen}
+              startIcon={<ApiIcon />}
+            >
+              Configure API
+            </Button>
+          </Paper>
+        )}
+        
+        <Outlet />
       </Box>
+      
+      {/* API Configuration Dialog */}
+      <Dialog open={apiConfigOpen} onClose={handleApiConfigClose} maxWidth="sm" fullWidth>
+        <DialogTitle>API Configuration</DialogTitle>
+        <DialogContent>
+          <Box my={2}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Configure the API connection settings. Use mock data for demos or connect to a real backend API for production use.
+            </Alert>
+            
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={apiConfig.useMockData}
+                  onChange={handleToggleMockData}
+                  color="primary"
+                />
+              }
+              label="Use Mock Data"
+            />
+            
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 2 }}>
+              {apiConfig.useMockData 
+                ? "Using mock data. Changes will not persist between sessions." 
+                : "Using real API. All changes will be sent to the backend."}
+            </Typography>
+            
+            <TextField
+              label="Real API URL"
+              value={realApiUrl}
+              onChange={(e) => setRealApiUrl(e.target.value)}
+              disabled={apiConfig.useMockData}
+              fullWidth
+              variant="outlined"
+              margin="normal"
+              helperText="The URL of the backend API when not using mock data"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleApiConfigClose}>Cancel</Button>
+          <Button onClick={handleApiConfigSave} variant="contained" color="primary">
+            Save Configuration
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
