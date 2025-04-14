@@ -9,7 +9,7 @@ import {
   FaceRetouchingNatural as PersonalizeIcon, 
   Collections as TrainingIcon,
   DynamicFeed as CompositeIcon,
-  Copyright as RightsIcon
+  Security as RightsIcon
 } from '@mui/icons-material';
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
 

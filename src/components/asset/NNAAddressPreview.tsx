@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import taxonomyService from '../../api/taxonomyService';
 import nnaRegistryService from '../../api/nnaRegistryService';
+import { generateHumanFriendlyName, generateMachineFriendlyAddress } from '../../api/codeMapping';
 
 interface NNAAddressPreviewProps {
   layerCode: string;
@@ -51,33 +52,20 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       return;
     }
 
-    // Get category and subcategory names
-    const category = taxonomyService.getCategory(layerCode, categoryCode);
-    const subcategory = taxonomyService.getSubcategory(layerCode, categoryCode, subcategoryCode);
-    const categoryName = category?.name;
-    const subcategoryName = subcategory?.name;
+    // Generate addresses using our custom mapping
+    const humanName = generateHumanFriendlyName(
+      layerCode,
+      categoryCode,
+      subcategoryCode,
+      sequentialNumber
+    );
     
-    // Use the NNA Registry Service to get both addresses
-    let humanName = '';
-    let machineAddress = '';
-    
-    if (categoryName && subcategoryName) {
-      // Generate human-friendly name with NNA Registry Service
-      humanName = nnaRegistryService.generateHumanFriendlyName(
-        layerCode,
-        categoryName,
-        subcategoryName,
-        sequentialNumber
-      );
-      
-      // Generate machine-friendly address with NNA Registry Service
-      machineAddress = nnaRegistryService.generateMachineFriendlyAddress(
-        layerCode,
-        categoryName,
-        subcategoryName,
-        sequentialNumber
-      );
-    }
+    const machineAddress = generateMachineFriendlyAddress(
+      layerCode,
+      categoryCode,
+      subcategoryCode,
+      sequentialNumber
+    );
     
     setHumanFriendlyName(humanName);
     setMachineFriendlyAddress(machineAddress);
@@ -183,8 +171,8 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       
       {/* Human-friendly format */}
       <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          Human-Friendly Format
+        <Typography variant="body2" sx={{ color: 'red', fontWeight: 'bold' }} gutterBottom>
+          Human-Friendly Name (HFN)
         </Typography>
         <Box
           sx={{
@@ -204,8 +192,8 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       
       {/* Machine-friendly format */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          Machine-Friendly Format
+        <Typography variant="body2" sx={{ color: 'blue', fontWeight: 'bold' }} gutterBottom>
+          Machine-Friendly Address (MFA)
         </Typography>
         <Box
           sx={{

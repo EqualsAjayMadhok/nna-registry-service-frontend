@@ -9,13 +9,16 @@ import {
   Divider,
   CircularProgress,
   Alert,
-  Paper
+  Paper,
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
 import nnaRegistryService from '../../api/nnaRegistryService';
+import { getAlphabeticCode, generateHumanFriendlyName } from '../../api/codeMapping';
 
 interface TaxonomySelectionProps {
   layerCode: string;
@@ -239,7 +242,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             }}
           />
         )}
-
+        
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel id="category-select-label">Category</InputLabel>
           <Select
@@ -255,7 +258,29 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             </MenuItem>
             {categories.map((category) => (
               <MenuItem key={category.code} value={category.code}>
-                {category.name} ({category.code})
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography>{category.name}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Tooltip title="Human-Friendly Name (3-letter code)">
+                      <Chip 
+                        label={getAlphabeticCode(layerCode, category.code)}
+                        size="small" 
+                        color="primary" 
+                        variant="outlined" 
+                        sx={{ ml: 1, mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }} 
+                      />
+                    </Tooltip>
+                    <Tooltip title="Machine-Friendly Address (3-digit code)">
+                      <Chip 
+                        label={category.code} 
+                        size="small" 
+                        color="default" 
+                        variant="outlined" 
+                        sx={{ fontSize: '0.7rem' }} 
+                      />
+                    </Tooltip>
+                  </Box>
+                </Box>
               </MenuItem>
             ))}
           </Select>
@@ -283,7 +308,29 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   onSubcategorySelect(subcategory, true);
                 }}
               >
-                {subcategory.name} ({subcategory.code})
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <Typography>{subcategory.name}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Tooltip title="Human-Friendly Name (3-letter code)">
+                      <Chip 
+                        label={getAlphabeticCode(layerCode, selectedCategoryCode || '', subcategory.code)}
+                        size="small" 
+                        color="secondary" 
+                        variant="outlined" 
+                        sx={{ mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }} 
+                      />
+                    </Tooltip>
+                    <Tooltip title="Machine-Friendly Address (3-digit code)">
+                      <Chip 
+                        label={subcategory.code} 
+                        size="small" 
+                        color="default" 
+                        variant="outlined" 
+                        sx={{ fontSize: '0.7rem' }} 
+                      />
+                    </Tooltip>
+                  </Box>
+                </Box>
               </MenuItem>
             ))}
           </Select>

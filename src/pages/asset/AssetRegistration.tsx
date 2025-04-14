@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -17,6 +17,9 @@ import MetadataForm, { AssetMetadata } from '../../components/asset/MetadataForm
 import FileUpload from '../../components/asset/FileUpload';
 import ReviewSubmit from '../../components/asset/ReviewSubmit';
 import assetService from '../../services/api/asset.service';
+import { LayerOption, CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
+import taxonomyService from '../../api/taxonomyService';
+import nnaRegistryService from '../../api/nnaRegistryService';
 
 // Define steps
 const steps = [
@@ -35,6 +38,9 @@ const AssetRegistration: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // State for collected form data
+  const [selectedLayer, setSelectedLayer] = useState<LayerOption | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryOption | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<SubcategoryOption | null>(null);
   const [layerCode, setLayerCode] = useState<string>('');
   const [layerName, setLayerName] = useState<string>('');
   const [categoryCode, setCategoryCode] = useState<string>('');
@@ -44,6 +50,10 @@ const AssetRegistration: React.FC = () => {
   const [metadata, setMetadata] = useState<AssetMetadata | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [formValid, setFormValid] = useState(false);
+  const [humanFriendlyName, setHumanFriendlyName] = useState<string>('');
+  const [machineFriendlyAddress, setMachineFriendlyAddress] = useState<string>('');
+  const [sequentialNumber, setSequentialNumber] = useState<number>(1);
+  const [showTrainingDialog, setShowTrainingDialog] = useState(false);
 
   // Event handlers
   const handleNext = () => {
@@ -56,6 +66,9 @@ const AssetRegistration: React.FC = () => {
 
   const handleReset = () => {
     setActiveStep(0);
+    setSelectedLayer(null);
+    setSelectedCategory(null);
+    setSelectedSubcategory(null);
     setLayerCode('');
     setLayerName('');
     setCategoryCode('');
@@ -65,7 +78,102 @@ const AssetRegistration: React.FC = () => {
     setMetadata(null);
     setFiles([]);
     setFormValid(false);
+    setHumanFriendlyName('');
+    setMachineFriendlyAddress('');
+    setSequentialNumber(1);
+    setShowTrainingDialog(false);
   };
+  
+  // Handle training data upload
+  const handleUploadTrainingData = () => {
+    console.log('Opening training data upload dialog');
+    setShowTrainingDialog(true);
+    // In a real implementation, this would show a dialog or navigate to a training data upload page
+    alert('Training data upload would open here');
+  };
+
+  // Generate NNA names when taxonomy selections change
+  useEffect(() => {
+    if (selectedLayer && selectedCategory && selectedSubcategory) {
+      console.log('Generating NNA names for:', selectedLayer.code, selectedCategory.code, selectedSubcategory.code);
+      
+      // Get existing sequential numbers for this taxonomy combination
+      const checkAddressAndGetNextNumber = async () => {
+        try {
+          setSequentialNumber(1); // Default to 1 initially
+          
+          // Generate human-friendly name with the current sequential number
+          const hfName = nnaRegistryService.generateHumanFriendlyName(
+            selectedLayer.code,
+            selectedCategory.name,
+            selectedSubcategory.name,
+            1
+          );
+          
+          // Check if address exists
+          const exists = await taxonomyService.checkNNAAddressExists(hfName);
+          
+          if (exists) {
+            // Get next available number using the taxonomy service
+            const nextNumber = taxonomyService.getNextSequentialNumber(
+              selectedLayer.code,
+              selectedCategory.code,
+              selectedSubcategory.code,
+              [1] // The initial number we tried
+            );
+            
+            setSequentialNumber(nextNumber);
+            
+            // Generate updated human-friendly name with new sequential number
+            const updatedHfName = nnaRegistryService.generateHumanFriendlyName(
+              selectedLayer.code,
+              selectedCategory.name,
+              selectedSubcategory.name,
+              nextNumber
+            );
+            setHumanFriendlyName(updatedHfName);
+            
+            // Generate machine-friendly address with new sequential number
+            const updatedMfAddress = nnaRegistryService.generateMachineFriendlyAddress(
+              selectedLayer.code,
+              selectedCategory.name,
+              selectedSubcategory.name,
+              nextNumber
+            );
+            
+            setMachineFriendlyAddress(updatedMfAddress);
+          } else {
+            // If the address doesn't exist, we can use the first one
+            setHumanFriendlyName(hfName);
+            
+            // Generate machine-friendly address
+            const mfAddress = nnaRegistryService.generateMachineFriendlyAddress(
+              selectedLayer.code,
+              selectedCategory.name,
+              selectedSubcategory.name,
+              1
+            );
+            
+            setMachineFriendlyAddress(mfAddress);
+          }
+          
+          // Update metadata with the generated name
+          if (metadata) {
+            const updatedMetadata = {
+              ...metadata,
+              name: humanFriendlyName || hfName
+            };
+            setMetadata(updatedMetadata);
+            console.log('Setting metadata name to:', humanFriendlyName || hfName);
+          }
+        } catch (err) {
+          console.error('Error generating NNA addresses:', err);
+        }
+      };
+      
+      checkAddressAndGetNextNumber();
+    }
+  }, [selectedLayer, selectedCategory, selectedSubcategory]);
 
   // Submit the asset with files
   const handleSubmit = async () => {
@@ -79,7 +187,8 @@ const AssetRegistration: React.FC = () => {
       
       // Prepare asset creation data
       const assetData = {
-        name: metadata.name,
+        name: humanFriendlyName || metadata.name,
+        address: machineFriendlyAddress,
         layer: layerCode,
         category: categoryCode,
         subcategory: subcategoryCode,
@@ -91,7 +200,10 @@ const AssetRegistration: React.FC = () => {
           trainingDescription: metadata.trainingData?.trainingDescription || '',
           rights: metadata.rights,
           layerSpecificData: metadata.layerSpecificData,
-          // Include any other metadata fields
+          trainingData: {
+            prompts: metadata.trainingData?.prompts || [],
+            referenceVideoUrls: metadata.trainingData?.referenceVideoUrls || [],
+          }
         },
         files
       };
@@ -136,10 +248,20 @@ const AssetRegistration: React.FC = () => {
             </Typography>
             
             <LayerSelection 
-              onLayerSelect={(layer) => {
+              onLayerSelect={(layer, isDoubleClick) => {
+                console.log(`Layer selected: ${layer.name} (${layer.code}), Double-click: ${isDoubleClick}`);
+                setSelectedLayer(layer);
                 setLayerCode(layer.code);
                 setLayerName(layer.name);
                 setFormValid(true);
+                
+                // Proceed to the next step automatically on double-click
+                if (isDoubleClick) {
+                  console.log('Double-click detected, proceeding to next step');
+                  setTimeout(() => {
+                    handleNext();
+                  }, 100); // Small timeout to ensure state updates first
+                }
               }}
               selectedLayerCode={layerCode}
             />
@@ -157,17 +279,44 @@ const AssetRegistration: React.FC = () => {
               selectedCategoryCode={categoryCode}
               selectedSubcategoryCode={subcategoryCode}
               onCategorySelect={(category) => {
+                setSelectedCategory(category);
                 setCategoryCode(category.code);
                 setCategoryName(category.name);
                 // Reset subcategory when category changes
+                setSelectedSubcategory(null);
                 setSubcategoryCode('');
                 setSubcategoryName('');
                 setFormValid(false);
               }}
-              onSubcategorySelect={(subcategory) => {
+              onSubcategorySelect={(subcategory, isDoubleClick) => {
+                console.log(`Subcategory selected: ${subcategory.name} (${subcategory.code}), Double-click: ${isDoubleClick}`);
+                setSelectedSubcategory(subcategory);
                 setSubcategoryCode(subcategory.code);
                 setSubcategoryName(subcategory.name);
                 setFormValid(true);
+                
+                // Proceed to the next step automatically on double-click
+                if (isDoubleClick) {
+                  console.log('Double-click detected on subcategory, proceeding to next step');
+                  setTimeout(() => {
+                    handleNext();
+                  }, 100); // Small timeout to ensure state updates first
+                }
+              }}
+              onNNAAddressChange={(hfName, mfAddress, seqNumber) => {
+                console.log('NNA address updated:', hfName, mfAddress, seqNumber);
+                setHumanFriendlyName(hfName);
+                setMachineFriendlyAddress(mfAddress);
+                setSequentialNumber(seqNumber);
+                
+                // Update metadata with the new name if it exists
+                if (metadata) {
+                  const updatedMetadata = {
+                    ...metadata,
+                    name: hfName
+                  };
+                  setMetadata(updatedMetadata);
+                }
               }}
             />
           </Box>
@@ -181,10 +330,20 @@ const AssetRegistration: React.FC = () => {
             
             <MetadataForm
               layerCode={layerCode}
-              initialData={metadata || undefined}
+              initialData={{
+                ...metadata,
+                name: humanFriendlyName || (metadata?.name || 'Auto-generated NNA Name')
+              }}
               onFormChange={(data, isValid) => {
-                setMetadata(data);
+                // Preserve the human-friendly name if we've already generated it
+                const updatedData = {
+                  ...data,
+                  name: humanFriendlyName || data.name
+                };
+                setMetadata(updatedData);
                 setFormValid(isValid);
+                
+                console.log('Updated metadata with name:', updatedData.name);
               }}
             />
           </Box>
@@ -256,7 +415,8 @@ const AssetRegistration: React.FC = () => {
               {metadata && (
                 <Box sx={{ my: 2 }}>
                   <Typography variant="subtitle2">Metadata:</Typography>
-                  <Typography variant="body1"><strong>Name:</strong> {metadata.name}</Typography>
+                  <Typography variant="body1"><strong>Human-friendly name:</strong> {humanFriendlyName || 'Auto-generated'}</Typography>
+                  <Typography variant="body1"><strong>Machine-friendly address:</strong> {machineFriendlyAddress || 'Auto-generated'}</Typography>
                   <Typography variant="body1"><strong>Description:</strong> {metadata.description}</Typography>
                   {metadata.tags && metadata.tags.length > 0 && (
                     <Typography variant="body1">
@@ -292,21 +452,32 @@ const AssetRegistration: React.FC = () => {
         Your asset has been registered
       </Typography>
       <Typography variant="body1" paragraph>
-        Your asset has been assigned the NNA address: <strong>{layerCode}.{categoryCode}.{subcategoryCode}.001</strong>
+        Your asset has been assigned the following:<br/>
+        Human-friendly name: <strong>{humanFriendlyName}</strong><br/>
+        Machine-friendly address: <strong>{machineFriendlyAddress}</strong>
       </Typography>
       <Box sx={{ mt: 3 }}>
         <Button 
           variant="contained" 
-          onClick={() => navigate('/assets')}
-          sx={{ mr: 2 }}
+          color="primary"
+          size="large"
+          onClick={handleUploadTrainingData}
+          sx={{ mr: 2, fontWeight: 'bold' }}
         >
-          View All Assets
+          Upload Training Data
         </Button>
         <Button 
           variant="outlined" 
           onClick={handleReset}
+          sx={{ mr: 2 }}
         >
           Register Another Asset
+        </Button>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate('/assets')}
+        >
+          View Asset Details
         </Button>
       </Box>
     </Box>
