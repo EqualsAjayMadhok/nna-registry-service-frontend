@@ -4,10 +4,10 @@
   "installCommand": "npm install",
   "outputDirectory": "build",
   "env": {
-    "REACT_APP_API_URL": "https://nna-registry-service-backend.vercel.app/api",
-    "REACT_APP_REAL_API_URL": "https://nna-registry-service-us-central1.run.app/api",
+    "REACT_APP_API_URL": "https://registry.reviz.dev/api",
+    "REACT_APP_REAL_API_URL": "https://registry.reviz.dev/api",
     "REACT_APP_ENV": "production",
-    "REACT_APP_USE_MOCK_DATA": "true",
+    "REACT_APP_USE_MOCK_DATA": "false",
     "GENERATE_SOURCEMAP": "false"
   },
   "routes": [
