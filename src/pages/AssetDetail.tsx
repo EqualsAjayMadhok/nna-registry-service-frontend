@@ -240,7 +240,7 @@ const AssetDetail: React.FC = () => {
         // Just refresh the current asset
         const currentAsset = await AssetService.getAssetById(id);
         setAsset(currentAsset);
-        setCurrentVersionNumber(currentasset?.version?.number);
+        setCurrentVersionNumber(currentAsset?.version?.number || '');
       } else {
         // Get the specific version
         const versionedAsset = await AssetService.getAssetVersion(id, versionNumber);
@@ -277,7 +277,7 @@ const AssetDetail: React.FC = () => {
 
       const updatedAsset = await AssetService.createVersion(request);
       setAsset(updatedAsset);
-      setCurrentVersionNumber(updatedasset?.version?.number);
+      setCurrentVersionNumber(updatedAsset?.version?.number || '');
       setCreateVersionDialogOpen(false);
     } catch (err) {
       console.error('Error creating new version:', err);
@@ -712,13 +712,13 @@ const AssetDetail: React.FC = () => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Created
                         </Typography>
-                        <Typography variant="body1">{formatDate(asset.createdAt)}</Typography>
+                        <Typography variant="body1">{formatDate(asset.createdAt || '')}</Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Last Updated
                         </Typography>
-                        <Typography variant="body1">{formatDate(asset.updatedAt)}</Typography>
+                        <Typography variant="body1">{formatDate(asset.updatedAt || '')}</Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -914,14 +914,14 @@ const AssetDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   Created
                 </Typography>
-                <Typography variant="body1">{formatDate(asset.createdAt)}</Typography>
+                <Typography variant="body1">{formatDate(asset?.createdAt || '')}</Typography>
               </Box>
 
               <Box mb={2}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Last Updated
                 </Typography>
-                <Typography variant="body1">{formatDate(asset.updatedAt)}</Typography>
+                <Typography variant="body1">{formatDate(asset?.updatedAt || '')}</Typography>
               </Box>
 
               <Box mb={2}>
