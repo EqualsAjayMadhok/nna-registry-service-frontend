@@ -63,7 +63,7 @@ export interface FileUploaderProps {
    */
   accept?: string;
 
-  options: any;
+  options?: any;
 
   /**
    * Maximum file size in bytes

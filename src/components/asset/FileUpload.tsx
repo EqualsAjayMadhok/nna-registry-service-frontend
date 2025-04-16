@@ -51,7 +51,7 @@ interface FileUploadProps {
    */
   layerCode?: string;
 
-  options: any;
+  options?: any;
 
   /**
    * Files that are already selected
