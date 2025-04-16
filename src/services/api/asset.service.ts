@@ -432,6 +432,8 @@ class AssetService {
         formData.append('file', file);
         
         // Add metadata if provided
+        console.log(options, 'options');
+        
         if (options?.metadata) {
           for (const [key, value] of Object.entries(options.metadata)) {
             formData.append(key, typeof value === 'string' ? value : JSON.stringify(value));
@@ -440,12 +442,12 @@ class AssetService {
 
         // Set up the request with progress tracking
         const response = await api.post<ApiResponse<FileUploadResponse>>(
-          '/assets/upload',
+          '/assets',
           formData,
           {
             headers: {
               'Content-Type': 'multipart/form-data',
-              'X-File-Id': id, // Add file ID to headers for server identification
+              // 'X-File-Id': id, // Add file ID to headers for server identification
             },
             signal: abortController.signal,
             onUploadProgress: (progressEvent) => {
@@ -1876,8 +1878,8 @@ class AssetService {
     try {
       // Split by lines and remove any empty lines
       const lines = csvData.split(/\\r?\\n/).filter(line => line.trim() !== '');
-      
-      if (lines.length < 2) {
+
+      if (lines.length <= 0) {
         return { error: 'CSV must contain a header row and at least one data row' };
       }
       

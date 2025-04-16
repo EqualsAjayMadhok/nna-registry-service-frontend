@@ -79,7 +79,7 @@ class AuthService {
         return this.mockUser;
       }
 
-      const response = await api.get<ApiResponse<User>>('/auth/me');
+      const response = await api.get<ApiResponse<User>>('/auth/profile');
       return response.data.data as User;
     } catch (error) {
       console.error('Error fetching current user:', error);

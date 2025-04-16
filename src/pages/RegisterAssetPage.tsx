@@ -24,7 +24,7 @@ const initialSteps: StepInfo[] = [
   { label: 'Select Taxonomy', completed: false },
   { label: 'Asset Details', completed: false },
   { label: 'Upload Files', completed: false },
-  { label: 'Review & Submit', completed: false }
+  { label: 'Review & Submit', completed: false },
 ];
 
 const initialMetadata: AssetMetadata = {
@@ -38,23 +38,23 @@ const initialMetadata: AssetMetadata = {
     trainingRequirements: '',
     prompts: [],
     referenceImages: [],
-    referenceVideoUrls: []
+    referenceVideoUrls: [],
   },
   rights: {
     license: 'CC-BY',
     attributionRequired: true,
     attributionText: '',
-    commercialUse: true
-  }
+    commercialUse: true,
+  },
 };
 
 const RegisterAssetPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Step control state
   const [activeStep, setActiveStep] = useState(0);
   const [steps, setSteps] = useState<StepInfo[]>(initialSteps);
-  
+
   // Form data state
   const [selectedLayer, setSelectedLayer] = useState<LayerOption | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption | null>(null);
@@ -62,39 +62,42 @@ const RegisterAssetPage: React.FC = () => {
   const [assetMetadata, setAssetMetadata] = useState<AssetMetadata>(initialMetadata);
   const [assetMetadataValid, setAssetMetadataValid] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  
+
   // Submission state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registeredAsset, setRegisteredAsset] = useState<Asset | null>(null);
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  
+
   // Auto-generated assets
   const [relatedAssets, setRelatedAssets] = useState<{
     trainingAsset: Asset | null;
     rightsAsset: Asset | null;
   }>({
     trainingAsset: null,
-    rightsAsset: null
+    rightsAsset: null,
   });
-  
+
   // Thumbnail for the uploaded asset
   const [assetThumbnail, setAssetThumbnail] = useState<string | null>(null);
-  
+
   // Training data upload prompt
   const [showTrainingPrompt, setShowTrainingPrompt] = useState(false);
   const [showTrainingManager, setShowTrainingManager] = useState(false);
-  
+
   // Notifications context
   const { addTask } = useNotifications();
-  
+
   // Helper function to update step completion
-  const updateStepCompletion = useCallback((stepIndex: number, isCompleted: boolean) => {
-    const updatedSteps = [...steps];
-    updatedSteps[stepIndex].completed = isCompleted;
-    setSteps(updatedSteps);
-  }, [steps]);
-  
+  const updateStepCompletion = useCallback(
+    (stepIndex: number, isCompleted: boolean) => {
+      const updatedSteps = [...steps];
+      updatedSteps[stepIndex].completed = isCompleted;
+      setSteps(updatedSteps);
+    },
+    [steps]
+  );
+
   // Check if the current step is valid and can proceed
   const isStepValid = useCallback(() => {
     switch (activeStep) {
@@ -112,18 +115,20 @@ const RegisterAssetPage: React.FC = () => {
         return false;
     }
   }, [activeStep, selectedLayer, selectedCategory, assetMetadataValid, files.length]);
-  
+
   // Update step completion when data changes
   useEffect(() => {
     updateStepCompletion(activeStep, isStepValid());
   }, [activeStep, isStepValid, updateStepCompletion]);
-  
+
   // Handle layer selection
   const handleLayerSelect = (layer: LayerOption, isDoubleClick?: boolean) => {
-    console.log(`Layer selected in RegisterAssetPage: ${layer.name}, Double-click: ${isDoubleClick}`);
+    console.log(
+      `Layer selected in RegisterAssetPage: ${layer.name}, Double-click: ${isDoubleClick}`
+    );
     setSelectedLayer(layer);
     updateStepCompletion(0, true);
-    
+
     // If double-clicked, automatically proceed to the next step
     if (isDoubleClick) {
       console.log('Double-click detected, proceeding to next step');
@@ -132,7 +137,7 @@ const RegisterAssetPage: React.FC = () => {
       }, 100); // Small timeout to ensure state updates first
     }
   };
-  
+
   // Handle category selection
   const handleCategorySelect = (category: CategoryOption) => {
     setSelectedCategory(category);
@@ -140,83 +145,81 @@ const RegisterAssetPage: React.FC = () => {
     setSelectedSubcategory(null);
     updateStepCompletion(1, true);
   };
-  
+
   // Handle subcategory selection
   const handleSubcategorySelect = (subcategory: SubcategoryOption) => {
     setSelectedSubcategory(subcategory);
   };
-  
+
   // Handle metadata form changes
   const handleMetadataChange = (data: AssetMetadata, isValid: boolean) => {
     setAssetMetadata(data);
     setAssetMetadataValid(isValid);
     updateStepCompletion(2, isValid);
   };
-  
+
   // Handle file uploads
   const handleFilesChange = (uploadedFiles: File[]) => {
     setFiles(uploadedFiles);
     updateStepCompletion(3, uploadedFiles.length > 0);
   };
-  
+
   // Navigation handlers
   const handleNext = () => {
     if (activeStep < steps.length - 1) {
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      setActiveStep(prevActiveStep => prevActiveStep + 1);
     }
   };
-  
+
   const handleBack = () => {
     if (activeStep > 0) {
-      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+      setActiveStep(prevActiveStep => prevActiveStep - 1);
     }
   };
-  
+
   const handleEditStep = (stepIndex: number) => {
     setActiveStep(stepIndex);
   };
-  
+
   // Track uploaded file responses
   const [uploadedFileResponses, setUploadedFileResponses] = useState<Record<string, any>>({});
-  
+
   // Track upload progress for UI display
   const [uploadProgress, setUploadProgress] = useState<number>(0);
-  
+
   // Asset submission
   const handleSubmit = async () => {
     if (!selectedLayer || !selectedCategory || !assetMetadataValid || files.length === 0) {
       setError('Please complete all required steps before submitting');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setUploadProgress(0);
-    
+
     try {
       // Handle training data separately
       const trainingData = assetMetadata.trainingData;
       const isTrainable = trainingData?.isTrainable || false;
-      
+
       // Only prepare training data if asset is trainable
       let processedTrainingData = null;
       if (isTrainable && trainingData) {
         processedTrainingData = prepareTrainingDataForSubmission(trainingData);
-        
+
         // Extract prompts and other training files - these will be handled separately
         const promptFiles = processedTrainingData.files.filter(
           (f: File) => 'promptData' in f || f.name.startsWith('prompt-')
         );
-        
+
         // Update the regular files to exclude training-specific files
-        const regularFiles = files.filter(file => 
-          !promptFiles.some(pf => pf.name === file.name)
-        );
-        
+        const regularFiles = files.filter(file => !promptFiles.some(pf => pf.name === file.name));
+
         // Keep the list of files up to date
         setFiles(regularFiles);
       }
-      
+
       // Prepare basic asset data without training data files
       const assetData = {
         name: assetMetadata.name,
@@ -230,26 +233,33 @@ const RegisterAssetPage: React.FC = () => {
           source: assetMetadata.source,
           rights: assetMetadata.rights,
           // Include basic training flags but not the files
-          trainingData: isTrainable ? {
-            isTrainable: true,
-            trainingDescription: trainingData?.trainingDescription || '',
-            trainingRequirements: trainingData?.trainingRequirements || ''
-          } : undefined
+          trainingData: isTrainable
+            ? {
+                isTrainable: true,
+                trainingDescription: trainingData?.trainingDescription || '',
+                trainingRequirements: trainingData?.trainingRequirements || '',
+              }
+            : undefined,
         },
-        files
+        files,
       };
-      
+
       // Log the data we're about to submit
       console.log('Submitting asset data:', assetData);
-      
+
       // Submit to API with progress tracking
       const response = await AssetService.createAssetWithFiles(assetData, {
         onProgress: (fileId, progress) => {
           console.log(`File ${fileId} upload progress: ${progress}%`);
           // Update overall progress - simple average for now
           const overallProgress = Math.floor(
-            Object.values(uploadedFileResponses).length > 0 
-              ? (Object.values(uploadedFileResponses).reduce((sum, file) => sum + (file.progress || 0), 0) + progress) / (Object.values(uploadedFileResponses).length + 1)
+            Object.values(uploadedFileResponses).length > 0
+              ? (Object.values(uploadedFileResponses).reduce(
+                  (sum, file) => sum + (file.progress || 0),
+                  0
+                ) +
+                  progress) /
+                  (Object.values(uploadedFileResponses).length + 1)
               : progress
           );
           setUploadProgress(overallProgress);
@@ -259,42 +269,42 @@ const RegisterAssetPage: React.FC = () => {
           // Track uploaded file responses
           setUploadedFileResponses(prev => ({
             ...prev,
-            [fileId]: { ...fileData, progress: 100 }
+            [fileId]: { ...fileData, progress: 100 },
           }));
         },
         onError: (fileId, error) => {
           console.error(`File ${fileId} upload error:`, error);
           setError(`Error uploading file: ${error}`);
-          
+
           // Still track this file but mark as failed
           setUploadedFileResponses(prev => ({
             ...prev,
-            [fileId]: { error, progress: 0, failed: true }
+            [fileId]: { error, progress: 0, failed: true },
           }));
-        }
+        },
       });
-      
+
       // Submit training data if the asset is trainable
       if (isTrainable && processedTrainingData && response.asset) {
         try {
           console.log('Submitting training data for asset:', response.asset.id);
-          
+
           // Use our specialized training data service
           const trainingResponse = await trainingDataService.submitTrainingData(
             response.asset.id,
             assetMetadata.trainingData
           );
-          
+
           console.log('Training data submitted successfully:', trainingResponse);
-          
+
           // Update the response asset with training data info
           response.asset.metadata = {
             ...response.asset.metadata,
             trainingData: {
               ...response.asset.metadata?.trainingData,
               submitted: true,
-              id: trainingResponse.id
-            }
+              id: trainingResponse.id,
+            },
           };
         } catch (trainingError) {
           console.error('Error submitting training data:', trainingError);
@@ -304,24 +314,27 @@ const RegisterAssetPage: React.FC = () => {
             trainingData: {
               ...response.asset.metadata?.trainingData,
               submitted: false,
-              error: trainingError instanceof Error ? trainingError.message : 'Unknown error submitting training data'
-            }
+              error:
+                trainingError instanceof Error
+                  ? trainingError.message
+                  : 'Unknown error submitting training data',
+            },
           };
         }
       }
-      
+
       // Handle success
       console.log('Asset created successfully:', response);
       setRegisteredAsset(response.asset);
       setRegistrationComplete(true);
-      
+
       // Auto-generate related assets (Training Data and Rights)
       if (response.asset) {
         try {
           // Generate human-friendly names for related assets
           const primaryHumanName = response.asset.name;
           const parts = primaryHumanName.split('.');
-          
+
           // If we have a valid NNA name format
           if (parts.length >= 4) {
             const layerCode = parts[0];
@@ -329,40 +342,40 @@ const RegisterAssetPage: React.FC = () => {
             const subcategoryCode = parts[2];
             const sequentialStr = parts[3];
             const sequentialNumber = parseInt(sequentialStr, 10);
-            
+
             // Generate training asset name
             const trainingAssetName = `T.${layerCode}.${categoryCode}.${subcategoryCode}.${sequentialStr}.set`;
-            
+
             // Generate rights asset name
             const rightsAssetName = `R.${categoryCode}.${subcategoryCode}.${sequentialStr}.json`;
-            
+
             // Simple mock addresses for now
             const trainingAssetAddress = `T.${layerCode}.001.001.${sequentialStr}.set`;
             const rightsAssetAddress = `R.001.001.${sequentialStr}.json`;
-            
+
             // Create asset objects
             const trainingAsset: Asset = {
               id: `training-${Date.now()}`,
               name: trainingAssetName,
               address: trainingAssetAddress,
               layer: 'T',
-              status: 'pending'
+              status: 'pending',
             };
-            
+
             const rightsAsset: Asset = {
               id: `rights-${Date.now()}`,
               name: rightsAssetName,
               address: rightsAssetAddress,
               layer: 'R',
-              status: 'pending'
+              status: 'pending',
             };
-            
+
             // Set related assets
             setRelatedAssets({
               trainingAsset,
-              rightsAsset
+              rightsAsset,
             });
-            
+
             // Show prompt for training data upload
             setShowTrainingPrompt(true);
           }
@@ -370,7 +383,7 @@ const RegisterAssetPage: React.FC = () => {
           console.error('Error generating related assets:', err);
         }
       }
-      
+
       // Reset form state for "register another"
       setActiveStep(0);
       setSelectedLayer(null);
@@ -381,7 +394,6 @@ const RegisterAssetPage: React.FC = () => {
       setUploadedFileResponses({});
       setUploadProgress(0);
       setSteps(initialSteps);
-      
     } catch (err) {
       console.error('Error registering asset:', err);
       setError(err instanceof Error ? err.message : 'Failed to register asset');
@@ -389,53 +401,53 @@ const RegisterAssetPage: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const handleRegisterAnother = () => {
     setRegistrationComplete(false);
     setRegisteredAsset(null);
     setRelatedAssets({ trainingAsset: null, rightsAsset: null });
     // Form is already reset in handleSubmit
   };
-  
+
   // Handle training data upload options
   const handleUploadTrainingNow = () => {
     setShowTrainingPrompt(false);
     setShowTrainingManager(true);
   };
-  
+
   const handleRemindTrainingLater = () => {
     setShowTrainingPrompt(false);
-    
+
     // Add to user's tasks
     if (registeredAsset && relatedAssets.trainingAsset) {
       addTask({
         type: 'training_upload',
         assetId: registeredAsset.id || '',
-        assetName: registeredAsset.name
+        assetName: registeredAsset.name,
       });
     }
   };
-  
+
   // Handle training data set save
   const handleSaveTrainingData = (components: any[]) => {
     console.log('Saving training data components:', components);
-    
+
     // Here you would make an API call to save the training data
-    
+
     setShowTrainingManager(false);
-    
+
     // Update training asset status
     if (relatedAssets.trainingAsset) {
       setRelatedAssets({
         ...relatedAssets,
         trainingAsset: {
           ...relatedAssets.trainingAsset,
-          status: 'complete'
-        }
+          status: 'complete',
+        },
       });
     }
   };
-  
+
   // Render step content
   const renderStepContent = () => {
     switch (activeStep) {
@@ -467,6 +479,14 @@ const RegisterAssetPage: React.FC = () => {
       case 3:
         return (
           <FileUpload
+            options={{
+              name: assetMetadata.name,
+              layer: selectedLayer?.code || '',
+              category: selectedCategory?.code,
+              subcategory: selectedSubcategory?.code || '',
+              description: assetMetadata.description,
+              tags: assetMetadata.tags,
+            }}
             onFilesChange={handleFilesChange}
             layerCode={selectedLayer?.code}
             initialFiles={files}
@@ -490,7 +510,7 @@ const RegisterAssetPage: React.FC = () => {
         return null;
     }
   };
-  
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
@@ -506,7 +526,7 @@ const RegisterAssetPage: React.FC = () => {
             {error}
           </Alert>
         )}
-        
+
         <Collapse in={!registrationComplete}>
           {/* Step Control */}
           <StepControl
@@ -518,27 +538,30 @@ const RegisterAssetPage: React.FC = () => {
             isNextDisabled={!isStepValid()}
             loading={loading}
           />
-          
+
           {/* Auto-generated Asset References (shown in metadata step and review step) */}
-          {(activeStep === 2 || activeStep === 4) && selectedLayer && selectedCategory && selectedSubcategory && (
-            <AutoGeneratedAssetReferences
-              trainingAsset={{
-                name: `T.${selectedLayer.code}.${selectedCategory.code}.${selectedSubcategory.code}.001.set`,
-                address: `T.${selectedLayer.code}.001.001.001.set`
-              }}
-              rightsAsset={{
-                name: `R.${selectedCategory.code}.${selectedSubcategory.code}.001.json`,
-                address: `R.001.001.001.json`
-              }}
-              showButtons={false}
-              showHelperText={true}
-            />
-          )}
-          
+          {(activeStep === 2 || activeStep === 4) &&
+            selectedLayer &&
+            selectedCategory &&
+            selectedSubcategory && (
+              <AutoGeneratedAssetReferences
+                trainingAsset={{
+                  name: `T.${selectedLayer.code}.${selectedCategory.code}.${selectedSubcategory.code}.001.set`,
+                  address: `T.${selectedLayer.code}.001.001.001.set`,
+                }}
+                rightsAsset={{
+                  name: `R.${selectedCategory.code}.${selectedSubcategory.code}.001.json`,
+                  address: `R.001.001.001.json`,
+                }}
+                showButtons={false}
+                showHelperText={true}
+              />
+            )}
+
           {/* Step Content */}
           {renderStepContent()}
         </Collapse>
-        
+
         {/* Registration Success */}
         <Collapse in={registrationComplete && registeredAsset !== null}>
           {registeredAsset && (
@@ -549,7 +572,7 @@ const RegisterAssetPage: React.FC = () => {
                 onUploadTrainingData={handleUploadTrainingNow}
                 assetThumbnail={assetThumbnail}
               />
-              
+
               {/* Show the auto-generated assets */}
               {(relatedAssets.trainingAsset || relatedAssets.rightsAsset) && (
                 <AutoGeneratedAssetReferences
@@ -562,7 +585,7 @@ const RegisterAssetPage: React.FC = () => {
             </>
           )}
         </Collapse>
-        
+
         {/* Training Data Upload Prompt */}
         <TrainingDataUploadPrompt
           open={showTrainingPrompt}
@@ -571,7 +594,7 @@ const RegisterAssetPage: React.FC = () => {
           onRemindLater={handleRemindTrainingLater}
           onClose={() => setShowTrainingPrompt(false)}
         />
-        
+
         {/* Training Data Manager */}
         <Collapse in={showTrainingManager}>
           {relatedAssets.trainingAsset && (

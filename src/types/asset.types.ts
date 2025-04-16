@@ -71,7 +71,7 @@ export interface SearchGroup {
 }
 
 export interface AssetSearchParams {
-  query?: string; // Simple search query
+  search?: string; // Simple search query
   layer?: string;
   category?: string;
   subcategory?: string;

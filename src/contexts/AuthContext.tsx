@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { user: userData, token } = await authService.register(username, email, password);
       
       // Store token in localStorage

@@ -27,13 +27,13 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Get the redirect path from location state if available
   const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // For demo, we'll always use the demo login
     await demoLogin();
   };
@@ -42,23 +42,23 @@ const Login: React.FC = () => {
   const demoLogin = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Force the environment variable for mock data
-      (window as any).process = {
-        ...((window as any).process || {}),
-        env: {
-          ...((window as any).process?.env || {}),
-          REACT_APP_USE_MOCK_DATA: 'true',
-        },
-      };
-      
+      // (window as any).process = {
+      //   ...((window as any).process || {}),
+      //   env: {
+      //     ...((window as any).process?.env || {}),
+      //     REACT_APP_USE_MOCK_DATA: 'true',
+      //   },
+      // };
+
       // Set demo credentials for reference
-      setEmail('demo@example.com');
-      setPassword('password');
-      
+      // setEmail('demo@example.com');
+      // setPassword('password');
+
       // Log in with demo credentials
-      await login('demo@example.com', 'password');
+      await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
               autoComplete="email"
               autoFocus
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -123,7 +123,7 @@ const Login: React.FC = () => {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
             />
             <Button
               type="submit"
@@ -134,7 +134,7 @@ const Login: React.FC = () => {
             >
               {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
-            
+
             <Button
               variant="contained"
               color="success"
@@ -144,7 +144,7 @@ const Login: React.FC = () => {
             >
               Quick Demo Login
             </Button>
-            
+
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <Link component={RouterLink} to="/register" variant="body2">
                 {"Don't have an account? Sign Up"}

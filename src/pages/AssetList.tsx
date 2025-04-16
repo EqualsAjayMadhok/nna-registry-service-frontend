@@ -85,7 +85,7 @@ const AssetList: React.FC = () => {
     e.preventDefault();
     setSearchParams({
       ...searchParams,
-      query: searchQuery,
+      search: searchQuery,
       layer: selectedLayer,
       page: 1, // Reset to first page when search changes
     });
@@ -250,7 +250,7 @@ const AssetList: React.FC = () => {
                   )}
                 </CardContent>
                 <CardActions>
-                  <Button size="small" component={Link} to={`/assets/${asset.id}`}>
+                  <Button size="small" component={Link} to={`/assets/${asset.name}`}>
                     View Details
                   </Button>
                 </CardActions>
