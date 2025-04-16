@@ -119,7 +119,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     'idle'
   );
   const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>([]);
-console.log(options, 'options');
 
   // Use layer-specific file types if none provided
   const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);

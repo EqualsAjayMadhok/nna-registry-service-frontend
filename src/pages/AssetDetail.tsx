@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -297,7 +297,7 @@ const AssetDetail: React.FC = () => {
       setAsset(refreshedAsset);
 
       // If we were viewing a specific version, switch back to the current version
-      setCurrentVersionNumber(refreshedasset?.version?.number);
+      setCurrentVersionNumber(refreshedAsset?.version?.number || '');
 
       // Refresh rights information as well
       await loadRightsInformation(refreshedAsset.name);
