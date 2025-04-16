@@ -2589,8 +2589,8 @@ class AssetService {
     let filteredAssets = [...mockAssets];
     
     // Apply basic filters
-    if (params.query) {
-      const query = params.query.toLowerCase();
+    if (params.search) {
+      const query = params.search.toLowerCase();
       filteredAssets = filteredAssets.filter(asset => 
         asset.name.toLowerCase().includes(query) || 
         (asset.description && asset.description.toLowerCase().includes(query))
