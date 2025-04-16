@@ -138,7 +138,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     // Build search params
     const newParams: AssetSearchParams = {
       ...searchParams,
-      query: query || undefined,
+      search: query || undefined,
       layer: selectedLayer || undefined,
       category: selectedCategory || undefined,
       subcategory: selectedSubcategory || undefined,
