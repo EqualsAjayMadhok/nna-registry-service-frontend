@@ -159,7 +159,7 @@ const AssetDetail: React.FC = () => {
 
         // Set the current version number
         if (loadedAsset.version) {
-          setCurrentVersionNumber(loadedasset?.version?.number);
+          setCurrentVersionNumber(loadedAsset?.version?.number);
         }
 
         // Load rights information
