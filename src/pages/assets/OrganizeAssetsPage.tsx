@@ -223,7 +223,7 @@ const OrganizeAssetsPage: React.FC = () => {
                                 {asset.name}
                               </Typography>
                               <Typography variant="body2" color="text.secondary" noWrap>
-                                {asset.nnaAddress}
+                                {asset.nna_address}
                               </Typography>
                               <Box sx={{ mt: 1 }}>
                                 <Chip
@@ -324,7 +324,7 @@ const OrganizeAssetsPage: React.FC = () => {
                                     {asset.name}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary" display="block" noWrap>
-                                    {asset.nnaAddress}
+                                    {asset.nna_address}
                                   </Typography>
                                   <Chip
                                     label={`${asset.layer} · ${asset.category}`}

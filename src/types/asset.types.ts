@@ -357,7 +357,7 @@ export interface AssetUsageData {
 export interface TopAssetData {
   id: string;
   name: string;
-  nnaAddress: string;
+  nna_address: string;
   layer: string;
   category?: string;
   subcategory?: string;

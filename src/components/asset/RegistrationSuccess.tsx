@@ -153,7 +153,7 @@ const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({
                       wordBreak: 'break-all'
                     }}
                   >
-                    {asset.nnaAddress}
+                    {asset.nna_address}
                   </Typography>
                 </Grid>
                 

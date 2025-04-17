@@ -116,17 +116,17 @@ const getFileIcon = (contentType: string) => {
 };
 
 // Helper to get file metadata
-const getFileMetadata = (file: AssetFile) => {
-  const metadata: Record<string, any> = {};
+// const getFileMetadata = (file: AssetFile) => {
+//   const metadata: Record<string, any> = {};
 
-  // Add any specific metadata based on file type
-  if (file.contentType.startsWith('audio/')) {
-    metadata.format = file.contentType.split('/')[1].toUpperCase();
-    metadata.bitrate = '320 kbps'; // Example, should come from actual metadata
-  }
+//   // Add any specific metadata based on file type
+//   if (file.contentType.startsWith('audio/')) {
+//     metadata.format = file.contentType.split('/')[1].toUpperCase();
+//     metadata.bitrate = '320 kbps'; // Example, should come from actual metadata
+//   }
 
-  return metadata;
-};
+//   return metadata;
+// };
 
 const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -679,7 +679,7 @@ const AssetDetail: React.FC = () => {
                           fileType={selectedFile.contentType}
                           fileSize={selectedFile.size}
                           thumbnailUrl={selectedFile.thumbnailUrl}
-                          metadata={getFileMetadata(selectedFile)}
+                          // metadata={getFileMetadata(selectedFile)}
                           hasNext={asset.files && selectedFileIndex < asset.files.length - 1}
                           hasPrevious={selectedFileIndex > 0}
                           onNext={handleNextFile}

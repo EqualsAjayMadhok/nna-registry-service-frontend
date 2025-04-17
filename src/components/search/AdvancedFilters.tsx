@@ -74,7 +74,7 @@ interface FieldOption {
 const FIELD_OPTIONS: FieldOption[] = [
   { field: 'name', label: 'Name', type: 'text' },
   { field: 'description', label: 'Description', type: 'text' },
-  { field: 'nnaAddress', label: 'NNA Address', type: 'text' },
+  { field: 'nna_address', label: 'NNA Address', type: 'text' },
   { 
     field: 'layer', 
     label: 'Layer', 

@@ -288,7 +288,7 @@ class AssetService {
     try {
       if (this.useMockData()) {
         console.log('Using mock asset data for NNA address:', nnaAddress);
-        const asset = mockAssets.find(a => a.nnaAddress === nnaAddress);
+        const asset = mockAssets.find(a => a.nna_address === nnaAddress);
         if (!asset) {
           // If not found by NNA address, return the first asset as a fallback for demo
           return mockAssets[0];
@@ -700,7 +700,7 @@ class AssetService {
         const baseAsset: Asset = {
           id: `asset-${mockAssets.length + 1}`,
           name: assetData.name,
-          nnaAddress: `${assetData.layer}.${assetData.category || '001'}.${(mockAssets.length + 1).toString().padStart(3, '0')}`,
+          nna_address: `${assetData.layer}.${assetData.category || '001'}.${(mockAssets.length + 1).toString().padStart(3, '0')}`,
           layer: assetData.layer,
           category: assetData.category,
           subcategory: assetData.subcategory,
@@ -710,7 +710,7 @@ class AssetService {
           files: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: 'user-1',
+          registeredBy: 'user-1',
         };
         
         // Track uploaded files and failures
@@ -891,7 +891,7 @@ class AssetService {
         const newAsset: Asset = {
           id: `asset-${mockAssets.length + 1}`,
           name: assetData.name,
-          nnaAddress: `${assetData.layer}.${assetData.category || '001'}.${(mockAssets.length + 1).toString().padStart(3, '0')}`,
+          nna_address: `${assetData.layer}.${assetData.category || '001'}.${(mockAssets.length + 1).toString().padStart(3, '0')}`,
           layer: assetData.layer,
           category: assetData.category,
           subcategory: assetData.subcategory,
@@ -900,7 +900,7 @@ class AssetService {
           metadata: assetData.metadata,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: 'user-1',
+          registeredBy: 'user-1',
         };
         mockAssets.push(newAsset);
         return newAsset;
@@ -1482,7 +1482,7 @@ class AssetService {
           const currentVersion: VersionInfo = {
             number: '1.0.0',
             createdAt: asset.createdAt,
-            createdBy: asset.createdBy,
+            createdBy: asset.registeredBy,
             message: 'Initial version',
             hash: 'abc123',
           };
@@ -1496,7 +1496,7 @@ class AssetService {
             asset.versionHistory.push({
               number: '1.0.1',
               createdAt: new Date(creationDate.getTime() + 3600000).toISOString(), // 1 hour later
-              createdBy: asset.createdBy,
+              createdBy: asset.registeredBy,
               message: 'Updated metadata',
               hash: 'def456',
               changes: {
@@ -1515,7 +1515,7 @@ class AssetService {
               asset.versionHistory.push({
                 number: '1.0.2',
                 createdAt: new Date(creationDate.getTime() + 7200000).toISOString(), // 2 hours later
-                createdBy: asset.createdBy,
+                createdBy: asset.registeredBy,
                 message: 'Added new file',
                 hash: 'ghi789',
                 changes: {
@@ -1527,7 +1527,7 @@ class AssetService {
               asset.version = {
                 number: '1.0.2',
                 createdAt: new Date(creationDate.getTime() + 7200000).toISOString(),
-                createdBy: asset.createdBy,
+                createdBy: asset.registeredBy,
                 message: 'Added new file',
                 hash: 'ghi789'
               };
@@ -2271,12 +2271,12 @@ class AssetService {
       : [...filteredAssets, ...Array(limit - filteredAssets.length).fill(null).map((_, i) => ({
           id: `top-asset-${i}`,
           name: `Top Asset ${i + 1}`,
-          nnaAddress: `G.TOP.${(i + 1).toString().padStart(3, '0')}`,
+          nna_address: `G.TOP.${(i + 1).toString().padStart(3, '0')}`,
           layer: ['G', 'S', 'L', 'M', 'W'][Math.floor(Math.random() * 5)],
           category: '001',
           subcategory: '001',
           createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-          createdBy: 'user-1',
+          registeredBy: 'user-1',
         }))];
     
     // Add usage data to each asset
@@ -2293,14 +2293,14 @@ class AssetService {
       topAssets.push({
         id: asset.id,
         name: asset.name,
-        nnaAddress: asset.nnaAddress,
+        nna_address: asset.nna_address,
         layer: asset.layer,
         category: asset.category,
         subcategory: asset.subcategory,
         views,
         downloads,
         thumbnailUrl: (asset as Asset).files && (asset as Asset).files.length > 0 ? (asset as Asset).files[0].thumbnailUrl : undefined,
-        createdBy: asset.createdBy,
+        createdBy: asset.registeredBy,
         createdAt: asset.createdAt,
         lastViewedAt: new Date(Date.now() - Math.random() * 1000000000).toISOString()
       });
@@ -2460,7 +2460,7 @@ class AssetService {
           const mockAsset: Asset = {
             id: `asset-${Math.floor(Math.random() * 10000)}`,
             name: assetData.name || item.file.name,
-            nnaAddress: `${assetData.layer}.${assetData.category || '001'}.${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+            nna_address: `${assetData.layer}.${assetData.category || '001'}.${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
             layer: assetData.layer,
             category: assetData.category,
             subcategory: assetData.subcategory,
@@ -2480,7 +2480,7 @@ class AssetService {
             metadata: assetData.metadata,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            createdBy: 'user-1',
+            registeredBy: 'user-1',
           };
           
           // Add to mock data
@@ -2667,7 +2667,7 @@ class AssetService {
     
     if (params.createdBy) {
       filteredAssets = filteredAssets.filter(asset => 
-        asset.createdBy === params.createdBy
+        asset.registeredBy === params.createdBy
       );
     }
     

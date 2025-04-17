@@ -164,7 +164,7 @@ const UpdateAssetPage: React.FC = () => {
         Update Asset
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Modify the details and files for this asset. Current NNA Address: {asset?.nnaAddress}
+        Modify the details and files for this asset. Current NNA Address: {asset?.nna_address}
       </Typography>
 
       {error && (

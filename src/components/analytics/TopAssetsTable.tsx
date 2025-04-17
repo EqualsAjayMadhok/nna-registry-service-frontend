@@ -174,7 +174,7 @@ const TopAssetsTable: React.FC<TopAssetsTableProps> = ({
                               </Link>
                             </Typography>
                             <Typography variant="caption" color="text.secondary" noWrap>
-                              {asset.nnaAddress}
+                              {asset.nna_address}
                             </Typography>
                           </Box>
                         </Box>
