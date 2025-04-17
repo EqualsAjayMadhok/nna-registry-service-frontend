@@ -110,7 +110,7 @@ const TrainingDataSetManager: React.FC<TrainingDataSetManagerProps> = ({
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
   
   // Extract asset details from training asset name for proper naming
-  const assetAddress = trainingAsset.address || ('nnaAddress' in trainingAsset ? trainingAsset.nnaAddress : '') || trainingAsset.name;
+  const assetAddress = trainingAsset.address || ('nna_address' in trainingAsset ? trainingAsset.nna_address : '') || trainingAsset.name;
   const assetParts = {
     layer: trainingAsset.layer || assetAddress.split('.')[1] || '',
     category: trainingAsset.category || assetAddress.split('.')[2] || '',
