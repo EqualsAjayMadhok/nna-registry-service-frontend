@@ -58,12 +58,11 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import MediaPlayer, { formatFileSize } from '../components/asset/MediaPlayer';
 import AssetService from '../services/api/asset.service';
-import { Asset, AssetFile, CreateVersionRequest, AssetRights } from '../types/asset.types';
+import { Asset, CreateVersionRequest, AssetRights } from '../types/asset.types';
 import taxonomyService from '../api/taxonomyService';
 import VersionHistory from '../components/asset/VersionHistory';
 import RecommendedAssets from '../components/asset/RecommendedAssets';
 import RightsManagement from '../components/asset/RightsManagement';
-import rightsService from '../api/rightsService';
 
 // Interface for tab panel props
 interface TabPanelProps {
