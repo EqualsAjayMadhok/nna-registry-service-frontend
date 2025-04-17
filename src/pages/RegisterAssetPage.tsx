@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Typography, Box, Alert, Collapse } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import StepControl, { StepInfo } from '../components/asset/StepControl';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
@@ -16,7 +15,6 @@ import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonom
 import AssetService from '../services/api/asset.service';
 import trainingDataService from '../api/trainingDataService';
 import { prepareTrainingDataForSubmission } from '../utils/trainingDataHelpers';
-import nnaRegistryService from '../api/nnaRegistryService';
 import { useNotifications } from '../contexts/NotificationsContext';
 
 const initialSteps: StepInfo[] = [
@@ -49,8 +47,6 @@ const initialMetadata: AssetMetadata = {
 };
 
 const RegisterAssetPage: React.FC = () => {
-  const navigate = useNavigate();
-
   // Step control state
   const [activeStep, setActiveStep] = useState(0);
   const [steps, setSteps] = useState<StepInfo[]>(initialSteps);
@@ -224,8 +220,8 @@ const RegisterAssetPage: React.FC = () => {
       const assetData = {
         name: assetMetadata.name,
         layer: selectedLayer.code,
-        category: selectedCategory.code,
-        subcategory: selectedSubcategory?.code || '',
+        category: selectedCategory.name,
+        subcategory: selectedSubcategory?.name || '',
         description: assetMetadata.description,
         tags: assetMetadata.tags,
         metadata: {

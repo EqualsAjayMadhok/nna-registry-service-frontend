@@ -1,4 +1,4 @@
-import taxonomyData from '../assets/enriched_nna_layer_taxonomy_v1.2.json';
+import taxonomyData from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
 import {
   TaxonomyData,
   LayerInfo,
@@ -6,7 +6,7 @@ import {
   Subcategory,
   LayerOption,
   CategoryOption,
-  SubcategoryOption
+  SubcategoryOption,
 } from '../types/taxonomy.types';
 
 class TaxonomyService {
@@ -75,7 +75,7 @@ class TaxonomyService {
       layers.push({
         id: layerCode,
         name: layer.name,
-        code: layerCode
+        code: layerCode,
       });
     }
 
@@ -123,16 +123,20 @@ class TaxonomyService {
     const categories: CategoryOption[] = [];
     for (const categoryCode in layer.categories) {
       const category = layer.categories[categoryCode];
+
       // Use numeric index + 1 as a fallback numeric code if none exists in the data
-      const numericCode = category.numericCode || parseInt(categoryCode, 10) || 
-                         Object.keys(layer.categories).indexOf(categoryCode) + 1;
-      
+      const numericCode =
+        category.numericCode ||
+        parseInt(categoryCode, 10) ||
+        Object.keys(layer.categories).indexOf(categoryCode) + 1;
+
       categories.push({
         id: `${layerCode}.${categoryCode}`,
         name: category.name,
+        categoryCodeName: category.code,
         code: categoryCode,
         layerCode,
-        numericCode
+        numericCode,
       });
     }
 
@@ -168,16 +172,19 @@ class TaxonomyService {
     for (const subcategoryCode in category.subcategories) {
       const subcategory = category.subcategories[subcategoryCode];
       // Use numeric index + 1 as a fallback numeric code if none exists in the data
-      const numericCode = subcategory.numericCode || parseInt(subcategoryCode, 10) || 
-                         Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
-      
+      const numericCode =
+        subcategory.numericCode ||
+        parseInt(subcategoryCode, 10) ||
+        Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
+
       subcategories.push({
-        id: `${layerCode}.${categoryCode}.${subcategoryCode}`,
+        id: `${layerCode}.${category.code}.${subcategory.code}`,
         name: subcategory.name,
-        code: subcategoryCode,
+        code: subcategory.code || '',
         categoryCode,
         layerCode,
-        numericCode
+        numericCode,
+        subcategoryCode,
       });
     }
 
@@ -202,12 +209,12 @@ class TaxonomyService {
    */
   getCategory(layerCode: string, categoryCode: string): Category | null {
     this.checkInitialized();
-    
+
     const layer = this.getLayer(layerCode);
     if (!layer || !layer.categories || !layer.categories[categoryCode]) {
       return null;
     }
-    
+
     return layer.categories[categoryCode];
   }
 
@@ -218,17 +225,21 @@ class TaxonomyService {
    * @param subcategoryCode The subcategory code
    * @returns The subcategory object or null if not found
    */
-  getSubcategory(layerCode: string, categoryCode: string, subcategoryCode: string): Subcategory | null {
+  getSubcategory(
+    layerCode: string,
+    categoryCode: string,
+    subcategoryCode: string
+  ): Subcategory | null {
     this.checkInitialized();
-    
+
     const category = this.getCategory(layerCode, categoryCode);
     if (!category || !category.subcategories || !category.subcategories[subcategoryCode]) {
       return null;
     }
-    
+
     return category.subcategories[subcategoryCode];
   }
-  
+
   /**
    * Get the numeric code for a category
    * @param layerCode The layer code
@@ -237,17 +248,17 @@ class TaxonomyService {
    */
   getCategoryNumericCode(layerCode: string, categoryCode: string): number {
     this.checkInitialized();
-    
+
     const categories = this.getCategories(layerCode);
     const category = categories.find(c => c.code === categoryCode);
-    
+
     if (!category) {
       return -1;
     }
-    
-    return category.numericCode;
+
+    return category.numericCode || 0;
   }
-  
+
   /**
    * Get the numeric code for a subcategory
    * @param layerCode The layer code
@@ -255,19 +266,23 @@ class TaxonomyService {
    * @param subcategoryCode The alphabetic subcategory code
    * @returns The numeric code or -1 if not found
    */
-  getSubcategoryNumericCode(layerCode: string, categoryCode: string, subcategoryCode: string): number {
+  getSubcategoryNumericCode(
+    layerCode: string,
+    categoryCode: string,
+    subcategoryCode: string
+  ): number {
     this.checkInitialized();
-    
+
     const subcategories = this.getSubcategories(layerCode, categoryCode);
     const subcategory = subcategories.find(sc => sc.code === subcategoryCode);
-    
+
     if (!subcategory) {
       return -1;
     }
-    
-    return subcategory.numericCode;
+
+    return subcategory.numericCode || 0;
   }
-  
+
   /**
    * Get the alphabetic code for a category using its numeric code
    * @param layerCode The layer code
@@ -276,22 +291,22 @@ class TaxonomyService {
    */
   getCategoryAlphabeticCode(layerCode: string, numericCode: number): string {
     this.checkInitialized();
-    
+
     const categories = this.getCategories(layerCode);
     const category = categories.find(c => c.numericCode === numericCode);
-    
+
     if (!category) {
       return '';
     }
-    
+
     // If the code is numeric, try to generate an alphabetic code from the name
     if (/^\d+$/.test(category.code) && category.name) {
       return this.generateAlphabeticCodeFromName(category.name);
     }
-    
+
     return category.code;
   }
-  
+
   /**
    * Get the alphabetic code for a subcategory using its numeric code
    * @param layerCode The layer code
@@ -299,31 +314,35 @@ class TaxonomyService {
    * @param subcategoryNumericCode The numeric subcategory code
    * @returns The alphabetic code or empty string if not found
    */
-  getSubcategoryAlphabeticCode(layerCode: string, categoryNumericCode: number, subcategoryNumericCode: number): string {
+  getSubcategoryAlphabeticCode(
+    layerCode: string,
+    categoryNumericCode: number,
+    subcategoryNumericCode: number
+  ): string {
     this.checkInitialized();
-    
+
     // First, find the category alphabetic code
     const categoryCode = this.getCategoryAlphabeticCode(layerCode, categoryNumericCode);
     if (!categoryCode) {
       return '';
     }
-    
+
     // Then use it to get the subcategories and find the matching numeric code
     const subcategories = this.getSubcategories(layerCode, categoryCode);
     const subcategory = subcategories.find(sc => sc.numericCode === subcategoryNumericCode);
-    
+
     if (!subcategory) {
       return '';
     }
-    
+
     // If the code is numeric, try to generate an alphabetic code from the name
     if (/^\d+$/.test(subcategory.code) && subcategory.name) {
       return this.generateAlphabeticCodeFromName(subcategory.name);
     }
-    
+
     return subcategory.code;
   }
-  
+
   /**
    * Get the category name using its numeric code
    * @param layerCode The layer code
@@ -332,13 +351,13 @@ class TaxonomyService {
    */
   getCategoryNameByNumericCode(layerCode: string, numericCode: number): string | undefined {
     this.checkInitialized();
-    
+
     const categories = this.getCategories(layerCode);
     const category = categories.find(c => c.numericCode === numericCode);
-    
+
     return category?.name;
   }
-  
+
   /**
    * Get the subcategory name using its numeric code
    * @param layerCode The layer code
@@ -347,25 +366,25 @@ class TaxonomyService {
    * @returns The subcategory name or undefined if not found
    */
   getSubcategoryNameByNumericCode(
-    layerCode: string, 
-    categoryNumericCode: number, 
+    layerCode: string,
+    categoryNumericCode: number,
     subcategoryNumericCode: number
   ): string | undefined {
     this.checkInitialized();
-    
+
     // First, find the category alphabetic code
     const categoryCode = this.getCategoryAlphabeticCode(layerCode, categoryNumericCode);
     if (!categoryCode) {
       return undefined;
     }
-    
+
     // Then use it to get the subcategories and find the matching numeric code
     const subcategories = this.getSubcategories(layerCode, categoryCode);
     const subcategory = subcategories.find(sc => sc.numericCode === subcategoryNumericCode);
-    
+
     return subcategory?.name;
   }
-  
+
   /**
    * Generate a 3-letter alphabetic code from a name using various strategies
    * @param name The name to convert to an alphabetic code
@@ -373,22 +392,22 @@ class TaxonomyService {
    */
   private generateAlphabeticCodeFromName(name: string): string {
     if (!name) return '';
-    
+
     // Replace underscores and hyphens with spaces for word boundary detection
     const cleanName = name.replace(/[_-]/g, ' ');
-    
+
     // If name is a single word and 3-5 letters, use it directly
     if (/^[A-Za-z]{3,5}$/.test(cleanName)) {
       return cleanName.substring(0, 3).toUpperCase();
     }
-    
+
     // For compound words, take first letters of each word (up to 3 words)
     const words = cleanName.split(/\s+/).filter(word => word.length > 0);
-    
+
     if (words.length >= 3) {
       return (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
     }
-    
+
     if (words.length === 2) {
       // If two words, take first letter of each word plus first letter of second word
       if (words[1].length >= 2) {
@@ -397,17 +416,17 @@ class TaxonomyService {
         return (words[0][0] + words[0][1] + words[1][0]).toUpperCase();
       }
     }
-    
+
     // For a single word, take first 3 letters
     if (words.length === 1 && words[0].length >= 3) {
       return words[0].substring(0, 3).toUpperCase();
     }
-    
+
     // Fallback - take whatever's available and pad with X
     const available = cleanName.replace(/\s+/g, '');
     return (available + 'XXX').substring(0, 3).toUpperCase();
   }
-  
+
   /**
    * Get the next available sequential number for a taxonomy path
    * @param layerCode The layer code
@@ -417,23 +436,23 @@ class TaxonomyService {
    * @returns The next available number, starting from 1
    */
   getNextSequentialNumber(
-    layerCode: string, 
-    categoryCode: string, 
+    layerCode: string,
+    categoryCode: string,
     subcategoryCode: string,
     existingNumbers?: number[]
   ): number {
     // In a real implementation, this would query the database
     // For now, we'll simulate by using the provided existingNumbers
     // or start from 1 if none are provided
-    
+
     if (!existingNumbers || existingNumbers.length === 0) {
       return 1;
     }
-    
+
     // Find the highest existing number and add 1
     return Math.max(...existingNumbers) + 1;
   }
-  
+
   /**
    * Check if a given NNA address already exists
    * @param nnaAddress The NNA address to check
@@ -442,7 +461,7 @@ class TaxonomyService {
   async checkNNAAddressExists(nnaAddress: string): Promise<boolean> {
     // In a real implementation, this would query the backend API
     // For now, we'll simulate with a simple lookup of known addresses
-    
+
     // Mock set of existing NNA addresses for testing
     const existingAddresses = [
       'G.POP.TSW.001',
@@ -450,12 +469,12 @@ class TaxonomyService {
       'S.ACT.MOV.001',
       'L.FAS.DRS.001',
       'G.001.001.001',
-      'S.001.001.001'
+      'S.001.001.001',
     ];
-    
+
     // Simulate API latency
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     return existingAddresses.includes(nnaAddress);
   }
 
@@ -468,34 +487,36 @@ class TaxonomyService {
    */
   getTaxonomyPath(layerCode?: string, categoryCode?: string, subcategoryCode?: string): string {
     if (!layerCode) return '';
-    
+
+    console.log(categoryCode, subcategoryCode);
+
     this.checkInitialized();
-    
+
     const layer = this.getLayer(layerCode);
     if (!layer) {
       return layerCode;
     }
-    
+
     let path = layer.name;
-    
+
     if (categoryCode) {
       const category = this.getCategory(layerCode, categoryCode);
       if (!category) {
         return path;
       }
-      
+
       path += ` > ${category.name}`;
-      
+
       if (subcategoryCode) {
         const subcategory = this.getSubcategory(layerCode, categoryCode, subcategoryCode);
         if (!subcategory) {
           return path;
         }
-        
+
         path += ` > ${subcategory.name}`;
       }
     }
-    
+
     return path;
   }
 }

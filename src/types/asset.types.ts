@@ -1,12 +1,14 @@
 export interface Asset {
   id: string;
+  _id?: string;
   name: string;
-  nnaAddress?: string;
+  nna_address?: string;
   address?: string; // Alternative property used in some components
   layer: string;
   category?: string;
   subcategory?: string;
   description?: string;
+  gcpStorageUrl?: string;
   tags?: string[];
   files?: AssetFile[];
   metadata?: Record<string, any>;
@@ -15,7 +17,7 @@ export interface Asset {
   versionHistory?: VersionInfo[];
   createdAt?: string;
   updatedAt?: string;
-  createdBy?: string;
+  registeredBy?: string;
   collectionIds?: string[]; // Collections this asset belongs to
   featured?: boolean; // Whether this asset is featured
   rights?: AssetRights; // Rights management information
@@ -34,27 +36,21 @@ export interface AssetFile {
 
 export type SearchOperator = 'AND' | 'OR';
 
-export type SearchConditionType = 
-  | 'text' 
-  | 'date' 
-  | 'number' 
-  | 'boolean' 
-  | 'select' 
-  | 'tags';
+export type SearchConditionType = 'text' | 'date' | 'number' | 'boolean' | 'select' | 'tags';
 
-export type SearchComparisonOperator = 
-  | 'equals' 
-  | 'notEquals' 
-  | 'contains' 
-  | 'notContains' 
-  | 'startsWith' 
-  | 'endsWith' 
-  | 'greaterThan' 
-  | 'lessThan' 
-  | 'greaterThanOrEqual' 
-  | 'lessThanOrEqual' 
-  | 'between' 
-  | 'in' 
+export type SearchComparisonOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'contains'
+  | 'notContains'
+  | 'startsWith'
+  | 'endsWith'
+  | 'greaterThan'
+  | 'lessThan'
+  | 'greaterThanOrEqual'
+  | 'lessThanOrEqual'
+  | 'between'
+  | 'in'
   | 'exists';
 
 export interface SearchCondition {
@@ -76,7 +72,7 @@ export interface AssetSearchParams {
   category?: string;
   subcategory?: string;
   tags?: string[];
-  
+
   // Advanced search capabilities
   searchGroup?: SearchGroup; // Complex search query structure
   createdAfter?: string | Date; // ISO string or Date object
@@ -89,10 +85,10 @@ export interface AssetSearchParams {
   minFileSize?: number; // In bytes
   maxFileSize?: number; // In bytes
   hasFiles?: boolean;
-  
+
   // Metadata field search
   metadata?: Record<string, any>;
-  
+
   // Pagination & sorting
   page?: number;
   limit?: number;
@@ -152,7 +148,7 @@ export interface AssetUpdateRequest {
   name?: string;
   description?: string;
   tags?: string[];
-  layer?: string;  // Allow changing taxonomy
+  layer?: string; // Allow changing taxonomy
   category?: string;
   subcategory?: string;
   metadata?: Record<string, any>;
@@ -415,13 +411,13 @@ export enum CollectionType {
   CURATED = 'curated',
   PROJECT = 'project',
   FEATURED = 'featured',
-  SYSTEM = 'system'
+  SYSTEM = 'system',
 }
 
 export enum CollectionVisibility {
   PRIVATE = 'private',
   PUBLIC = 'public',
-  SHARED = 'shared'
+  SHARED = 'shared',
 }
 
 export interface CollectionPermission {
@@ -516,155 +512,156 @@ export interface CollectionSearchParams {
  */
 
 export enum RightsStatus {
-  VERIFIED = 'verified',         // All rights are verified and cleared
-  PARTIAL = 'partial',           // Some rights are verified, others pending
-  PENDING = 'pending',           // Rights verification in progress
-  UNVERIFIED = 'unverified',     // Rights not yet submitted for verification
-  REJECTED = 'rejected',         // Rights verification failed
-  EXPIRED = 'expired'            // Previously verified rights have expired
+  VERIFIED = 'verified', // All rights are verified and cleared
+  PARTIAL = 'partial', // Some rights are verified, others pending
+  PENDING = 'pending', // Rights verification in progress
+  UNVERIFIED = 'unverified', // Rights not yet submitted for verification
+  REJECTED = 'rejected', // Rights verification failed
+  EXPIRED = 'expired', // Previously verified rights have expired
 }
 
 export enum RightsType {
-  COPYRIGHT = 'copyright',       // Copyright ownership or license
-  TRADEMARK = 'trademark',       // Trademark usage rights
-  PATENT = 'patent',             // Patent rights
-  PERSONALITY = 'personality',   // Personality/publicity rights
-  MUSIC = 'music',               // Music synchronization rights
-  PERFORMANCE = 'performance',   // Performance rights
-  MECHANICAL = 'mechanical',     // Mechanical reproduction rights
-  SYNC = 'sync',                 // Synchronization rights
-  MASTER = 'master',             // Master recording rights
-  ATTRIBUTION = 'attribution'    // Attribution requirements
+  COPYRIGHT = 'copyright', // Copyright ownership or license
+  TRADEMARK = 'trademark', // Trademark usage rights
+  PATENT = 'patent', // Patent rights
+  PERSONALITY = 'personality', // Personality/publicity rights
+  MUSIC = 'music', // Music synchronization rights
+  PERFORMANCE = 'performance', // Performance rights
+  MECHANICAL = 'mechanical', // Mechanical reproduction rights
+  SYNC = 'sync', // Synchronization rights
+  MASTER = 'master', // Master recording rights
+  ATTRIBUTION = 'attribution', // Attribution requirements
 }
 
 export enum RightsLimitation {
-  TIME = 'time',                 // Time-limited usage
-  TERRITORY = 'territory',       // Geographic limitations
-  PLATFORM = 'platform',         // Platform-specific usage
-  PURPOSE = 'purpose',           // Purpose-specific usage
+  TIME = 'time', // Time-limited usage
+  TERRITORY = 'territory', // Geographic limitations
+  PLATFORM = 'platform', // Platform-specific usage
+  PURPOSE = 'purpose', // Purpose-specific usage
   MODIFICATION = 'modification', // Modification limitations
   DISTRIBUTION = 'distribution', // Distribution limitations
-  COMBINATION = 'combination'    // Combination with other works
+  COMBINATION = 'combination', // Combination with other works
 }
 
 export enum RightsVerificationMethod {
-  BLOCKCHAIN = 'blockchain',     // Blockchain verification
-  CONTRACT = 'contract',         // Contract evidence
-  LICENSE = 'license',           // License agreement
-  DECLARATION = 'declaration',   // Declaration of rights
-  REGISTRY = 'registry',         // Registry lookup
-  LEGAL = 'legal'                // Legal documentation
+  BLOCKCHAIN = 'blockchain', // Blockchain verification
+  CONTRACT = 'contract', // Contract evidence
+  LICENSE = 'license', // License agreement
+  DECLARATION = 'declaration', // Declaration of rights
+  REGISTRY = 'registry', // Registry lookup
+  LEGAL = 'legal', // Legal documentation
 }
 
 export interface RightsVerification {
-  id: string;                    // Verification ID
+  id: string; // Verification ID
   method: RightsVerificationMethod; // Verification method
-  status: RightsStatus;          // Verification status
-  verifiedBy?: string;           // Entity that performed verification
-  verifiedAt?: string;           // Timestamp of verification
-  expiresAt?: string;            // Expiration date of verification
-  evidenceIds?: string[];        // IDs of evidence documents
-  evidenceUrls?: string[];       // URLs to evidence
-  notes?: string;                // Notes about verification
-  transactionId?: string;        // Blockchain transaction ID if applicable
-  contractId?: string;           // Contract ID if applicable
+  status: RightsStatus; // Verification status
+  verifiedBy?: string; // Entity that performed verification
+  verifiedAt?: string; // Timestamp of verification
+  expiresAt?: string; // Expiration date of verification
+  evidenceIds?: string[]; // IDs of evidence documents
+  evidenceUrls?: string[]; // URLs to evidence
+  notes?: string; // Notes about verification
+  transactionId?: string; // Blockchain transaction ID if applicable
+  contractId?: string; // Contract ID if applicable
 }
 
 export interface RightsLimitationDetail {
-  type: RightsLimitation;        // Type of limitation
-  description: string;           // Description of limitation
-  value?: any;                   // Value of limitation (e.g., date, territory code)
-  startDate?: string;            // Start date if time-based
-  endDate?: string;              // End date if time-based
-  territories?: string[];        // Territory codes if territory-based
-  platforms?: string[];          // Platform identifiers if platform-based
+  type: RightsLimitation; // Type of limitation
+  description: string; // Description of limitation
+  value?: any; // Value of limitation (e.g., date, territory code)
+  startDate?: string; // Start date if time-based
+  endDate?: string; // End date if time-based
+  territories?: string[]; // Territory codes if territory-based
+  platforms?: string[]; // Platform identifiers if platform-based
 }
 
 export interface RightsClearance {
-  id: string;                    // Clearance record ID
-  rightType: RightsType;         // Type of right being cleared
-  status: RightsStatus;          // Clearance status
-  source: string;                // Source of rights (e.g., license, ownership)
-  holder: string;                // Rights holder
-  obtainedAt: string;            // When rights were obtained
-  expiresAt?: string;            // When rights expire (if applicable)
+  id: string; // Clearance record ID
+  rightType: RightsType; // Type of right being cleared
+  status: RightsStatus; // Clearance status
+  source: string; // Source of rights (e.g., license, ownership)
+  holder: string; // Rights holder
+  obtainedAt: string; // When rights were obtained
+  expiresAt?: string; // When rights expire (if applicable)
   limitations?: RightsLimitationDetail[]; // Usage limitations
   verification?: RightsVerification; // Verification details
-  clearanceDocUrl?: string;      // URL to clearance document
-  licenseType?: string;          // Type of license (e.g., CC BY 4.0)
-  termsUrl?: string;             // URL to terms
-  paymentRequired?: boolean;     // Whether payment is required
-  paymentDetails?: string;       // Payment details
-  notes?: string;                // Additional notes
+  clearanceDocUrl?: string; // URL to clearance document
+  licenseType?: string; // Type of license (e.g., CC BY 4.0)
+  termsUrl?: string; // URL to terms
+  paymentRequired?: boolean; // Whether payment is required
+  paymentDetails?: string; // Payment details
+  notes?: string; // Additional notes
 }
 
 export interface RightsUsage {
-  id: string;                    // Usage record ID
-  assetId: string;               // Asset ID
-  usedBy: string;                // User ID using the asset
-  usedAt: string;                // When the asset was used
-  purpose: string;               // Purpose of usage
-  platform: string;              // Platform where asset was used
-  projectId?: string;            // Project ID if applicable
-  contentId?: string;            // Content ID where asset was used
-  contentUrl?: string;           // URL to content where asset was used
-  usageType: string;             // Type of usage (e.g., inclusion, derivative)
+  id: string; // Usage record ID
+  assetId: string; // Asset ID
+  usedBy: string; // User ID using the asset
+  usedAt: string; // When the asset was used
+  purpose: string; // Purpose of usage
+  platform: string; // Platform where asset was used
+  projectId?: string; // Project ID if applicable
+  contentId?: string; // Content ID where asset was used
+  contentUrl?: string; // URL to content where asset was used
+  usageType: string; // Type of usage (e.g., inclusion, derivative)
   status: 'active' | 'completed' | 'terminated'; // Usage status
-  reportedAt?: string;           // When usage was reported
-  notes?: string;                // Additional notes
+  reportedAt?: string; // When usage was reported
+  notes?: string; // Additional notes
 }
 
 export interface AssetRights {
-  status: RightsStatus;          // Overall rights status
+  status: RightsStatus; // Overall rights status
   clearances: RightsClearance[]; // Rights clearance records
-  usages?: RightsUsage[];        // Asset usage records
-  updateHistory?: {              // History of rights updates
-    updatedAt: string;           // Update timestamp
-    updatedBy: string;           // User who made update
-    changedFields: string[];     // Fields that were changed
+  usages?: RightsUsage[]; // Asset usage records
+  updateHistory?: {
+    // History of rights updates
+    updatedAt: string; // Update timestamp
+    updatedBy: string; // User who made update
+    changedFields: string[]; // Fields that were changed
     previousStatus?: RightsStatus; // Previous status
-    notes?: string;              // Notes about update
+    notes?: string; // Notes about update
   }[];
-  attributionText?: string;      // Required attribution text
-  attributionRequired: boolean;  // Whether attribution is required
-  commercialUse: boolean;        // Whether commercial use is allowed
-  derivativeWorks: boolean;      // Whether derivative works are allowed
-  pendingVerification: boolean;  // Whether verification is pending
-  clarityJobId?: string;         // Clearity service job ID
-  clarityLastChecked?: string;   // When Clearity last checked rights
+  attributionText?: string; // Required attribution text
+  attributionRequired: boolean; // Whether attribution is required
+  commercialUse: boolean; // Whether commercial use is allowed
+  derivativeWorks: boolean; // Whether derivative works are allowed
+  pendingVerification: boolean; // Whether verification is pending
+  clarityJobId?: string; // Clearity service job ID
+  clarityLastChecked?: string; // When Clearity last checked rights
 }
 
 export interface RightsVerificationRequest {
-  assetId: string;               // Asset ID
-  rightTypes: RightsType[];      // Types of rights to verify
-  evidenceFiles?: File[];        // Evidence files
-  evidenceUrls?: string[];       // URLs to evidence
-  notes?: string;                // Additional notes
-  contactEmail?: string;         // Contact email for verification
+  assetId: string; // Asset ID
+  rightTypes: RightsType[]; // Types of rights to verify
+  evidenceFiles?: File[]; // Evidence files
+  evidenceUrls?: string[]; // URLs to evidence
+  notes?: string; // Additional notes
+  contactEmail?: string; // Contact email for verification
 }
 
 export interface RightsUpdateRequest {
-  assetId: string;               // Asset ID
-  attributionText?: string;      // Attribution text
+  assetId: string; // Asset ID
+  attributionText?: string; // Attribution text
   attributionRequired?: boolean; // Whether attribution is required
-  commercialUse?: boolean;       // Whether commercial use is allowed
-  derivativeWorks?: boolean;     // Whether derivative works are allowed
+  commercialUse?: boolean; // Whether commercial use is allowed
+  derivativeWorks?: boolean; // Whether derivative works are allowed
   rightsClearances?: Partial<RightsClearance>[]; // Clearances to add/update
   clearanceIdsToRemove?: string[]; // Clearance IDs to remove
-  notes?: string;                // Notes about update
+  notes?: string; // Notes about update
 }
 
 export interface RightsClearanceRequest {
-  assetId: string;               // Asset ID
-  rightType: RightsType;         // Type of right being cleared
-  source: string;                // Source of rights
-  holder: string;                // Rights holder
-  expiresAt?: string;            // Expiration date
+  assetId: string; // Asset ID
+  rightType: RightsType; // Type of right being cleared
+  source: string; // Source of rights
+  holder: string; // Rights holder
+  expiresAt?: string; // Expiration date
   limitations?: RightsLimitationDetail[]; // Usage limitations
-  clearanceDoc?: File;           // Clearance document
-  licenseType?: string;          // License type
-  termsUrl?: string;             // Terms URL
-  paymentRequired?: boolean;     // Whether payment is required
-  paymentDetails?: string;       // Payment details
-  notes?: string;                // Additional notes
+  clearanceDoc?: File; // Clearance document
+  licenseType?: string; // License type
+  termsUrl?: string; // Terms URL
+  paymentRequired?: boolean; // Whether payment is required
+  paymentDetails?: string; // Payment details
+  notes?: string; // Additional notes
 }

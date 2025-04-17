@@ -203,7 +203,7 @@ const AssetOrganizer: React.FC<AssetOrganizerProps> = ({
           (asset.name && asset.name.toLowerCase().includes(query)) ||
           (asset.description && asset.description.toLowerCase().includes(query)) ||
           (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(query))) ||
-          (asset.nnaAddress && asset.nnaAddress.toLowerCase().includes(query))
+          (asset.nna_address && asset.nna_address.toLowerCase().includes(query))
         );
       });
       
@@ -601,7 +601,7 @@ const AssetOrganizer: React.FC<AssetOrganizerProps> = ({
             {asset.name}
           </Typography>
           <Typography variant="body2" color="text.secondary" noWrap>
-            {asset.nnaAddress}
+            {asset.nna_address}
           </Typography>
         </Box>
         

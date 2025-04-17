@@ -231,7 +231,7 @@ const AssetList: React.FC = () => {
                     variant="outlined"
                   />
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    NNA: {asset.nnaAddress}
+                    NNA: {asset.nna_address}
                   </Typography>
                   <Typography variant="body2">
                     {asset.description || 'No description'}

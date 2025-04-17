@@ -25,6 +25,8 @@ interface TaxonomySelectionProps {
   onCategorySelect: (category: CategoryOption) => void;
   onSubcategorySelect: (subcategory: SubcategoryOption, isDoubleClick?: boolean) => void;
   selectedCategoryCode?: string;
+  categoryName?: string;
+  subcategoryNumericCode?: string;
   selectedSubcategoryCode?: string;
   onNNAAddressChange?: (humanFriendlyName: string, machineFriendlyAddress: string, sequentialNumber: number) => void;
 }
@@ -34,9 +36,13 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   onCategorySelect,
   onSubcategorySelect,
   selectedCategoryCode,
+  categoryName,
   selectedSubcategoryCode,
+  subcategoryNumericCode,
   onNNAAddressChange
 }) => {
+  console.log(categoryName, 'categoryName');
+  
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -56,6 +62,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       try {
         setLoading(true);
         const categoryOptions = taxonomyService.getCategories(layerCode);
+
+        console.log(categoryOptions, 'ewfwe');
+        
         setCategories(categoryOptions);
         setError(null);
       } catch (err) {
@@ -79,6 +88,8 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       try {
         setLoading(true);
         const subcategoryOptions = taxonomyService.getSubcategories(layerCode, selectedCategoryCode);
+        console.log(subcategoryOptions, 'subcategoryOptions');
+        
         setSubcategories(subcategoryOptions);
         setError(null);
       } catch (err) {
@@ -263,7 +274,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip 
-                        label={getAlphabeticCode(layerCode, category.code)}
+                        label={category.categoryCodeName}
                         size="small" 
                         color="primary" 
                         variant="outlined" 
@@ -313,7 +324,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip 
-                        label={getAlphabeticCode(layerCode, selectedCategoryCode || '', subcategory.code)}
+                        label={getAlphabeticCode(layerCode, subcategory.code)}
                         size="small" 
                         color="secondary" 
                         variant="outlined" 
@@ -322,7 +333,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip 
-                        label={subcategory.code} 
+                        label={subcategory.subcategoryCode} 
                         size="small" 
                         color="default" 
                         variant="outlined" 
@@ -343,13 +354,14 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                 Selected Taxonomy:
               </Typography>
               <Typography>
-                {taxonomyService.getTaxonomyPath(layerCode, selectedCategoryCode, selectedSubcategoryCode) || 'Invalid selection'}
+                {taxonomyService.getTaxonomyPath(layerCode, selectedCategoryCode, subcategoryNumericCode) || 'Invalid selection'}
               </Typography>
             </Box>
             
             {/* NNA Address Preview */}
             <NNAAddressPreview
               layerCode={layerCode}
+              subcategoryNumericCode={subcategoryNumericCode}
               categoryCode={selectedCategoryCode}
               subcategoryCode={selectedSubcategoryCode}
               sequentialNumber={sequentialNumber}

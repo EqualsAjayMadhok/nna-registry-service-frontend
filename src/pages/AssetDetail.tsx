@@ -72,6 +72,12 @@ interface TabPanelProps {
   value: number;
 }
 
+interface AssetFile {
+  size: number;
+  type: string;
+  url: string;
+}
+
 // Tab Panel component
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   return (
@@ -132,6 +138,9 @@ const AssetDetail: React.FC = () => {
   // State
   const [asset, setAsset] = useState<Asset | null>(null);
   const [assetRights, setAssetRights] = useState<AssetRights | null>(null);
+
+  const [assetFile, setAssetFile] = useState<AssetFile | null>(null);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [rightsLoading, setRightsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +154,7 @@ const AssetDetail: React.FC = () => {
 
   // Check user permissions
   const isAdmin = user?.role === 'admin';
-  const canEdit = isAdmin || user?.id === asset?.createdBy;
+  const canEdit = isAdmin || user?.id === asset?.registeredBy;
 
   // Load asset data
   useEffect(() => {
@@ -155,6 +164,12 @@ const AssetDetail: React.FC = () => {
         if (!id) throw new Error('Asset ID is required');
 
         const loadedAsset = await AssetService.getAssetById(id);
+        if (loadedAsset.gcpStorageUrl) {
+          const asset = await fetchMedia(loadedAsset.gcpStorageUrl);
+
+          setAssetFile(asset as AssetFile);
+        }
+
         setAsset(loadedAsset);
 
         // Set the current version number
@@ -177,12 +192,28 @@ const AssetDetail: React.FC = () => {
     loadAsset();
   }, [id]);
 
+  const fetchMedia = async (gcpStorageUrl: string) => {
+    try {
+      const file = await fetch(gcpStorageUrl);
+
+      const blob = await file.blob();
+
+      return {
+        size: blob.size,
+        type: blob.type,
+        url: gcpStorageUrl,
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // Load rights information
   const loadRightsInformation = async (assetId: string) => {
     try {
       setRightsLoading(true);
-      const rights = await rightsService.getAssetRights(assetId);
-      setAssetRights(rights);
+      // const rights = await rightsService.getAssetRights(assetId);
+      // setAssetRights(rights);
     } catch (err) {
       console.error('Error loading rights information:', err);
       // Don't set error here to avoid blocking main asset display
@@ -408,7 +439,7 @@ const AssetDetail: React.FC = () => {
             <Chip label={getFullTaxonomyPath(asset)} variant="outlined" sx={{ mr: 1, mb: 1 }} />
           )}
           <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
-            NNA: {asset.nnaAddress}
+            NNA: {asset.nna_address}
           </Typography>
 
           {/* Show indicator if viewing an older version */}
@@ -491,7 +522,7 @@ const AssetDetail: React.FC = () => {
                   </>
                 )}
 
-                {selectedFile && (
+                {assetFile && (
                   <>
                     <Typography variant="h6" gutterBottom sx={{ mt: 4, mb: 2 }}>
                       Preview
@@ -499,12 +530,12 @@ const AssetDetail: React.FC = () => {
 
                     <Box sx={{ position: 'relative' }}>
                       <MediaPlayer
-                        fileUrl={selectedFile.url}
-                        fileName={selectedFile.filename}
-                        fileType={selectedFile.contentType}
-                        fileSize={selectedFile.size}
-                        thumbnailUrl={selectedFile.thumbnailUrl}
-                        metadata={getFileMetadata(selectedFile)}
+                        fileUrl={assetFile.url}
+                        fileName={assetFile.url}
+                        fileType={assetFile.type}
+                        fileSize={assetFile.size}
+                        thumbnailUrl={assetFile.url}
+                        // metadata={getFileMetadata(selectedFile)}
                         hasNext={asset.files && selectedFileIndex < asset.files.length - 1}
                         hasPrevious={selectedFileIndex > 0}
                         onNext={handleNextFile}
@@ -700,13 +731,13 @@ const AssetDetail: React.FC = () => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Asset ID
                         </Typography>
-                        <Typography variant="body1">{asset.id}</Typography>
+                        <Typography variant="body1">{asset._id}</Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
                           NNA Address
                         </Typography>
-                        <Typography variant="body1">{asset.nnaAddress}</Typography>
+                        <Typography variant="body1">{asset.nna_address}</Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -724,7 +755,7 @@ const AssetDetail: React.FC = () => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Created By
                         </Typography>
-                        <Typography variant="body1">{asset.createdBy}</Typography>
+                        <Typography variant="body1">{asset.registeredBy}</Typography>
                       </Grid>
                     </Grid>
                   </Paper>
@@ -882,7 +913,7 @@ const AssetDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   NNA Address
                 </Typography>
-                <Typography variant="body1">{asset.nnaAddress}</Typography>
+                <Typography variant="body1">{asset.nna_address}</Typography>
               </Box>
 
               <Box mb={2}>
@@ -928,7 +959,7 @@ const AssetDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   Created By
                 </Typography>
-                <Typography variant="body1">{asset.createdBy}</Typography>
+                <Typography variant="body1">{asset.registeredBy}</Typography>
               </Box>
 
               {asset.files && asset.files.length > 0 && (

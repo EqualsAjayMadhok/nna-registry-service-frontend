@@ -779,86 +779,95 @@ class AssetService {
       const failedFiles: { file: File; error: string }[] = [];
       
       // Process each file if any
-      if (assetData.files && assetData.files.length > 0) {
-        for (const file of assetData.files) {
-          const fileUpload = this.uploadFile(file, {
-            onProgress: options?.onProgress,
-            onComplete: options?.onComplete,
-            onError: options?.onError,
-          });
+      // if (assetData.files && assetData.files.length > 0) {
+      //   for (const file of assetData.files) {
+      //     const fileUpload = this.uploadFile(file, {
+      //       onProgress: options?.onProgress,
+      //       onComplete: options?.onComplete,
+      //       onError: options?.onError,
+      //     });
           
-          // Create a promise for this upload
-          const uploadPromise = new Promise<FileUploadResponse>((resolve, reject) => {
-            // Poll the upload status until completion or error
-            const checkStatus = () => {
-              const status = this.getUploadStatus(fileUpload.id);
+      //     // Create a promise for this upload
+      //     const uploadPromise = new Promise<FileUploadResponse>((resolve, reject) => {
+      //       // Poll the upload status until completion or error
+      //       const checkStatus = () => {
+      //         const status = this.getUploadStatus(fileUpload.id);
               
-              if (!status) {
-                reject(new Error('Upload not found'));
-                return;
-              }
+      //         if (!status) {
+      //           reject(new Error('Upload not found'));
+      //           return;
+      //         }
               
-              if (status.status === 'completed') {
-                // When completed, the API response is stored in options.onComplete callback
-                // We need to reconstruct that here since we don't have direct access
-                const response: FileUploadResponse = {
-                  id: uuidv4(), // This would come from the server
-                  filename: file.name,
-                  contentType: file.type,
-                  size: file.size,
-                  url: URL.createObjectURL(file), // Temporary URL
-                  uploadedAt: new Date().toISOString(),
-                };
-                resolve(response);
-              } else if (status.status === 'error') {
-                reject(new Error(status.error || 'Upload failed'));
-              } else {
-                // Still in progress, check again after a short delay
-                setTimeout(checkStatus, 500);
-              }
-            };
+      //         if (status.status === 'completed') {
+      //           // When completed, the API response is stored in options.onComplete callback
+      //           // We need to reconstruct that here since we don't have direct access
+      //           const response: FileUploadResponse = {
+      //             id: uuidv4(), // This would come from the server
+      //             filename: file.name,
+      //             contentType: file.type,
+      //             size: file.size,
+      //             url: URL.createObjectURL(file), // Temporary URL
+      //             uploadedAt: new Date().toISOString(),
+      //           };
+      //           resolve(response);
+      //         } else if (status.status === 'error') {
+      //           reject(new Error(status.error || 'Upload failed'));
+      //         } else {
+      //           // Still in progress, check again after a short delay
+      //           setTimeout(checkStatus, 500);
+      //         }
+      //       };
             
-            // Start checking status
-            checkStatus();
-          });
+      //       // Start checking status
+      //       checkStatus();
+      //     });
           
-          // Handle success and failure for this upload
-          uploadPromise
-            .then(fileData => {
-              uploadedFiles.push(fileData);
-            })
-            .catch(error => {
-              failedFiles.push({
-                file,
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-            });
+      //     // Handle success and failure for this upload
+      //     uploadPromise
+      //       .then(fileData => {
+      //         uploadedFiles.push(fileData);
+      //       })
+      //       .catch(error => {
+      //         failedFiles.push({
+      //           file,
+      //           error: error instanceof Error ? error.message : 'Unknown error',
+      //         });
+      //       });
           
-          uploadTasks.push(uploadPromise);
-        }
-      }
+      //     uploadTasks.push(uploadPromise);
+      //   }
+      // }
       
       // Wait for all uploads to complete
       await Promise.allSettled(uploadTasks);
       
       // Create the asset with the uploaded file IDs
       const formData = new FormData();
-      formData.append('name', assetData.name);
       formData.append('layer', assetData.layer);
-      
+
       if (assetData.category) formData.append('category', assetData.category);
       if (assetData.subcategory) formData.append('subcategory', assetData.subcategory);
       if (assetData.description) formData.append('description', assetData.description);
       if (assetData.tags) formData.append('tags', JSON.stringify(assetData.tags));
-      if (assetData.metadata) formData.append('metadata', JSON.stringify(assetData.metadata));
-      
+      if (assetData?.metadata?.source)  formData.append('source', assetData.metadata?.source);
+
       // Add the IDs of successfully uploaded files
       if (uploadedFiles.length > 0) {
         formData.append('fileIds', JSON.stringify(uploadedFiles.map(file => file.id)));
       }
-      
+
+      if (assetData.files && assetData.files.length > 0) {
+        assetData.files.forEach((file, index) => {
+          formData.append('file', file);
+        });
+      }
+
       // Create the asset with the uploaded files
-      const response = await api.post<ApiResponse<Asset>>('/assets', formData);
+      const response = await api.post<ApiResponse<Asset>>('/assets', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       const asset = response.data.data as Asset;
       
       return {

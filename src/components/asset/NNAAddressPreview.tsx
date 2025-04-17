@@ -26,6 +26,7 @@ interface NNAAddressPreviewProps {
   categoryCode: string;
   subcategoryCode: string;
   sequentialNumber: number;
+  subcategoryNumericCode?: string;
   isUnique?: boolean;
   checkingUniqueness?: boolean;
   validationError?: string;
@@ -36,6 +37,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   categoryCode,
   subcategoryCode,
   sequentialNumber,
+  subcategoryNumericCode,
   isUnique = true,
   checkingUniqueness = false,
   validationError
@@ -44,6 +46,10 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   const [humanFriendlyName, setHumanFriendlyName] = useState<string>('');
   const [machineFriendlyAddress, setMachineFriendlyAddress] = useState<string>('');
   const [isValid, setIsValid] = useState<boolean>(false);
+
+  const categoryOptions = taxonomyService.getCategories(layerCode);
+  const category = categoryOptions.find(c => c.code === categoryCode);
+
 
   // Generate the addresses whenever inputs change
   useEffect(() => {
@@ -55,7 +61,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     // Generate addresses using our custom mapping
     const humanName = generateHumanFriendlyName(
       layerCode,
-      categoryCode,
+      category?.categoryCodeName || '',
       subcategoryCode,
       sequentialNumber
     );
@@ -63,7 +69,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     const machineAddress = generateMachineFriendlyAddress(
       layerCode,
       categoryCode,
-      subcategoryCode,
+      subcategoryNumericCode || '',
       sequentialNumber
     );
     
@@ -71,7 +77,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     setMachineFriendlyAddress(machineAddress);
     setIsValid(Boolean(humanName && machineAddress));
     
-  }, [layerCode, categoryCode, subcategoryCode, sequentialNumber]);
+  }, [layerCode, categoryCode, subcategoryNumericCode, subcategoryCode, sequentialNumber]);
 
   // Function to render address part explanation
   const renderAddressPart = (
@@ -120,6 +126,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       </Paper>
     );
   }
+
 
   return (
     <Paper
@@ -227,7 +234,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         
         {renderAddressPart(
           'Category',
-          categoryCode,
+          category?.categoryCodeName || '',
           'Identifies the category within the layer'
         )}
         

@@ -328,11 +328,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       }
 
       // Upload immediately if configured
-      if (uploadImmediately) {
-        preparedFiles.forEach(({ file, id }) => {
-          uploadFile(file, id);
-        });
-      }
+      // if (uploadImmediately) {
+      //   preparedFiles.forEach(({ file, id }) => {
+      //     uploadFile(file, id);
+      //   });
+      // }
     },
     [uploadState, maxFiles, uploadImmediately]
   );

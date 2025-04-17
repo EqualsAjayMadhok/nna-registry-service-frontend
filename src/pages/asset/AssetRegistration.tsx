@@ -45,6 +45,7 @@ const AssetRegistration: React.FC = () => {
   const [layerName, setLayerName] = useState<string>('');
   const [categoryCode, setCategoryCode] = useState<string>('');
   const [categoryName, setCategoryName] = useState<string>('');
+  const [subcategoryNumericCode, setSubcategoryNumericCode] = useState<string>('');
   const [subcategoryCode, setSubcategoryCode] = useState<string>('');
   const [subcategoryName, setSubcategoryName] = useState<string>('');
   const [metadata, setMetadata] = useState<AssetMetadata | null>(null);
@@ -195,8 +196,8 @@ const AssetRegistration: React.FC = () => {
         name: humanFriendlyName || metadata.name,
         address: machineFriendlyAddress,
         layer: layerCode,
-        category: categoryCode,
-        subcategory: subcategoryCode,
+        category: categoryName,
+        subcategory: subcategoryName,
         description: metadata.description,
         tags: metadata.tags,
         metadata: {
@@ -282,6 +283,7 @@ const AssetRegistration: React.FC = () => {
             </Typography>
 
             <TaxonomySelection
+              subcategoryNumericCode={subcategoryNumericCode}
               layerCode={layerCode}
               selectedCategoryCode={categoryCode}
               selectedSubcategoryCode={subcategoryCode}
@@ -289,6 +291,7 @@ const AssetRegistration: React.FC = () => {
                 setSelectedCategory(category);
                 setCategoryCode(category.code);
                 setCategoryName(category.name);
+
                 // Reset subcategory when category changes
                 setSelectedSubcategory(null);
                 setSubcategoryCode('');
@@ -300,8 +303,9 @@ const AssetRegistration: React.FC = () => {
                   `Subcategory selected: ${subcategory.name} (${subcategory.code}), Double-click: ${isDoubleClick}`
                 );
                 setSelectedSubcategory(subcategory);
-                setSubcategoryCode(subcategory.code);
+                setSubcategoryCode(subcategory.code || '');
                 setSubcategoryName(subcategory.name);
+                setSubcategoryNumericCode(subcategory.subcategoryCode || '');
                 setFormValid(true);
 
                 // Proceed to the next step automatically on double-click

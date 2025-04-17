@@ -1,5 +1,6 @@
 export interface Subcategory {
   name: string;
+  code?: string;
   [key: string]: any;
 }
 
@@ -9,6 +10,7 @@ export interface SubcategoryMap {
 
 export interface Category {
   name: string;
+  code?: string;
   subcategories: SubcategoryMap;
   [key: string]: any;
 }
@@ -30,7 +32,7 @@ export interface TaxonomyData {
   L: LayerInfo; // Looks
   M: LayerInfo; // Moves
   W: LayerInfo; // Worlds
-  
+
   // Optional properties for other keys
   [otherKey: string]: LayerInfo | undefined;
 }
@@ -46,6 +48,7 @@ export interface CategoryOption {
   id: string;
   name: string;
   code: string;
+  categoryCodeName?: string;
   layerCode: string;
   numericCode?: number; // Numeric code for machine-friendly address
 }
@@ -57,4 +60,5 @@ export interface SubcategoryOption {
   categoryCode: string;
   layerCode: string;
   numericCode?: number; // Numeric code for machine-friendly address
+  subcategoryCode?: string;
 }

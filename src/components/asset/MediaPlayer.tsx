@@ -14,7 +14,7 @@ import {
   useMediaQuery,
   CircularProgress,
   Button,
-  Grid
+  Grid,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -29,7 +29,7 @@ import {
   Info,
   BrokenImage,
   VideocamOff,
-  MusicOff
+  MusicOff,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -57,7 +57,7 @@ const PlayerContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   width: '100%',
   borderRadius: theme.shape.borderRadius,
-  overflow: 'hidden'
+  overflow: 'hidden',
 }));
 
 const MediaControls = styled(Box)(({ theme }) => ({
@@ -70,7 +70,7 @@ const MediaControls = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   transition: 'opacity 0.3s ease',
-  backdropFilter: 'blur(5px)'
+  backdropFilter: 'blur(5px)',
 }));
 
 const ErrorContainer = styled(Box)(({ theme }) => ({
@@ -81,7 +81,7 @@ const ErrorContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.grey[900],
   color: theme.palette.common.white,
   height: '100%',
-  padding: theme.spacing(3)
+  padding: theme.spacing(3),
 }));
 
 /**
@@ -89,10 +89,10 @@ const ErrorContainer = styled(Box)(({ theme }) => ({
  */
 const formatTime = (seconds: number): string => {
   if (isNaN(seconds)) return '00:00';
-  
+
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
-  
+
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
@@ -127,16 +127,16 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   loop = false,
   width = '100%',
   height = 'auto',
-  metadata = {}
+  metadata = {},
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
   // Refs for media elements
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  
+
   // State for player
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [duration, setDuration] = useState(0);
@@ -149,7 +149,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   const [loadProgress, setLoadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [mediaInfo, setMediaInfo] = useState<Record<string, any>>({});
-  
+
   // Determine media type
   const isAudio = fileType.startsWith('audio/');
   const isVideo = fileType.startsWith('video/');
@@ -167,17 +167,17 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   const handleLoadMetadata = (e: React.SyntheticEvent<HTMLAudioElement | HTMLVideoElement>) => {
     const target = e.target as HTMLAudioElement | HTMLVideoElement;
     setDuration(target.duration || 0);
-    
+
     // Extract media info
     const info: Record<string, any> = {
-      duration: target.duration ? formatTime(target.duration) : 'Unknown'
+      duration: target.duration ? formatTime(target.duration) : 'Unknown',
     };
-    
+
     if (isVideo && videoRef.current) {
       info.dimensions = `${videoRef.current.videoWidth} × ${videoRef.current.videoHeight}`;
       info.aspectRatio = (videoRef.current.videoWidth / videoRef.current.videoHeight).toFixed(2);
     }
-    
+
     setMediaInfo({ ...info, ...metadata });
   };
 
@@ -202,21 +202,25 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
     setCurrentTime(target.currentTime);
   };
 
-  const handleError = (e: React.SyntheticEvent<HTMLAudioElement | HTMLVideoElement | HTMLImageElement>) => {
+  const handleError = (
+    e: React.SyntheticEvent<HTMLAudioElement | HTMLVideoElement | HTMLImageElement>
+  ) => {
     setIsLoading(false);
     setError(`Failed to load ${isAudio ? 'audio' : isVideo ? 'video' : 'media'}`);
     console.error('Media error:', e);
   };
-  
+
   // Image specific handlers
   const handleImageLoad = () => {
+    console.log('ergerge');
+
     setIsLoading(false);
-    
+
     // Extract image info
     if (imageRef.current) {
       const info = {
         dimensions: `${imageRef.current.naturalWidth} × ${imageRef.current.naturalHeight}`,
-        aspectRatio: (imageRef.current.naturalWidth / imageRef.current.naturalHeight).toFixed(2)
+        aspectRatio: (imageRef.current.naturalWidth / imageRef.current.naturalHeight).toFixed(2),
       };
       setMediaInfo({ ...info, ...metadata });
     }
@@ -255,7 +259,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
     const newVolume = typeof newValue === 'number' ? newValue : newValue[0];
     setVolume(newVolume / 100);
-    
+
     if (isAudio && audioRef.current) {
       audioRef.current.volume = newVolume / 100;
       setIsMuted(newVolume === 0);
@@ -289,7 +293,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
       audioRef.current.volume = volume;
       audioRef.current.muted = isMuted;
       audioRef.current.loop = loop;
-      
+
       if (autoPlay) {
         audioRef.current.play().catch(e => {
           console.warn('Autoplay prevented:', e);
@@ -299,7 +303,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
       videoRef.current.volume = volume;
       videoRef.current.muted = isMuted;
       videoRef.current.loop = loop;
-      
+
       if (autoPlay) {
         videoRef.current.play().catch(e => {
           console.warn('Autoplay prevented:', e);
@@ -322,22 +326,22 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   // Hide controls after inactivity for video
   useEffect(() => {
     if (!showControls || !isVideo) return;
-    
+
     let timeoutId: NodeJS.Timeout;
-    
+
     const resetTimeout = () => {
       clearTimeout(timeoutId);
       setControlsVisible(true);
-      
+
       timeoutId = setTimeout(() => {
         if (isPlaying) {
           setControlsVisible(false);
         }
       }, 3000);
     };
-    
+
     resetTimeout();
-    
+
     const handleMouseMove = () => resetTimeout();
     const handleMouseLeave = () => {
       clearTimeout(timeoutId);
@@ -345,13 +349,13 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         setControlsVisible(false);
       }
     };
-    
+
     const container = document.getElementById('media-player-container');
     if (container) {
       container.addEventListener('mousemove', handleMouseMove);
       container.addEventListener('mouseleave', handleMouseLeave);
     }
-    
+
     return () => {
       clearTimeout(timeoutId);
       if (container) {
@@ -363,26 +367,6 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
 
   // Render appropriate media player based on file type
   const renderPlayer = () => {
-    if (isLoading) {
-      return (
-        <Box 
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center', 
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            height: typeof height === 'number' ? height : 240,
-            width,
-            color: 'white'
-          }}
-        >
-          <CircularProgress color="primary" size={48} sx={{ mb: 2 }} />
-          <Typography variant="body2">Loading {fileName}...</Typography>
-        </Box>
-      );
-    }
-    
     if (error) {
       return (
         <ErrorContainer style={{ width, height: typeof height === 'number' ? height : 240 }}>
@@ -390,70 +374,74 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
           {isVideo && <VideocamOff fontSize="large" sx={{ mb: 2 }} />}
           {isImage && <BrokenImage fontSize="large" sx={{ mb: 2 }} />}
           {!isAudio && !isVideo && !isImage && <Info fontSize="large" sx={{ mb: 2 }} />}
-          <Typography variant="body1" gutterBottom>{error}</Typography>
+          <Typography variant="body1" gutterBottom>
+            {error}
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             {fileName} ({formatFileSize(fileSize)})
           </Typography>
         </ErrorContainer>
       );
     }
-    
+
     if (isAudio) {
       return (
         <Card sx={{ width, display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
           {thumbnailUrl ? (
             <CardMedia
               component="img"
-              sx={{ 
+              sx={{
                 width: { xs: '100%', sm: 140 },
-                height: { xs: 140, sm: 140 }
+                height: { xs: 140, sm: 140 },
               }}
               image={thumbnailUrl}
               alt={fileName}
             />
           ) : (
             <Box
-              sx={{ 
+              sx={{
                 width: { xs: '100%', sm: 140 },
                 height: { xs: 140, sm: 140 },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText
+                color: theme.palette.primary.contrastText,
               }}
             >
               <Lyrics sx={{ fontSize: 48 }} />
             </Box>
           )}
-          
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            flexGrow: 1,
-            p: 2
-          }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              flexGrow: 1,
+              p: 2,
+            }}
+          >
             <Typography component="div" variant="h6" noWrap sx={{ mb: 1 }}>
               {fileName}
             </Typography>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
               {hasPrevious && (
                 <IconButton onClick={onPrevious} size="small">
                   <SkipPrevious />
                 </IconButton>
               )}
-              
+
               <IconButton onClick={togglePlay} sx={{ mx: hasPrevious ? 1 : 0 }}>
                 {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
-              
+
               {hasNext && (
                 <IconButton onClick={onNext} size="small">
                   <SkipNext />
                 </IconButton>
               )}
-              
+
               <Box sx={{ mx: 2, flexGrow: 1 }}>
                 <Slider
                   size="small"
@@ -472,12 +460,12 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                   </Typography>
                 </Box>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton onClick={toggleMute} size="small">
                   {isMuted ? <VolumeOff /> : <VolumeUp />}
                 </IconButton>
-                
+
                 {!isMobile && (
                   <Box sx={{ width: 80, ml: 1 }}>
                     <Slider
@@ -490,9 +478,9 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                     />
                   </Box>
                 )}
-                
+
                 <Tooltip title="Download">
-                  <IconButton 
+                  <IconButton
                     href={fileUrl}
                     download={fileName}
                     target="_blank"
@@ -505,7 +493,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                 </Tooltip>
               </Box>
             </Box>
-            
+
             <audio
               ref={audioRef}
               src={fileUrl}
@@ -517,11 +505,11 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
               onError={handleError}
               style={{ display: 'none' }}
             />
-            
+
             {loadProgress < 100 && (
-              <LinearProgress 
-                variant="determinate" 
-                value={loadProgress} 
+              <LinearProgress
+                variant="determinate"
+                value={loadProgress}
                 sx={{ height: 3, borderRadius: 3 }}
               />
             )}
@@ -529,15 +517,15 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         </Card>
       );
     }
-    
+
     if (isVideo) {
       return (
-        <PlayerContainer 
-          id="media-player-container" 
-          sx={{ 
-            width, 
-            height: typeof height === 'number' ? height : 'auto', 
-            backgroundColor: 'black' 
+        <PlayerContainer
+          id="media-player-container"
+          sx={{
+            width,
+            height: typeof height === 'number' ? height : 'auto',
+            backgroundColor: 'black',
           }}
         >
           <video
@@ -553,7 +541,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
             onError={handleError}
             onClick={togglePlay}
           />
-          
+
           {controlsVisible && (
             <MediaControls sx={{ opacity: controlsVisible ? 1 : 0 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -564,7 +552,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                   {formatTime(duration)}
                 </Typography>
               </Box>
-              
+
               <Slider
                 size="small"
                 min={0}
@@ -572,29 +560,29 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                 value={currentTime}
                 onChange={handleSeek}
                 aria-label="Time"
-                sx={{ 
+                sx={{
                   color: 'white',
                   '& .MuiSlider-thumb': {
                     width: 12,
                     height: 12,
                     '&:hover, &.Mui-focusVisible': {
                       boxShadow: 'none',
-                    }
+                    },
                   },
                   '& .MuiSlider-rail': {
                     opacity: 0.3,
-                  }
+                  },
                 }}
               />
-              
+
               {loadProgress < 100 && (
-                <LinearProgress 
-                  variant="determinate" 
-                  value={loadProgress} 
+                <LinearProgress
+                  variant="determinate"
+                  value={loadProgress}
                   sx={{ height: 2, borderRadius: 2, mb: 1 }}
                 />
               )}
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   {hasPrevious && (
@@ -602,45 +590,43 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                       <SkipPrevious />
                     </IconButton>
                   )}
-                  
+
                   <IconButton onClick={togglePlay} size="small" sx={{ color: 'white', mx: 0.5 }}>
                     {isPlaying ? <Pause /> : <PlayArrow />}
                   </IconButton>
-                  
+
                   {hasNext && (
                     <IconButton onClick={onNext} size="small" sx={{ color: 'white' }}>
                       <SkipNext />
                     </IconButton>
                   )}
-                  
-                  <Box 
-                    sx={{ 
-                      display: 'flex', 
+
+                  <Box
+                    sx={{
+                      display: 'flex',
                       alignItems: 'center',
                       ml: 1,
-                      position: 'relative'
+                      position: 'relative',
                     }}
                     onMouseEnter={() => setShowVolumeSlider(true)}
                     onMouseLeave={() => setShowVolumeSlider(false)}
                   >
-                    <IconButton 
-                      onClick={toggleMute} 
-                      size="small"
-                      sx={{ color: 'white' }}
-                    >
+                    <IconButton onClick={toggleMute} size="small" sx={{ color: 'white' }}>
                       {isMuted ? <VolumeOff /> : <VolumeUp />}
                     </IconButton>
-                    
+
                     {showVolumeSlider && !isMobile && (
-                      <Box sx={{ 
-                        width: 70, 
-                        position: 'absolute',
-                        left: '100%',
-                        ml: 1,
-                        backgroundColor: 'rgba(0,0,0,0.7)',
-                        p: 1,
-                        borderRadius: 1
-                      }}>
+                      <Box
+                        sx={{
+                          width: 70,
+                          position: 'absolute',
+                          left: '100%',
+                          ml: 1,
+                          backgroundColor: 'rgba(0,0,0,0.7)',
+                          p: 1,
+                          borderRadius: 1,
+                        }}
+                      >
                         <Slider
                           size="small"
                           min={0}
@@ -648,22 +634,22 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                           value={isMuted ? 0 : volume * 100}
                           onChange={handleVolumeChange}
                           aria-label="Volume"
-                          sx={{ 
+                          sx={{
                             color: 'white',
                             '& .MuiSlider-thumb': {
                               width: 10,
                               height: 10,
-                            }
+                            },
                           }}
                         />
                       </Box>
                     )}
                   </Box>
                 </Box>
-                
+
                 <Box>
                   <Tooltip title="Download">
-                    <IconButton 
+                    <IconButton
                       href={fileUrl}
                       download={fileName}
                       target="_blank"
@@ -674,9 +660,9 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
                       <CloudDownload />
                     </IconButton>
                   </Tooltip>
-                  
+
                   <Tooltip title="Fullscreen">
-                    <IconButton 
+                    <IconButton
                       onClick={enterFullScreen}
                       size="small"
                       sx={{ color: 'white', ml: 0.5 }}
@@ -691,19 +677,19 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         </PlayerContainer>
       );
     }
-    
+
     if (isImage) {
       return (
-        <Box 
-          sx={{ 
-            width, 
-            height, 
+        <Box
+          sx={{
+            width,
+            height,
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
           }}
         >
-          <Box 
-            sx={{ 
+          <Box
+            sx={{
               position: 'relative',
               overflow: 'hidden',
               borderRadius: 1,
@@ -711,46 +697,46 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
               flexGrow: 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
             }}
           >
             <img
               ref={imageRef}
               src={fileUrl}
               alt={fileName}
-              style={{ 
-                maxWidth: '100%', 
+              style={{
+                maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain'
+                objectFit: 'contain',
               }}
               onLoad={handleImageLoad}
               onError={handleError}
             />
-            
+
             {/* Download button for image */}
-            <Box 
-              sx={{ 
+            <Box
+              sx={{
                 position: 'absolute',
                 top: 8,
                 right: 8,
                 opacity: 0.7,
                 '&:hover': {
-                  opacity: 1
-                }
+                  opacity: 1,
+                },
               }}
             >
               <Tooltip title="Download">
-                <IconButton 
+                <IconButton
                   href={fileUrl}
                   download={fileName}
                   target="_blank"
                   rel="noopener noreferrer"
-                  sx={{ 
+                  sx={{
                     bgcolor: 'rgba(0, 0, 0, 0.5)',
                     color: 'white',
                     '&:hover': {
-                      bgcolor: 'rgba(0, 0, 0, 0.7)'
-                    }
+                      bgcolor: 'rgba(0, 0, 0, 0.7)',
+                    },
                   }}
                   size="small"
                 >
@@ -762,7 +748,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         </Box>
       );
     }
-    
+
     if (isPdf) {
       return (
         <Box sx={{ width, height }}>
@@ -773,12 +759,12 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
             height={typeof height === 'number' ? height : 600}
             style={{ borderRadius: theme.shape.borderRadius }}
           >
-            <Box 
-              sx={{ 
-                p: 3, 
+            <Box
+              sx={{
+                p: 3,
                 textAlign: 'center',
                 bgcolor: theme.palette.grey[100],
-                borderRadius: 1
+                borderRadius: 1,
               }}
             >
               <Typography variant="body1" gutterBottom>
@@ -801,13 +787,13 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         </Box>
       );
     }
-    
+
     // For text files and other unsupported formats
     return (
-      <Box 
-        sx={{ 
-          width, 
-          p: 3, 
+      <Box
+        sx={{
+          width,
+          p: 3,
           textAlign: 'center',
           bgcolor: theme.palette.grey[100],
           borderRadius: 1,
@@ -836,44 +822,58 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   // Render media information
   const renderMediaInfo = () => {
     if (Object.keys(mediaInfo).length === 0) return null;
-    
+
     return (
       <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" gutterBottom>File Information</Typography>
+        <Typography variant="subtitle2" gutterBottom>
+          File Information
+        </Typography>
         <Grid container spacing={1}>
           <Grid item xs={6} sm={3}>
-            <Typography variant="caption" color="text.secondary">Type</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Type
+            </Typography>
             <Typography variant="body2">{fileType.split('/')[1].toUpperCase()}</Typography>
           </Grid>
           <Grid item xs={6} sm={3}>
-            <Typography variant="caption" color="text.secondary">Size</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Size
+            </Typography>
             <Typography variant="body2">{formatFileSize(fileSize)}</Typography>
           </Grid>
-          
+
           {mediaInfo.dimensions && (
             <Grid item xs={6} sm={3}>
-              <Typography variant="caption" color="text.secondary">Dimensions</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Dimensions
+              </Typography>
               <Typography variant="body2">{mediaInfo.dimensions}</Typography>
             </Grid>
           )}
-          
+
           {mediaInfo.duration && (
             <Grid item xs={6} sm={3}>
-              <Typography variant="caption" color="text.secondary">Duration</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Duration
+              </Typography>
               <Typography variant="body2">{mediaInfo.duration}</Typography>
             </Grid>
           )}
-          
+
           {metadata.bitrate && (
             <Grid item xs={6} sm={3}>
-              <Typography variant="caption" color="text.secondary">Bitrate</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Bitrate
+              </Typography>
               <Typography variant="body2">{metadata.bitrate}</Typography>
             </Grid>
           )}
-          
+
           {metadata.codec && (
             <Grid item xs={6} sm={3}>
-              <Typography variant="caption" color="text.secondary">Codec</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Codec
+              </Typography>
               <Typography variant="body2">{metadata.codec}</Typography>
             </Grid>
           )}
@@ -884,6 +884,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
 
   return (
     <Box>
+      {isLoading && <CircularProgress color="primary" size={48} sx={{ mb: 2 }} />}
       {renderPlayer()}
       {renderMediaInfo()}
     </Box>
