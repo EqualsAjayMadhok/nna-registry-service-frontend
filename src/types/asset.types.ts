@@ -11,6 +11,7 @@ export interface Asset {
   gcpStorageUrl?: string;
   tags?: string[];
   files?: AssetFile[];
+  components?: string[]
   metadata?: Record<string, any>;
   order?: number;
   version?: VersionInfo;

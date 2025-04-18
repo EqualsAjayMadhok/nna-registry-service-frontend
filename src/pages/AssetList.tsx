@@ -134,12 +134,7 @@ const AssetList: React.FC = () => {
             >
               Organize
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              component={Link}
-              to="/assets/new"
-            >
+            <Button variant="contained" startIcon={<AddIcon />} component={Link} to="/assets/new">
               New Asset
             </Button>
           </Box>
@@ -157,7 +152,7 @@ const AssetList: React.FC = () => {
               fullWidth
               placeholder="Search assets..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -177,7 +172,7 @@ const AssetList: React.FC = () => {
                 label="Layer"
                 onChange={handleLayerChange}
               >
-                {layerOptions.map((option) => (
+                {layerOptions.map(option => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
@@ -216,11 +211,11 @@ const AssetList: React.FC = () => {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {assets.map((asset) => (
+          {assets.map(asset => (
             <Grid item xs={12} sm={6} md={4} key={asset.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" component="div">
+                  <Typography sx={{ wordBreak: 'break-word' }} variant="h6" component="div">
                     {asset.name}
                   </Typography>
                   <Chip
@@ -233,18 +228,11 @@ const AssetList: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     NNA: {asset.nna_address}
                   </Typography>
-                  <Typography variant="body2">
-                    {asset.description || 'No description'}
-                  </Typography>
+                  <Typography variant="body2">{asset.description || 'No description'}</Typography>
                   {asset.tags && asset.tags.length > 0 && (
                     <Box mt={1}>
-                      {asset.tags.map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          size="small"
-                          sx={{ mr: 0.5, mb: 0.5 }}
-                        />
+                      {asset.tags.map(tag => (
+                        <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
                       ))}
                     </Box>
                   )}

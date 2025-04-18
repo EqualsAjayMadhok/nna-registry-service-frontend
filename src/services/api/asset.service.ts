@@ -851,6 +851,14 @@ class AssetService {
       if (assetData.tags) formData.append('tags', JSON.stringify(assetData.tags));
       if (assetData?.metadata?.source)  formData.append('source', assetData.metadata?.source);
 
+      if(assetData.layer === "C" && assetData?.metadata?.components.length <= 0) {
+        throw Error("Components is required");
+      }
+
+      assetData?.metadata?.components.forEach((component: any) => {
+        formData.append("components", component);
+      });
+
       // Add the IDs of successfully uploaded files
       if (uploadedFiles.length > 0) {
         formData.append('fileIds', JSON.stringify(uploadedFiles.map(file => file.id)));

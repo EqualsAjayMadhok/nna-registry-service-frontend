@@ -149,6 +149,8 @@ const RegisterAssetPage: React.FC = () => {
 
   // Handle metadata form changes
   const handleMetadataChange = (data: AssetMetadata, isValid: boolean) => {
+    console.log(data, 'data');
+    
     setAssetMetadata(data);
     setAssetMetadataValid(isValid);
     updateStepCompletion(2, isValid);

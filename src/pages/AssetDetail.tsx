@@ -34,6 +34,7 @@ import {
   TextField,
   Badge,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -905,8 +906,23 @@ const AssetDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   Name
                 </Typography>
-                <Typography variant="body1">{asset.name}</Typography>
+                <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
+                  {asset.name}
+                </Typography>
               </Box>
+
+              {asset.layer === 'C' && (
+                <Box mb={2}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Components
+                  </Typography>
+                  <Stack mt={1} flexDirection="row" flexWrap="wrap" gap={1}>
+                    {asset.components?.map(item => (
+                      <Chip label={item} />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
 
               <Box mb={2}>
                 <Typography variant="subtitle2" color="text.secondary">

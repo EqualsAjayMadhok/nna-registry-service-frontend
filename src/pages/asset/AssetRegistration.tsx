@@ -191,6 +191,8 @@ const AssetRegistration: React.FC = () => {
         throw new Error('Metadata is required');
       }
 
+      console.log(metadata, 'metadatametadatametadata');
+
       // Prepare asset creation data
       const assetData = {
         name: humanFriendlyName || metadata.name,
@@ -201,6 +203,7 @@ const AssetRegistration: React.FC = () => {
         description: metadata.description,
         tags: metadata.tags,
         metadata: {
+          components: metadata?.layerSpecificData?.components?.map(item => item.value),
           source: metadata.source,
           isTrainable: metadata.trainingData?.isTrainable || false,
           trainingDescription: metadata.trainingData?.trainingDescription || '',

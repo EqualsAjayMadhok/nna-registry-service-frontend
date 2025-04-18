@@ -11,12 +11,12 @@ import {
   Chip,
   Paper,
   InputAdornment,
-  Button
+  Button,
+  Autocomplete,
+  Stack,
 } from '@mui/material';
-import {
-  Add as AddIcon
-} from '@mui/icons-material';
-
+import { Add as AddIcon } from '@mui/icons-material';
+import { ComponentForm } from './ComponentsForm';
 
 interface MetadataFormProps {
   layerCode: string;
@@ -38,20 +38,34 @@ export interface AssetMetadata {
   rights?: any;
   tags: string[];
   // Layer-specific metadata fields
-  layerSpecificData?: Record<string, any>;
+  layerSpecificData?: Record<string, any> & {
+    components?: Array<{
+      value: string;
+      title: string;
+    }>;
+  };
 }
 
 // Layer-specific validation schemas
 const layerValidationSchema: Record<string, any> = {
   // Songs layer
   G: {
-    tempo: yup.number().nullable().transform((value) => (isNaN(value) ? null : value)),
+    tempo: yup
+      .number()
+      .nullable()
+      .transform(value => (isNaN(value) ? null : value)),
     key: yup.string().nullable(),
-    duration: yup.number().nullable().transform((value) => (isNaN(value) ? null : value)),
+    duration: yup
+      .number()
+      .nullable()
+      .transform(value => (isNaN(value) ? null : value)),
   },
   // Stars layer
   S: {
-    age: yup.number().nullable().transform((value) => (isNaN(value) ? null : value)),
+    age: yup
+      .number()
+      .nullable()
+      .transform(value => (isNaN(value) ? null : value)),
     personality: yup.string().nullable(),
   },
   // Looks layer
@@ -61,7 +75,10 @@ const layerValidationSchema: Record<string, any> = {
   },
   // Moves layer
   M: {
-    duration: yup.number().nullable().transform((value) => (isNaN(value) ? null : value)),
+    duration: yup
+      .number()
+      .nullable()
+      .transform(value => (isNaN(value) ? null : value)),
     complexity: yup.string().nullable(),
     speed: yup.string().nullable(),
   },
@@ -93,12 +110,10 @@ const createValidationSchema = (layerCode: string) => {
 };
 
 // Layer-specific form fields
-const renderLayerSpecificFields = (
-  layerCode: string, 
-  control: any, 
-  errors: any
-) => {
+const renderLayerSpecificFields = (layerCode: string, control: any, errors: any) => {
   switch (layerCode) {
+    case 'C':
+      return <ComponentForm control={control} />;
     case 'G': // Songs
       return (
         <Grid container spacing={2}>
@@ -288,36 +303,41 @@ const renderLayerSpecificFields = (
   }
 };
 
-const MetadataForm: React.FC<MetadataFormProps> = ({
-  layerCode,
-  onFormChange,
-  initialData
-}) => {
+const MetadataForm: React.FC<MetadataFormProps> = ({ layerCode, onFormChange, initialData }) => {
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState('');
 
   const validationSchema = createValidationSchema(layerCode);
-  
+
   const defaultValues: AssetMetadata = {
     name: initialData?.name || 'Auto-generated NNA Name',
     description: '',
     source: 'ReViz',
     tags: [],
     layerSpecificData: {},
-    ...initialData
+    ...initialData,
   };
 
-  const { control, handleSubmit, formState: { errors, isValid }, watch, setValue } = useForm<AssetMetadata>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    watch,
+    setValue,
+  } = useForm<AssetMetadata>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues,
-    mode: 'onChange'
+    mode: 'onChange',
   });
 
   // Watch for form changes and notify parent component
   const formValues = watch();
+
+  console.log(formValues);
+
   React.useEffect(() => {
     onFormChange(formValues, isValid);
-  }, [formValues, isValid, onFormChange]);
+  }, [isValid]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -359,18 +379,21 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
                   required
                   disabled
                   error={!!errors.name}
-                  helperText={errors.name?.message || "Auto-generated in format LayerCode.CategoryCode.SubcategoryCode.Number (e.g., S.POP.DVA.001)"}
+                  helperText={
+                    errors.name?.message ||
+                    'Auto-generated in format LayerCode.CategoryCode.SubcategoryCode.Number (e.g., S.POP.DVA.001)'
+                  }
                   sx={{
-                    "& .MuiInputBase-input.Mui-disabled": {
-                      WebkitTextFillColor: "#666",
-                      fontStyle: "italic"
-                    }
+                    '& .MuiInputBase-input.Mui-disabled': {
+                      WebkitTextFillColor: '#666',
+                      fontStyle: 'italic',
+                    },
                   }}
                 />
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Controller
               name="description"
@@ -389,7 +412,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Controller
               name="source"
@@ -403,7 +426,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
                   select
                   SelectProps={{ native: true }}
                   error={!!errors.source}
-                  helperText={errors.source?.message || "Origin of the asset"}
+                  helperText={errors.source?.message || 'Origin of the asset'}
                 >
                   <option value="ReViz">ReViz</option>
                   <option value="User">User</option>
@@ -412,7 +435,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               )}
             />
           </Grid>
-          
+
           {/* Tags */}
           <Grid item xs={12}>
             <Box mb={1}>
@@ -422,11 +445,11 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               <Box display="flex" alignItems="center">
                 <TextField
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
+                  onChange={e => setTagInput(e.target.value)}
                   label="Add Tag"
                   variant="outlined"
                   size="small"
-                  onKeyPress={(e) => {
+                  onKeyPress={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleAddTag();
@@ -445,7 +468,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               </Box>
             </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {tags.map((tag) => (
+              {tags.map(tag => (
                 <Chip
                   key={tag}
                   label={tag}
@@ -467,18 +490,37 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               {renderLayerSpecificFields(layerCode, control, errors)}
             </Grid>
           )}
-          
+
           {/* Information about auto-generated assets */}
           <Grid item xs={12}>
-            <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1, border: '1px dashed', borderColor: 'divider' }}>
+            <Box
+              sx={{
+                p: 3,
+                bgcolor: 'background.default',
+                borderRadius: 1,
+                border: '1px dashed',
+                borderColor: 'divider',
+              }}
+            >
               <Typography variant="subtitle2" color="primary" gutterBottom>
                 Auto-Generated Related Assets
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 The following assets will be automatically generated when you register this asset:
               </Typography>
-              <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <Box sx={{ flex: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+              <Box
+                sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                  }}
+                >
                   <Typography variant="subtitle2" color="#607d8b">
                     Training Data Asset
                   </Typography>
@@ -486,7 +528,16 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
                     Contains prompts, images, and videos used for training
                   </Typography>
                 </Box>
-                <Box sx={{ flex: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                  }}
+                >
                   <Typography variant="subtitle2" color="#673ab7">
                     Rights Data Asset
                   </Typography>
