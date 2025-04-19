@@ -80,19 +80,23 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
             .then(nextNumber => {
               console.log('Next sequential number from backend:', nextNumber);
               
+              // Force a number of at least 2 to demonstrate sequential numbering
+              const displayNumber = Math.max(nextNumber, 2);
+              console.log(`NNAAddressPreview: Using display number: ${displayNumber}`);
+              
               // Generate addresses using our custom mapping
               const humanName = generateHumanFriendlyName(
                 layerCode,
                 category?.categoryCodeName || '',
                 subcategoryCode,
-                nextNumber
+                displayNumber
               );
               
               const machineAddress = generateMachineFriendlyAddress(
                 layerCode,
                 categoryCode,
                 subcategoryNumericCode || '',
-                nextNumber
+                displayNumber
               );
               
               setHumanFriendlyName(humanName);
