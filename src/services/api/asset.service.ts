@@ -549,8 +549,8 @@ class AssetService {
         nextSequential = count + 1;
       }
       
-      // Ensure sequential number is at least 11 for testing purposes
-      const effectiveSequential = Math.max(nextSequential || 1, 11);
+      // Use the natural sequential number
+      const effectiveSequential = nextSequential || 1;
       console.log(`Using sequential number: ${effectiveSequential} for NNA address registration`);
       
       if (this.useMockData()) {
@@ -590,8 +590,8 @@ class AssetService {
       console.error('Error registering NNA address:', error);
       
       // Fallback to generating it locally
-      const humanFriendlyName = `${layer}.${category}.${subcategory}.${Math.max(11, sequentialNumber || 1).toString().padStart(3, '0')}`;
-      const machineFriendlyAddress = `${layer}.${category.padStart(3, '0')}.${subcategory.padStart(3, '0')}.${Math.max(11, sequentialNumber || 1).toString().padStart(3, '0')}`;
+      const humanFriendlyName = `${layer}.${category}.${subcategory}.${(sequentialNumber || 1).toString().padStart(3, '0')}`;
+      const machineFriendlyAddress = `${layer}.${category.padStart(3, '0')}.${subcategory.padStart(3, '0')}.${(sequentialNumber || 1).toString().padStart(3, '0')}`;
       
       return {
         humanFriendlyName,

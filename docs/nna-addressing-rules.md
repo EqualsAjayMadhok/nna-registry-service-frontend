@@ -8,40 +8,42 @@ The NNA framework uses a dual addressing system:
 
 1. **Human-Friendly Names (HFN)** - Uses alphabetic codes for readability
    - Format: `[Layer].[Category].[Subcategory].[SequentialNumber]`
-   - Example: `S.POP.BAS.011`
+   - Example: `S.POP.BAS.001`
 
 2. **Machine-Friendly Addresses (MFA)** - Uses numeric codes for machine processing
    - Format: `[Layer].[CategoryNumeric].[SubcategoryNumeric].[SequentialNumber]`
-   - Example: `S.001.001.011`
+   - Example: `S.001.001.001`
 
 ## Sequential Numbering
 
-**IMPORTANT:** Sequential numbers in NNA addresses always start at `011` (not `001`).
+Sequential numbers follow standard incrementing rules:
 
 - Sequential numbers are padded with leading zeros to ensure 3 digits
-- The minimum sequential number is `011` (displayed as `011`)
-- This is enforced at the backend database level
+- The first asset in a subcategory gets `001`
+- Subsequent assets get `002`, `003`, etc.
 
 ### Technical Implementation
 
-The sequential numbering rule is enforced in several places:
+The sequential numbering rule is implemented in several places:
 
 1. **Backend API** (`assets.service.ts`):
    ```typescript
-   // Ensure sequential numbers start at 11 minimum
-   const sequentialNumber = Math.max(count + 1, 11);
+   const count = await this.assetModel.countDocuments({
+     layer,
+     category,
+     subcategory,
+   });
+   const sequentialNumber = count + 1;
    const sequential = sequentialNumber.toString().padStart(3, '0');
    ```
 
-2. **Frontend Configuration** (`index.html`):
-   ```javascript
-   window.MIN_SEQUENTIAL_NUMBER = 11;
-   ```
-
-3. **Frontend Utilities** (`nnaAddressing.ts`):
+2. **Frontend Utilities** (`nnaAddressing.ts`):
    ```typescript
-   // CRITICAL FIX: Ensure sequential number is ALWAYS at least 11
-   const effectiveNum = Math.max(nextNum, 11);
+   // Add 1 to get the next number in sequence
+   const nextNum = numericCount + 1;
+   
+   // Format with leading zeros to ensure 3 digits
+   return String(nextNum).padStart(3, '0');
    ```
 
 ## Layer Codes
@@ -76,14 +78,14 @@ Changes to the NNA addressing structure should follow these guidelines:
 
 ## FAQ
 
-**Q: Why do sequential numbers start at 011 instead of 001?**
+**Q: How are sequential numbers assigned?**
 
-A: This is a business requirement to ensure visual distinction in addressing. Starting at 011 instead of 001 makes it easier to distinguish between different assets and avoid confusion with default or placeholder values.
+A: Sequential numbers start at "001" for the first asset in a category/subcategory combination and increment by 1 for each new asset. The system maintains uniqueness within each taxonomy path.
 
-**Q: Can I use sequential numbers below 011?**
+**Q: What happens if I delete an asset?**
 
-A: No, the system enforces a minimum of 011 for all sequential numbers. Any attempt to use a lower number will automatically be adjusted to 011.
+A: The system does not reuse sequential numbers. If you delete asset "001", the next asset will still be "002" to maintain referential integrity.
 
-**Q: What happens to existing assets with sequential number 001?**
+**Q: Can I manually assign a sequential number?**
 
-A: Existing assets may still have sequential number 001. Consider running a database migration to update these assets if consistency is required.
+A: Yes, the system supports manual assignment of sequential numbers when creating assets. However, the system will validate that the number is not already in use within the same category/subcategory.

@@ -330,9 +330,9 @@ export function formatSequentialNumber(count: number = 0): string {
   // Add 1 to get the next number in sequence
   const nextNum = numericCount + 1;
   
-  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 11
-  const effectiveNum = Math.max(nextNum, 11);
-  console.log(`[NNA ADDRESSING] Using sequential=${effectiveNum} (original=${nextNum})`);
+  // Use the natural sequential number
+  const effectiveNum = nextNum;
+  console.log(`[NNA ADDRESSING] Using sequential=${effectiveNum}`);
   
   // Format with leading zeros to ensure 3 digits
   return String(effectiveNum).padStart(3, '0');
@@ -350,9 +350,9 @@ export function getNextSequentialNumberFromCount(count: number = 0): string {
   // Add 1 to get the next number in sequence
   const nextNum = numericCount + 1;
   
-  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 11
-  const effectiveNum = Math.max(nextNum, 11);
-  console.log(`[NNA ADDRESSING] Next sequential from count=${effectiveNum} (original=${nextNum})`);
+  // Use the natural sequential number
+  const effectiveNum = nextNum;
+  console.log(`[NNA ADDRESSING] Next sequential from count=${effectiveNum}`);
   
   // Format with leading zeros to ensure 3 digits
   return String(effectiveNum).padStart(3, '0');
