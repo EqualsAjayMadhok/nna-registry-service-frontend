@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Typography,
@@ -54,7 +54,12 @@ const StyledLinearProgress = styled(LinearProgress)(({ theme, value }) => ({
   },
 }));
 
-export interface FileUploaderProps {
+// Define interface for imperative handle
+export interface FileUploaderHandle {
+  clearAll: () => void;
+}
+
+interface FileUploaderProps {
   /**
    * Accept specific file types (MIME types)
    * @example 'image/*' for all images
@@ -170,7 +175,7 @@ interface UploadState {
   responses: FileUploadResponse[];
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({
+const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
   accept = 'image/*,audio/*,video/*,application/pdf',
   maxSize = 10 * 1024 * 1024, // 10MB
   maxFiles = 5,
@@ -187,7 +192,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   uploaderId = 'default-uploader',
   uploadLabel = 'Drag and drop files, or click to select files',
   disabled = false,
-}) => {
+}, ref) => {
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    clearAll,
+  }));
   const theme = useTheme();
   const [uploadState, setUploadState] = useState<UploadState>({
     uploads: new Map(),
@@ -587,6 +596,25 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         cancelUpload(id);
       }
     });
+  };
+
+  // Clear all files completely
+  const clearAll = () => {
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    // Clear the upload state
+    setUploadState({
+      uploads: new Map(),
+      selectedFiles: []
+    });
+    
+    // Notify parent component
+    if (onFilesSelected) {
+      onFilesSelected([]);
+    }
   };
 
   // Clear all error files

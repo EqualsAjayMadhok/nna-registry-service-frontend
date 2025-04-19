@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
 import assetService from '../../services/api/asset.service';
-import FileUploader from '../common/FileUploader';
+import FileUploader, { FileUploaderHandle } from '../common/FileUploader';
 import FilePreview from '../common/FilePreview';
 
 interface FileUploadProps {
@@ -229,7 +229,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   // Clear all files including those in retry queue
+  // Reference to FileUploader component
+  const fileUploaderRef = useRef<FileUploaderHandle>(null);
+
   const handleClearAll = () => {
+    // Clear the FileUploader component
+    if (fileUploaderRef.current) {
+      fileUploaderRef.current.clearAll();
+    }
+    
+    // Clear our local state
     setFiles([]);
     setRetryQueue([]);
     setError(null);
@@ -341,6 +350,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
           <FileUploader
+            ref={fileUploaderRef}
             accept={accept}
             maxSize={maxSize}
             options={options}
