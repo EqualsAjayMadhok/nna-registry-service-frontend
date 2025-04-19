@@ -58,26 +58,87 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       return;
     }
 
-    // Generate addresses using our custom mapping
-    const humanName = generateHumanFriendlyName(
-      layerCode,
-      category?.categoryCodeName || '',
-      subcategoryCode,
-      sequentialNumber
-    );
+    // Try to use the backend service to get proper sequential number via asset.service
+    const getNextSequentialNumber = async () => {
+      try {
+        // Import the layerConfig to use our updated function
+        const { getNextSequentialNumber } = await import('../../api/layerConfig');
+        
+        // Get the full layer and category options
+        const allLayers = taxonomyService.getLayers();
+        const selectedLayer = allLayers.find(l => l.code === layerCode);
+        
+        const categories = taxonomyService.getCategories(layerCode);
+        const selectedCategory = categories.find(c => c.code === categoryCode);
+        
+        const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
+        const selectedSubcategory = subcategories.find(s => s.code === subcategoryCode);
+        
+        if (selectedLayer && selectedCategory && selectedSubcategory) {
+          // Query the backend for the next sequential number
+          getNextSequentialNumber(selectedLayer, selectedCategory, selectedSubcategory)
+            .then(nextNumber => {
+              console.log('Next sequential number from backend:', nextNumber);
+              
+              // Generate addresses using our custom mapping
+              const humanName = generateHumanFriendlyName(
+                layerCode,
+                category?.categoryCodeName || '',
+                subcategoryCode,
+                nextNumber
+              );
+              
+              const machineAddress = generateMachineFriendlyAddress(
+                layerCode,
+                categoryCode,
+                subcategoryNumericCode || '',
+                nextNumber
+              );
+              
+              setHumanFriendlyName(humanName);
+              setMachineFriendlyAddress(machineAddress);
+              setIsValid(Boolean(humanName && machineAddress));
+            })
+            .catch(error => {
+              console.error('Error getting next sequential number:', error);
+              
+              // Fallback to using the provided sequentialNumber if there's an error
+              fallbackGenerateAddresses();
+            });
+        } else {
+          fallbackGenerateAddresses();
+        }
+      } catch (error) {
+        console.error('Error importing or using getNextSequentialNumber:', error);
+        fallbackGenerateAddresses();
+      }
+    };
     
-    const machineAddress = generateMachineFriendlyAddress(
-      layerCode,
-      categoryCode,
-      subcategoryNumericCode || '',
-      sequentialNumber
-    );
+    // Fallback function to generate addresses with the provided sequentialNumber
+    const fallbackGenerateAddresses = () => {
+      const humanName = generateHumanFriendlyName(
+        layerCode,
+        category?.categoryCodeName || '',
+        subcategoryCode,
+        sequentialNumber
+      );
+      
+      const machineAddress = generateMachineFriendlyAddress(
+        layerCode,
+        categoryCode,
+        subcategoryNumericCode || '',
+        sequentialNumber
+      );
+      
+      setHumanFriendlyName(humanName);
+      setMachineFriendlyAddress(machineAddress);
+      setIsValid(Boolean(humanName && machineAddress));
+    };
     
-    setHumanFriendlyName(humanName);
-    setMachineFriendlyAddress(machineAddress);
-    setIsValid(Boolean(humanName && machineAddress));
+    // Start the process
+    getNextSequentialNumber();
     
-  }, [layerCode, categoryCode, subcategoryNumericCode, subcategoryCode, sequentialNumber]);
+  }, [layerCode, categoryCode, subcategoryNumericCode, subcategoryCode, sequentialNumber, category?.categoryCodeName]);
 
   // Function to render address part explanation
   const renderAddressPart = (

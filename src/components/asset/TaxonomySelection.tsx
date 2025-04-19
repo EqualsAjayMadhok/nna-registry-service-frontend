@@ -112,7 +112,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       try {
         setCheckingUniqueness(true);
         
-        // Get category and subcategory names
+        // Get category and subcategory names/objects
         const category = categories.find(c => c.code === selectedCategoryCode);
         const subcategory = subcategories.find(s => s.code === selectedSubcategoryCode);
         
@@ -121,39 +121,36 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           return;
         }
         
-        // Generate human-friendly name using registry service
-        const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-          layerCode,
-          category.name,
-          subcategory.name,
-          sequentialNumber
-        );
+        // Get all layers to create LayerOption object
+        const allLayers = taxonomyService.getLayers();
+        const layer = allLayers.find(l => l.code === layerCode);
         
-        // Check if it already exists
-        const exists = await taxonomyService.checkNNAAddressExists(humanFriendlyName);
+        if (!layer) {
+          console.error('Could not find layer');
+          return;
+        }
         
-        if (exists) {
-          // If address exists, try to get the next available number
-          const nextNumber = taxonomyService.getNextSequentialNumber(
-            layerCode,
-            selectedCategoryCode,
-            selectedSubcategoryCode,
-            [sequentialNumber]
-          );
+        try {
+          // Try to get the next sequential number from the backend
+          // Import the function dynamically to avoid circular dependencies
+          const { getNextSequentialNumber } = await import('../../api/layerConfig');
+          
+          // Query the backend API
+          const nextNumber = await getNextSequentialNumber(layer, category, subcategory);
+          console.log(`Next sequential number for ${layerCode}.${category.code}.${subcategory.code}: ${nextNumber}`);
           
           setSequentialNumber(nextNumber);
-          setIsUnique(false);
           
-          // Generate updated human-friendly name with new sequential number
-          const updatedHumanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+          // Generate human-friendly name with the correct sequential number
+          const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
             layerCode,
             category.name,
             subcategory.name,
             nextNumber
           );
           
-          // Generate machine-friendly address with new sequential number
-          const updatedMachineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+          // Generate machine-friendly address with the correct sequential number
+          const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
             layerCode,
             category.name,
             subcategory.name,
@@ -162,24 +159,76 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           
           // Notify parent component of the address change
           if (onNNAAddressChange) {
-            onNNAAddressChange(updatedHumanFriendlyName, updatedMachineFriendlyAddress, nextNumber);
+            onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, nextNumber);
           }
-        } else {
+          
           setIsUnique(true);
           
-          // Generate machine-friendly address
-          const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+        } catch (error) {
+          console.error('Error getting next sequential number:', error);
+          
+          // Fall back to the old method if the API call fails
+          // Generate human-friendly name using registry service
+          const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
             layerCode,
             category.name,
             subcategory.name,
             sequentialNumber
           );
           
-          // Notify parent component of the address change
-          if (onNNAAddressChange) {
-            onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, sequentialNumber);
+          // Check if it already exists
+          const exists = await taxonomyService.checkNNAAddressExists(humanFriendlyName);
+          
+          if (exists) {
+            // If address exists, try to get the next available number
+            const nextNumber = taxonomyService.getNextSequentialNumber(
+              layerCode,
+              selectedCategoryCode,
+              selectedSubcategoryCode,
+              [sequentialNumber]
+            );
+            
+            setSequentialNumber(nextNumber);
+            setIsUnique(false);
+            
+            // Generate updated human-friendly name with new sequential number
+            const updatedHumanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+              layerCode,
+              category.name,
+              subcategory.name,
+              nextNumber
+            );
+            
+            // Generate machine-friendly address with new sequential number
+            const updatedMachineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+              layerCode,
+              category.name,
+              subcategory.name,
+              nextNumber
+            );
+            
+            // Notify parent component of the address change
+            if (onNNAAddressChange) {
+              onNNAAddressChange(updatedHumanFriendlyName, updatedMachineFriendlyAddress, nextNumber);
+            }
+          } else {
+            setIsUnique(true);
+            
+            // Generate machine-friendly address
+            const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+              layerCode,
+              category.name,
+              subcategory.name,
+              sequentialNumber
+            );
+            
+            // Notify parent component of the address change
+            if (onNNAAddressChange) {
+              onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, sequentialNumber);
+            }
           }
         }
+        
       } catch (err) {
         console.error('Error checking address uniqueness:', err);
       } finally {
@@ -188,7 +237,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     };
 
     checkAddressUniqueness();
-  }, [layerCode, selectedCategoryCode, selectedSubcategoryCode, sequentialNumber, onNNAAddressChange]);
+  }, [layerCode, selectedCategoryCode, selectedSubcategoryCode, categories, subcategories, onNNAAddressChange]);
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const categoryCode = event.target.value;
