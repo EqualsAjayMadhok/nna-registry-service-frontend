@@ -11,6 +11,16 @@
     "GENERATE_SOURCEMAP": "false",
     "REACT_APP_BUILD_TIME": "${Date.now()}"
   },
+  "github": {
+    "enabled": true,
+    "silent": false,
+    "autoJobCancelation": true
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
   "routes": [
     {
       "src": "/static/(.*)",

@@ -3,6 +3,9 @@ name: Frontend CI/CD
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches: [ main ]
   # Allow manual triggering from GitHub Actions tab
@@ -35,16 +38,19 @@ jobs:
         run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
         
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
-          # Don't use cache by default
-          cache: 'npm'
+          # Only use cache if specifically requested
+          cache: ${{ github.event.inputs.cache_level == 'npm' || github.event.inputs.cache_level == 'full' && 'npm' || 'none' }}
           
       - name: Install dependencies
         run: |
-          echo "Installing dependencies..."
-          npm ci
+          echo "Installing with CLEAN dependencies (no cache)"
+          npm cache clean --force
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm install
           
       - name: Clean build directory
         run: |
@@ -61,8 +67,8 @@ jobs:
         run: npm run build
         env:
           CI: false
-          REACT_APP_API_URL: https://registry.reviz.dev/api
-          REACT_APP_REAL_API_URL: https://registry.reviz.dev
+          REACT_APP_API_URL: https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api
+          REACT_APP_REAL_API_URL: https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api
           REACT_APP_ENV: production
           REACT_APP_USE_MOCK_DATA: false
           GENERATE_SOURCEMAP: false
