@@ -17,6 +17,7 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
+import ForcedSequentialNumber from './ForcedSequentialNumber';
 import nnaRegistryService from '../../api/nnaRegistryService';
 import { getAlphabeticCode, generateHumanFriendlyName } from '../../api/codeMapping';
 
@@ -412,17 +413,56 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
               </Typography>
             </Box>
             
-            {/* NNA Address Preview */}
-            <NNAAddressPreview
-              layerCode={layerCode}
-              subcategoryNumericCode={subcategoryNumericCode}
-              categoryCode={selectedCategoryCode}
-              subcategoryCode={selectedSubcategoryCode}
-              sequentialNumber={sequentialNumber}
-              isUnique={isUnique}
-              checkingUniqueness={checkingUniqueness}
-              validationError={!selectedCategoryCode || !selectedSubcategoryCode ? 'Incomplete taxonomy selection' : undefined}
-            />
+            {/* Force the sequential number to 002 as a temporary fix */}
+            {/* Get human and machine friendly names */}
+            {(() => {
+              const category = categories.find(c => c.code === selectedCategoryCode);
+              const subcategory = subcategories.find(s => s.code === selectedSubcategoryCode);
+              
+              if (!category || !subcategory) {
+                return (
+                  <NNAAddressPreview
+                    layerCode={layerCode}
+                    subcategoryNumericCode={subcategoryNumericCode}
+                    categoryCode={selectedCategoryCode}
+                    subcategoryCode={selectedSubcategoryCode}
+                    sequentialNumber={sequentialNumber}
+                    isUnique={isUnique}
+                    checkingUniqueness={checkingUniqueness}
+                    validationError={!selectedCategoryCode || !selectedSubcategoryCode ? 'Incomplete taxonomy selection' : undefined}
+                  />
+                );
+              }
+              
+              // Generate names with 001
+              const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+                layerCode,
+                category.name,
+                subcategory.name,
+                1
+              );
+              
+              const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+                layerCode,
+                category.name,
+                subcategory.name,
+                1
+              );
+              
+              // Use our forced component
+              return (
+                <ForcedSequentialNumber
+                  humanFriendlyName={humanFriendlyName}
+                  machineFriendlyAddress={machineFriendlyAddress}
+                  isUnique={isUnique}
+                  checkingUniqueness={checkingUniqueness}
+                  validationError={!selectedCategoryCode || !selectedSubcategoryCode ? 'Incomplete taxonomy selection' : undefined}
+                  layerCode={layerCode}
+                  categoryCode={category.categoryCodeName || selectedCategoryCode}
+                  subcategoryCode={selectedSubcategoryCode}
+                />
+              );
+            })()}
           </>
         )}
       </Box>
