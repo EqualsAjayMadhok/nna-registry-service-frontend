@@ -335,17 +335,16 @@ export function formatSequentialNumber(count: number = 0): string {
 }
 
 /**
- * Gets the next sequential number from a count, ensuring a minimum value for testing
+ * Gets the next sequential number from a count
  * @param count The current count of assets
- * @param minValue The minimum value to return (default is 2 for testing)
- * @returns Formatted sequential number with minimum value enforced
+ * @returns Formatted sequential number (e.g., "001", "002", etc.)
  */
-export function getNextSequentialNumberFromCount(count: number = 0, minValue: number = 2): string {
+export function getNextSequentialNumberFromCount(count: number = 0): string {
   // Ensure we're working with a number
   const numericCount = Number(count) || 0;
   
-  // Add 1 to get the next number in sequence, but ensure it meets the minimum
-  const nextNum = Math.max(numericCount + 1, minValue);
+  // Add 1 to get the next number in sequence
+  const nextNum = numericCount + 1;
   
   // Format with leading zeros to ensure 3 digits
   return String(nextNum).padStart(3, '0');

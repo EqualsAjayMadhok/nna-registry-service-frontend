@@ -150,10 +150,10 @@ export const getNextSequentialNumber = async (
   try {
     console.log(`[layerConfig] Getting next sequential number for ${layer.code}.${category.code}.${subcategory.code}`);
     
-    // Import directly from the new utility for cleaner implementation
+    // Import directly from the asset count service
     const { getExistingAssetsCount } = await import('../utils/assetCountService');
     
-    // Get the count from the dedicated service
+    // Get the count from the backend via our service
     const count = await getExistingAssetsCount(
       layer.code,
       category.code,
@@ -162,15 +162,14 @@ export const getNextSequentialNumber = async (
     
     console.log(`[layerConfig] Got count ${count} for ${layer.code}.${category.code}.${subcategory.code}`);
     
-    // Always ensure a minimum of 2 for testing purposes
-    // This guarantees we'll see S.POP.BAS.002 instead of 001
-    const result = Math.max(count + 1, 2);
+    // Next sequential number is count + 1
+    const nextNumber = count + 1;
     
-    console.log(`[layerConfig] Returning sequential number: ${result}`);
-    return result;
+    console.log(`[layerConfig] Returning sequential number: ${nextNumber}`);
+    return nextNumber;
   } catch (error) {
     console.error('[layerConfig] Error getting next sequential number:', error);
-    // Return a minimum of 2 even on error to demonstrate the feature
-    return 2;
+    // Return 1 as a safe fallback
+    return 1;
   }
 };

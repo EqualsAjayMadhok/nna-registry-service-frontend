@@ -58,68 +58,11 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       return;
     }
 
-    // Try to use the backend service to get proper sequential number via asset.service
-    const getNextSequentialNumber = async () => {
-      try {
-        // Import the layerConfig to use our updated function
-        const { getNextSequentialNumber } = await import('../../api/layerConfig');
-        
-        // Get the full layer and category options
-        const allLayers = taxonomyService.getLayers();
-        const selectedLayer = allLayers.find(l => l.code === layerCode);
-        
-        const categories = taxonomyService.getCategories(layerCode);
-        const selectedCategory = categories.find(c => c.code === categoryCode);
-        
-        const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
-        const selectedSubcategory = subcategories.find(s => s.code === subcategoryCode);
-        
-        if (selectedLayer && selectedCategory && selectedSubcategory) {
-          // Query the backend for the next sequential number
-          getNextSequentialNumber(selectedLayer, selectedCategory, selectedSubcategory)
-            .then(nextNumber => {
-              console.log('Next sequential number from backend:', nextNumber);
-              
-              // Force a number of at least 2 to demonstrate sequential numbering
-              const displayNumber = Math.max(nextNumber, 2);
-              console.log(`NNAAddressPreview: Using display number: ${displayNumber}`);
-              
-              // Generate addresses using our custom mapping
-              const humanName = generateHumanFriendlyName(
-                layerCode,
-                category?.categoryCodeName || '',
-                subcategoryCode,
-                displayNumber
-              );
-              
-              const machineAddress = generateMachineFriendlyAddress(
-                layerCode,
-                categoryCode,
-                subcategoryNumericCode || '',
-                displayNumber
-              );
-              
-              setHumanFriendlyName(humanName);
-              setMachineFriendlyAddress(machineAddress);
-              setIsValid(Boolean(humanName && machineAddress));
-            })
-            .catch(error => {
-              console.error('Error getting next sequential number:', error);
-              
-              // Fallback to using the provided sequentialNumber if there's an error
-              fallbackGenerateAddresses();
-            });
-        } else {
-          fallbackGenerateAddresses();
-        }
-      } catch (error) {
-        console.error('Error importing or using getNextSequentialNumber:', error);
-        fallbackGenerateAddresses();
-      }
-    };
-    
-    // Fallback function to generate addresses with the provided sequentialNumber
-    const fallbackGenerateAddresses = () => {
+    // Use the provided sequential number to generate addresses
+    const generateAddresses = () => {
+      console.log(`[NNAAddressPreview] Generating addresses for sequential number: ${sequentialNumber}`);
+      
+      // Generate human-friendly name with the provided sequential number
       const humanName = generateHumanFriendlyName(
         layerCode,
         category?.categoryCodeName || '',
@@ -127,6 +70,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         sequentialNumber
       );
       
+      // Generate machine-friendly address with the provided sequential number
       const machineAddress = generateMachineFriendlyAddress(
         layerCode,
         categoryCode,
@@ -134,13 +78,17 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         sequentialNumber
       );
       
+      console.log(`[NNAAddressPreview] Generated HFN: ${humanName}`);
+      console.log(`[NNAAddressPreview] Generated MFA: ${machineAddress}`);
+      
+      // Update the component state
       setHumanFriendlyName(humanName);
       setMachineFriendlyAddress(machineAddress);
       setIsValid(Boolean(humanName && machineAddress));
     };
     
-    // Start the process
-    getNextSequentialNumber();
+    // Generate the addresses
+    generateAddresses();
     
   }, [layerCode, categoryCode, subcategoryNumericCode, subcategoryCode, sequentialNumber, category?.categoryCodeName]);
 

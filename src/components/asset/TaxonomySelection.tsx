@@ -122,121 +122,72 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           return;
         }
         
-        // Get all layers to create LayerOption object
-        const allLayers = taxonomyService.getLayers();
-        const layer = allLayers.find(l => l.code === layerCode);
+        // Import the asset count service directly
+        // This allows us to get the existing assets count from the backend
+        const { getExistingAssetsCount } = await import('../../utils/assetCountService');
         
-        if (!layer) {
-          console.error('Could not find layer');
-          return;
+        // Get the current count from the backend API
+        const count = await getExistingAssetsCount(layerCode, category.code, subcategory.code);
+        console.log(`Current asset count for ${layerCode}.${category.code}.${subcategory.code}: ${count}`);
+        
+        // Get the next sequential number (count + 1)
+        const nextNumber = count + 1;
+        console.log(`Next sequential number: ${nextNumber}`);
+        
+        setSequentialNumber(nextNumber);
+        
+        // Generate human-friendly name with the correct sequential number
+        const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+          layerCode,
+          category.name,
+          subcategory.name,
+          nextNumber
+        );
+        
+        // Generate machine-friendly address with the correct sequential number
+        const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+          layerCode,
+          category.name,
+          subcategory.name,
+          nextNumber
+        );
+        
+        // Notify parent component of the address change
+        if (onNNAAddressChange) {
+          onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, nextNumber);
         }
         
-        try {
-          // Try to get the next sequential number from the backend
-          // Import the function dynamically to avoid circular dependencies
-          const { getNextSequentialNumber } = await import('../../api/layerConfig');
-          
-          // Query the backend API
-          const nextNumber = await getNextSequentialNumber(layer, category, subcategory);
-          console.log(`Next sequential number for ${layerCode}.${category.code}.${subcategory.code}: ${nextNumber}`);
-          
-          // Force a value of at least 2 to demonstrate the sequential numbering
-          // This is a temporary workaround until the backend is properly connected
-          const displayNumber = Math.max(nextNumber, 2);
-          console.log(`Using display number: ${displayNumber}`);
-          
-          setSequentialNumber(displayNumber);
-          
-          // Generate human-friendly name with the correct sequential number
-          const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-            layerCode,
-            category.name,
-            subcategory.name,
-            displayNumber
-          );
-          
-          // Generate machine-friendly address with the correct sequential number
-          const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
-            layerCode,
-            category.name,
-            subcategory.name,
-            displayNumber
-          );
-          
-          // Notify parent component of the address change
-          if (onNNAAddressChange) {
-            onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, displayNumber);
-          }
-          
-          setIsUnique(true);
-          
-        } catch (error) {
-          console.error('Error getting next sequential number:', error);
-          
-          // Fall back to the old method if the API call fails
-          // Generate human-friendly name using registry service
-          const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-            layerCode,
-            category.name,
-            subcategory.name,
-            sequentialNumber
-          );
-          
-          // Check if it already exists
-          const exists = await taxonomyService.checkNNAAddressExists(humanFriendlyName);
-          
-          if (exists) {
-            // If address exists, try to get the next available number
-            const nextNumber = taxonomyService.getNextSequentialNumber(
-              layerCode,
-              selectedCategoryCode,
-              selectedSubcategoryCode,
-              [sequentialNumber]
-            );
-            
-            setSequentialNumber(nextNumber);
-            setIsUnique(false);
-            
-            // Generate updated human-friendly name with new sequential number
-            const updatedHumanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-              layerCode,
-              category.name,
-              subcategory.name,
-              nextNumber
-            );
-            
-            // Generate machine-friendly address with new sequential number
-            const updatedMachineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
-              layerCode,
-              category.name,
-              subcategory.name,
-              nextNumber
-            );
-            
-            // Notify parent component of the address change
-            if (onNNAAddressChange) {
-              onNNAAddressChange(updatedHumanFriendlyName, updatedMachineFriendlyAddress, nextNumber);
-            }
-          } else {
-            setIsUnique(true);
-            
-            // Generate machine-friendly address
-            const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
-              layerCode,
-              category.name,
-              subcategory.name,
-              sequentialNumber
-            );
-            
-            // Notify parent component of the address change
-            if (onNNAAddressChange) {
-              onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, sequentialNumber);
-            }
-          }
+        setIsUnique(true);
+        
+      } catch (error) {
+        console.error('Error getting asset count or generating NNA addresses:', error);
+        
+        // Fall back to a default sequential number if there was an error
+        const fallbackNumber = 1;
+        setSequentialNumber(fallbackNumber);
+        
+        // Generate human-friendly name with the fallback sequential number
+        const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
+          layerCode,
+          categories.find(c => c.code === selectedCategoryCode)?.name || '',
+          subcategories.find(s => s.code === selectedSubcategoryCode)?.name || '',
+          fallbackNumber
+        );
+        
+        // Generate machine-friendly address with the fallback sequential number
+        const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
+          layerCode,
+          categories.find(c => c.code === selectedCategoryCode)?.name || '',
+          subcategories.find(s => s.code === selectedSubcategoryCode)?.name || '',
+          fallbackNumber
+        );
+        
+        // Notify parent component of the address change
+        if (onNNAAddressChange) {
+          onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, fallbackNumber);
         }
         
-      } catch (err) {
-        console.error('Error checking address uniqueness:', err);
+        setIsUnique(true);
       } finally {
         setCheckingUniqueness(false);
       }
