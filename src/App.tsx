@@ -28,6 +28,8 @@ import TaxonomyPage from './pages/TaxonomyPage';
 import CollectionsPage from './pages/collections/CollectionsPage';
 import CollectionDetailPage from './pages/collections/CollectionDetailPage';
 import SequentialNumberTestPage from './pages/SequentialNumberTestPage';
+import SequentialNumberPublicTestPage from './pages/SequentialNumberPublicTestPage';
+import SequentialDemoRoot from './pages/SequentialDemoRoot';
 import NotFound from './pages/NotFound';
 
 // Set up Material UI theme
@@ -87,6 +89,19 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
+              {/* Public Test Pages */}
+              <Route path="/test/sequential-numbers" element={
+                <MainLayout>
+                  <SequentialNumberTestPage />
+                </MainLayout>
+              } />
+              
+              {/* Ultra Simple Public Test Page (no dependencies) */}
+              <Route path="/public-test" element={<SequentialNumberPublicTestPage />} />
+              
+              {/* Root Demo Page */}
+              <Route path="/sequential-demo" element={<SequentialDemoRoot />} />
+              
               {/* Main Application (Protected Routes) */}
               <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                 <Route path="/" element={<Navigate to="/dashboard" />} />
@@ -101,9 +116,6 @@ function App() {
                 <Route path="/assets/edit/:id" element={<UpdateAssetPage />} />
                 <Route path="/assets/:id" element={<AssetDetail />} />
                 <Route path="/taxonomy" element={<TaxonomyPage />} />
-                
-                {/* Test Pages */}
-                <Route path="/test/sequential-numbers" element={<SequentialNumberTestPage />} />
                 
                 {/* Collections Routes */}
                 <Route path="/collections" element={<CollectionsPage />} />
