@@ -360,6 +360,8 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
     disabled,
     noClick: false,
     noKeyboard: false,
+    // Pass the fileInputRef to get a reference to the file input element
+    inputRef: fileInputRef
   });
 
   // Effect to update isDragActive state
@@ -598,6 +600,9 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
     });
   };
 
+  // Reference to file input element
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   // Clear all files completely
   const clearAll = () => {
     // Reset the file input
@@ -608,12 +613,12 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
     // Clear the upload state
     setUploadState({
       uploads: new Map(),
-      selectedFiles: []
+      responses: []
     });
     
     // Notify parent component
-    if (onFilesSelected) {
-      onFilesSelected([]);
+    if (onFilesAdded) {
+      onFilesAdded([]);
     }
   };
 
@@ -714,19 +719,27 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
       {hasUploads && (
         <Box sx={{ mt: 2, mb: 2 }}>
           <Grid container spacing={1}>
-            {uploadCounts.pending > 0 && (
-              <Grid item>
-                <Chip label={`Pending: ${uploadCounts.pending}`} color="default" size="small" />
-              </Grid>
-            )}
-            {uploadCounts.uploading > 0 && (
-              <Grid item>
-                <Chip
-                  label={`Uploading: ${uploadCounts.uploading}`}
-                  color="primary"
-                  size="small"
-                  icon={<CircularProgress size={16} color="inherit" />}
-                />
+            {/* Calculate overall progress */}
+            {(uploadCounts.uploading > 0 || uploadCounts.pending > 0) && (
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ width: '100%', mr: 2 }}>
+                    <StyledLinearProgress
+                      variant="determinate"
+                      value={Array.from(uploadState.uploads.values())
+                        .filter(u => u.status === 'uploading' || u.status === 'pending')
+                        .reduce((acc, u) => acc + (u.progress || 0), 0) / 
+                        Math.max(1, (uploadCounts.uploading + uploadCounts.pending))}
+                    />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {uploadCounts.uploading > 0 
+                      ? `Uploading ${uploadCounts.uploading} files...` 
+                      : uploadCounts.pending > 0 
+                        ? `${uploadCounts.pending} files ready to upload` 
+                        : ''}
+                  </Typography>
+                </Box>
               </Grid>
             )}
             {uploadCounts.completed > 0 && (
