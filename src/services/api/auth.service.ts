@@ -27,25 +27,71 @@ class AuthService {
       if (apiConfig.useMockData) {
         console.log('AuthService: Using mock authentication data');
         
-        // For demo purposes, attempt to find a registered user, but allow fallback
-        // If emailOrUsername matches any registered mock email or username, use that user
-        const mockUserKey = isEmail ? 
-          `mock_email_${emailOrUsername}` : 
-          `mock_username_${emailOrUsername}`;
-          
-        if (localStorage.getItem(mockUserKey)) {
-          console.log('AuthService: Found registered mock user for', emailOrUsername);
+        // For demo purposes, attempt to find a registered user
+        // First check if there's a direct match with a username
+        const usernameKey = `mock_username_${emailOrUsername}`;
+        const userDataKey = `mock_user_${emailOrUsername}`;
+        
+        // Alternative - check if it's an email
+        const emailKey = isEmail ? `mock_email_${emailOrUsername}` : null;
+        
+        console.log('AuthService: Checking localStorage keys:', {
+          usernameKey, 
+          userDataKey, 
+          emailKey, 
+          usernameExists: localStorage.getItem(usernameKey),
+          userDataExists: localStorage.getItem(userDataKey),
+          emailExists: emailKey ? localStorage.getItem(emailKey) : null
+        });
+        
+        // First try to get stored user data by username
+        let mockUser = null;
+        
+        // First, try the exact username match
+        const storedUserData = localStorage.getItem(userDataKey);
+        if (storedUserData) {
+          try {
+            mockUser = JSON.parse(storedUserData);
+            console.log('AuthService: Found stored user data for username:', emailOrUsername);
+          } catch (e) {
+            console.error('Error parsing stored user data:', e);
+          }
         }
         
-        // Create a custom user based on the provided credentials
-        const mockUser = {
-          id: `user-${Date.now()}`,
-          username: isEmail ? emailOrUsername.split('@')[0] : emailOrUsername,
-          email: isEmail ? emailOrUsername : `${emailOrUsername}@example.com`,
-          role: 'user'
-        };
+        // If no stored user data and it's an email, try username lookup
+        if (!mockUser && isEmail) {
+          const username = emailOrUsername.split('@')[0];
+          const altUserDataKey = `mock_user_${username}`;
+          const altStoredUserData = localStorage.getItem(altUserDataKey);
+          
+          if (altStoredUserData) {
+            try {
+              mockUser = JSON.parse(altStoredUserData);
+              console.log('AuthService: Found stored user data by extracting username from email:', username);
+            } catch (e) {
+              console.error('Error parsing alternative stored user data:', e);
+            }
+          }
+        }
         
-        console.log('AuthService: Successfully authenticated as mock user:', mockUser);
+        // If still no user, generate a mock one
+        if (!mockUser) {
+          // Create a custom user based on the provided credentials
+          mockUser = {
+            id: `user-${Date.now()}`,
+            username: isEmail ? emailOrUsername.split('@')[0] : emailOrUsername,
+            email: isEmail ? emailOrUsername : `${emailOrUsername}@example.com`,
+            role: 'user'
+          };
+          console.log('AuthService: Created new mock user as no stored data found:', mockUser);
+          
+          // Store this user for future logins
+          localStorage.setItem(`mock_username_${mockUser.username}`, 'registered');
+          localStorage.setItem(`mock_email_${mockUser.email}`, 'registered');
+          localStorage.setItem(`mock_user_${mockUser.username}`, JSON.stringify(mockUser));
+        }
+        
+        console.log('AuthService: Successfully authenticated as user:', mockUser);
         
         return {
           user: mockUser,
@@ -92,8 +138,17 @@ class AuthService {
       
       const token = `mock-jwt-token-${Date.now()}`;
       
+      // Store registration in localStorage for later login
+      localStorage.setItem(`mock_email_${email}`, 'registered');
+      localStorage.setItem(`mock_username_${username}`, 'registered');
+      
+      // Also store the full user data for later retrieval
+      const userKey = `mock_user_${username}`;
+      localStorage.setItem(userKey, JSON.stringify(mockUser));
+      
       // Log success
       console.log('AuthService: Successfully registered mock user:', mockUser);
+      console.log('AuthService: Stored mock user data for future logins');
       
       return {
         user: mockUser,
@@ -161,7 +216,11 @@ class AuthService {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('mock_email_') || key.startsWith('mock_username_'))) {
+      if (key && (
+        key.startsWith('mock_email_') || 
+        key.startsWith('mock_username_') ||
+        key.startsWith('mock_user_')
+      )) {
         keysToRemove.push(key);
       }
     }
@@ -172,7 +231,17 @@ class AuthService {
       console.log('AuthService: Removed key from storage:', key);
     });
     
-    console.log('AuthService: Cleared mock storage');
+    console.log('AuthService: Cleared mock storage, found and removed', keysToRemove.length, 'keys');
+    
+    // Also dump all localStorage keys after clearing
+    const remainingKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        remainingKeys.push(key);
+      }
+    }
+    console.log('AuthService: Remaining localStorage keys:', remainingKeys);
   }
 }
 
