@@ -135,15 +135,7 @@ const Login: React.FC = () => {
               {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
 
-            <Button
-              variant="contained"
-              color="success"
-              fullWidth
-              onClick={demoLogin}
-              sx={{ mb: 2 }}
-            >
-              Quick Demo Login
-            </Button>
+{/* Quick Demo Login button removed - no longer functional */}
 
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <Link component={RouterLink} to="/register" variant="body2">

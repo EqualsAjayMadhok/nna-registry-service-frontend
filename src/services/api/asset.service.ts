@@ -3022,6 +3022,46 @@ class AssetService {
     this.mockSavedSearches[index].isDefault = true;
     return this.mockSavedSearches[index];
   }
+  
+  /**
+   * Get the count of existing assets with the specified layer, category, and subcategory
+   * This is used to generate sequential numbers for new assets
+   * @param params Layer, category, subcategory filters
+   * @returns Number of existing assets matching the criteria
+   */
+  async getExistingAssetsCount(params: {
+    layer: string;
+    category: string;
+    subcategory: string;
+  }): Promise<number> {
+    try {
+      if (this.useMockData()) {
+        // Mock implementation with some variation for testing
+        const mockCounts: Record<string, number> = {
+          'G.POP.BAS': 3,
+          'S.POP.BAS': 2,
+          'L.FAS.DRS': 1
+        };
+        
+        const key = `${params.layer}.${params.category}.${params.subcategory}`;
+        return Promise.resolve(mockCounts[key] || 0);
+      }
+
+      // Get count from backend
+      const response = await api.get<ApiResponse<{count: number}>>('/assets/count', { 
+        params: {
+          layer: params.layer,
+          category: params.category,
+          subcategory: params.subcategory
+        }
+      });
+      
+      return response.data.data.count;
+    } catch (error) {
+      console.error('Error getting existing assets count:', error);
+      return 0;
+    }
+  }
 }
 
 // Create a singleton instance

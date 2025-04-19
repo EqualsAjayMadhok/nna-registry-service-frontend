@@ -142,12 +142,24 @@ export const generateMachineFriendlyAddress = (
 };
 
 // Get the next sequential number for a layer-category-subcategory combination
-// In a real implementation, this would query the backend for the latest number
 export const getNextSequentialNumber = (
   layer: LayerOption,
   category: CategoryOption,
   subcategory: SubcategoryOption
 ): Promise<number> => {
-  // Mock implementation - in a real system, you would fetch this from the backend
-  return Promise.resolve(1);
+  // Query the backend to get the count of existing assets with the same layer, category, subcategory
+  // and return the next sequential number (count + 1)
+  return import('../services/api/asset.service').then(module => {
+    const assetService = module.default;
+    return assetService.getExistingAssetsCount({
+      layer: layer.code,
+      category: category.code,
+      subcategory: subcategory.code
+    }).then(count => {
+      return count + 1;
+    }).catch(error => {
+      console.error('Error getting next sequential number:', error);
+      return 1; // Fallback to 1 if the query fails
+    });
+  });
 };
