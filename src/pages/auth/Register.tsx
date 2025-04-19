@@ -64,14 +64,41 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Enhanced debug logging
+      console.log('Attempting registration with:', { username, email, password: '***' });
+      console.log('API config:', {
+        useMockData: window.localStorage.getItem('useMockData') || 'Not set in localStorage',
+        apiUrl: process.env.REACT_APP_API_URL,
+        realApiUrl: process.env.REACT_APP_REAL_API_URL
+      });
+      
       await register(username, email, password);
       navigate('/dashboard');
     } catch (err) {
       console.error('Registration error details:', err);
       
+      // Always log the full error object for debugging
+      console.error('Full error object:', JSON.stringify(err, null, 2));
+      
+      // Display any error response data if available
+      if (err && (err as any).response && (err as any).response.data) {
+        console.error('Error response data:', (err as any).response.data);
+        
+        // Try to get a more detailed message from the API response
+        const responseData = (err as any).response.data;
+        if (responseData.message) {
+          setError(`Server error: ${responseData.message}`);
+          return;
+        } else if (responseData.error) {
+          setError(`Server error: ${responseData.error}`);
+          return;
+        }
+      }
+      
       // Handle specific error cases
       if (err instanceof Error) {
         const errorMessage = err.message.toLowerCase();
+        console.log('Processing error message:', errorMessage);
         
         if (errorMessage.includes('username') && errorMessage.includes('taken')) {
           setError('This username is already taken. Please choose another one.');
@@ -83,7 +110,8 @@ const Register: React.FC = () => {
         } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
           setError('Network error. Please check your internet connection and try again.');
         } else {
-          setError(errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1));
+          // Display the full error message for better debugging
+          setError(`Error: ${err.message}`);
         }
       } else {
         setError('Registration failed. Please check your inputs and try again.');

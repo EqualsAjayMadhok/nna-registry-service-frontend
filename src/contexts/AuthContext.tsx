@@ -90,7 +90,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
 
+      console.log("AuthContext: Starting registration process");
       const { user: userData, token } = await authService.register(username, email, password);
+      console.log("AuthContext: Registration successful, received user data", userData);
       
       // Store token in localStorage
       localStorage.setItem('accessToken', token);
@@ -99,8 +101,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      throw err;
+      console.error("AuthContext: Registration error:", err);
+      
+      // Improve error handling by preserving more details
+      let errorMessage = 'Registration failed';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        // Try to extract error message from axios or other error objects
+        if ('response' in err && err.response && typeof err.response === 'object') {
+          const response = err.response as any;
+          if (response.data && response.data.message) {
+            errorMessage = response.data.message;
+          } else if (response.data && response.data.error) {
+            errorMessage = response.data.error;
+          } else if (response.statusText) {
+            errorMessage = `Server error: ${response.statusText}`;
+          }
+        }
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage); // Throw with enhanced error message
     } finally {
       setLoading(false);
     }
