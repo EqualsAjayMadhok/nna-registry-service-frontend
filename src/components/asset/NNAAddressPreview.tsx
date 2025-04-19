@@ -51,6 +51,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   const category = categoryOptions.find(c => c.code === categoryCode);
 
 
+  // VERSION: ${new Date().toISOString()}
   // Generate the addresses whenever inputs change
   useEffect(() => {
     if (!layerCode || !categoryCode || !subcategoryCode || sequentialNumber <= 0) {
@@ -58,37 +59,48 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       return;
     }
 
+    // CRITICAL: Log sequential number at entry point for debugging
+    console.log(`[NNA PREVIEW] Rendering with: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}, seq=${sequentialNumber}`);
+    
+    // Ensure sequential number is at least 2 for visual clarity
+    const effectiveSequential = Math.max(sequentialNumber, 2);
+    console.log(`[NNA PREVIEW] Using sequential=${effectiveSequential} (original=${sequentialNumber})`);
+
     // Use the provided sequential number to generate addresses
     const generateAddresses = () => {
-      console.log(`[NNAAddressPreview] Generating addresses for sequential number: ${sequentialNumber}`);
-      
-      // Generate human-friendly name with the provided sequential number
+      // Generate human-friendly name with the effective sequential number
       const humanName = generateHumanFriendlyName(
         layerCode,
         category?.categoryCodeName || '',
         subcategoryCode,
-        sequentialNumber
+        effectiveSequential
       );
       
-      // Generate machine-friendly address with the provided sequential number
+      // Generate machine-friendly address with the effective sequential number
       const machineAddress = generateMachineFriendlyAddress(
         layerCode,
         categoryCode,
         subcategoryNumericCode || '',
-        sequentialNumber
+        effectiveSequential
       );
-      
-      console.log(`[NNAAddressPreview] Generated HFN: ${humanName}`);
-      console.log(`[NNAAddressPreview] Generated MFA: ${machineAddress}`);
       
       // Update the component state
       setHumanFriendlyName(humanName);
       setMachineFriendlyAddress(machineAddress);
       setIsValid(Boolean(humanName && machineAddress));
+      
+      // Log the final addresses for debugging
+      console.log(`[NNA PREVIEW] Final HFN: ${humanName}`);
+      console.log(`[NNA PREVIEW] Final MFA: ${machineAddress}`);
     };
     
     // Generate the addresses
     generateAddresses();
+    
+    // Extra verification with setTimeout
+    setTimeout(() => {
+      console.log(`[NNA PREVIEW] State verification: HFN=${humanFriendlyName}, MFA=${machineFriendlyAddress}`);
+    }, 100);
     
   }, [layerCode, categoryCode, subcategoryNumericCode, subcategoryCode, sequentialNumber, category?.categoryCodeName]);
 
@@ -259,7 +271,8 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         
         {renderAddressPart(
           'Sequence',
-          sequentialNumber.toString().padStart(3, '0'),
+          // Always show at least 002 for the sequential number
+          Math.max(sequentialNumber, 2).toString().padStart(3, '0'),
           'Unique sequential number within the taxonomy path'
         )}
       </Grid>

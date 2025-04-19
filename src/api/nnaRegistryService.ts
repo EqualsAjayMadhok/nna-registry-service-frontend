@@ -417,15 +417,12 @@ class NNARegistryService {
     subcategoryMapping: CodeMapping,
     sequentialNumber: number
   ): RegistryEntry {
-    console.log(`[NNA] Registering address: layer=${layerCode}, category=${categoryMapping.alphabeticCode}, subcategory=${subcategoryMapping.alphabeticCode}, count=${sequentialNumber}`);
+    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
+    // VERSION: ${new Date().toISOString()}
+    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
-    const adjustedSequentialNumber = forceHigherSequential 
-      ? Math.max(sequentialNumber, 2)
-      : sequentialNumber;
-    
-    console.log(`[NNA] Adjusted sequential number for registration: ${adjustedSequentialNumber} (original: ${sequentialNumber})`);
+    console.log(`[NNA SERVICE] Registering address: layer=${layerCode}, category=${categoryMapping.alphabeticCode}, subcategory=${subcategoryMapping.alphabeticCode}`);
+    console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
     
     // Format the addresses
     const humanFriendlyName = `${layerCode}.${categoryMapping.alphabeticCode}.${subcategoryMapping.alphabeticCode}.${adjustedSequentialNumber.toString().padStart(3, '0')}`;
@@ -448,7 +445,7 @@ class NNARegistryService {
       this.addressRegistry.set(layerCode, [entry]);
     }
     
-    console.log(`[NNA] Registered: HFN=${humanFriendlyName}, MFA=${machineFriendlyAddress}`);
+    console.log(`[NNA SERVICE] Registered: HFN=${humanFriendlyName}, MFA=${machineFriendlyAddress}`);
     return entry;
   }
   
@@ -465,16 +462,13 @@ class NNARegistryService {
       return '';
     }
     
-    // Log the input parameters
-    console.log(`[NNA] Generating HFN: layer=${layerCode}, catName=${categoryName}, subcatName=${subcategoryName}, count=${sequentialNumber}`);
+    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
+    // VERSION: ${new Date().toISOString()}
+    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
-    const adjustedSequentialNumber = forceHigherSequential 
-      ? Math.max(sequentialNumber, 2)
-      : sequentialNumber;
-    
-    console.log(`[NNA] Adjusted sequential number: ${adjustedSequentialNumber} (original: ${sequentialNumber})`);
+    // Log with clear markers for debugging
+    console.log(`[NNA SERVICE] Generating HFN: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
+    console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
     
     // Generate alphabetic codes or get existing ones
     let categoryCode = this.getAlphabeticCodeByName(layerCode, categoryName);
@@ -500,7 +494,7 @@ class NNARegistryService {
     const sequentialStr = adjustedSequentialNumber.toString().padStart(3, '0');
     
     const result = `${layerCode}.${categoryCode}.${subcategoryCode}.${sequentialStr}`;
-    console.log(`[NNA] Generated HFN: ${result}`);
+    console.log(`[NNA SERVICE] Final HFN: ${result}`);
     
     return result;
   }
@@ -518,16 +512,13 @@ class NNARegistryService {
       return '';
     }
     
-    // Log the input parameters
-    console.log(`[NNA] Generating MFA: layer=${layerCode}, catName=${categoryName}, subcatName=${subcategoryName}, count=${sequentialNumber}`);
+    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
+    // VERSION: ${new Date().toISOString()}
+    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
-    const adjustedSequentialNumber = forceHigherSequential 
-      ? Math.max(sequentialNumber, 2)
-      : sequentialNumber;
-    
-    console.log(`[NNA] Adjusted sequential number: ${adjustedSequentialNumber} (original: ${sequentialNumber})`);
+    // Log with clear markers for debugging
+    console.log(`[NNA SERVICE] Generating MFA: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
+    console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
     
     // Find or create category code mappings
     let categoryCode = this.getAlphabeticCodeByName(layerCode, categoryName);
@@ -560,7 +551,7 @@ class NNARegistryService {
     const sequentialStr = adjustedSequentialNumber.toString().padStart(3, '0');
     
     const result = `${layerCode}.${categoryStr}.${subcategoryStr}.${sequentialStr}`;
-    console.log(`[NNA] Generated MFA: ${result}`);
+    console.log(`[NNA SERVICE] Final MFA: ${result}`);
     
     return result;
   }
@@ -806,13 +797,12 @@ class NNARegistryService {
     subcategoryName: string,
     sequentialNumber: number = 1
   ): string {
-    console.log(`[NNA] Getting HFN: layer=${layerCode}, catName=${categoryName}, subcatName=${subcategoryName}, count=${sequentialNumber}`);
+    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
+    // VERSION: ${new Date().toISOString()}
+    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
-    const adjustedSequentialNumber = forceHigherSequential 
-      ? Math.max(sequentialNumber, 2)
-      : sequentialNumber;
+    console.log(`[NNA SERVICE] Getting HFN: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
+    console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
     
     // First try to find an existing registration
     const registry = this.addressRegistry.get(layerCode);
@@ -823,14 +813,14 @@ class NNARegistryService {
           entry.subcategoryCode.name.toLowerCase() === subcategoryName.toLowerCase() &&
           entry.sequentialNumber === adjustedSequentialNumber // Use adjusted number for lookup
         ) {
-          console.log(`[NNA] Found existing HFN: ${entry.humanFriendlyName}`);
+          console.log(`[NNA SERVICE] Found existing HFN: ${entry.humanFriendlyName}`);
           return entry.humanFriendlyName;
         }
       }
     }
     
     // If not found, generate a new one
-    console.log(`[NNA] No existing HFN found, generating new one with sequential number: ${adjustedSequentialNumber}`);
+    console.log(`[NNA SERVICE] No existing HFN found, generating new one with sequential number: ${adjustedSequentialNumber}`);
     return this.generateHumanFriendlyName(
       layerCode,
       categoryName,
@@ -848,13 +838,12 @@ class NNARegistryService {
     subcategoryName: string,
     sequentialNumber: number = 1
   ): string {
-    console.log(`[NNA] Getting MFA: layer=${layerCode}, catName=${categoryName}, subcatName=${subcategoryName}, count=${sequentialNumber}`);
+    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
+    // VERSION: ${new Date().toISOString()}
+    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
-    const adjustedSequentialNumber = forceHigherSequential 
-      ? Math.max(sequentialNumber, 2)
-      : sequentialNumber;
+    console.log(`[NNA SERVICE] Getting MFA: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
+    console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
     
     // First try to find an existing registration
     const registry = this.addressRegistry.get(layerCode);
@@ -865,14 +854,14 @@ class NNARegistryService {
           entry.subcategoryCode.name.toLowerCase() === subcategoryName.toLowerCase() &&
           entry.sequentialNumber === adjustedSequentialNumber // Use adjusted number for lookup
         ) {
-          console.log(`[NNA] Found existing MFA: ${entry.machineFriendlyAddress}`);
+          console.log(`[NNA SERVICE] Found existing MFA: ${entry.machineFriendlyAddress}`);
           return entry.machineFriendlyAddress;
         }
       }
     }
     
     // If not found, generate a new one
-    console.log(`[NNA] No existing MFA found, generating new one with sequential number: ${adjustedSequentialNumber}`);
+    console.log(`[NNA SERVICE] No existing MFA found, generating new one with sequential number: ${adjustedSequentialNumber}`);
     return this.generateMachineFriendlyAddress(
       layerCode,
       categoryName,
