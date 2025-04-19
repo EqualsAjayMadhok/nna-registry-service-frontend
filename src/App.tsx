@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
@@ -9,6 +9,8 @@ import NotificationsProvider from './contexts/NotificationsContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import DebugPanel from './components/common/DebugPanel';
+import { APP_VERSION } from './utils/version';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -64,6 +66,11 @@ const theme = createTheme({
 };
 
 function App() {
+  // Log application version on startup
+  useEffect(() => {
+    console.log(`NNA Registry Service - Version ${APP_VERSION}`);
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -71,6 +78,9 @@ function App() {
         <AuthProvider>
           <NotificationsProvider>
             <Router>
+              {/* Debug Panel - available in all routes */}
+              <DebugPanel />
+              
               <Routes>
               {/* Auth Pages */}
               <Route path="/login" element={<Login />} />
