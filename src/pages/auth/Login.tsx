@@ -33,36 +33,16 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // For demo, we'll always use the demo login
-    await demoLogin();
-  };
-
-  // For demo purposes - simplified login
-  const demoLogin = async () => {
+    
     setIsLoading(true);
     setError(null);
 
     try {
-      // Force the environment variable for mock data
-      // (window as any).process = {
-      //   ...((window as any).process || {}),
-      //   env: {
-      //     ...((window as any).process?.env || {}),
-      //     REACT_APP_USE_MOCK_DATA: 'true',
-      //   },
-      // };
-
-      // Set demo credentials for reference
-      // setEmail('demo@example.com');
-      // setPassword('password');
-
-      // Log in with demo credentials
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError('Demo login failed. Please refresh the page and try again.');
+      setError('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
