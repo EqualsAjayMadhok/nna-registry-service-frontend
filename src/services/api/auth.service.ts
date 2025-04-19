@@ -16,29 +16,61 @@ class AuthService {
     role: 'user'
   };
 
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(emailOrUsername: string, password: string): Promise<AuthResponse> {
     try {
-      console.log('Login attempt with mock data:', apiConfig.useMockData);
+      console.log('AuthService: Login attempt with:', emailOrUsername);
+      
+      // Check if input is email or username
+      const isEmail = emailOrUsername.includes('@');
+      console.log('AuthService: Detected input as:', isEmail ? 'email' : 'username');
       
       if (apiConfig.useMockData) {
-        console.log('Using mock authentication data');
+        console.log('AuthService: Using mock authentication data');
         
-        // For demo purposes, accept any credentials
-        // In a real app, you would validate email and password
+        // For demo purposes, attempt to find a registered user, but allow fallback
+        // If emailOrUsername matches any registered mock email or username, use that user
+        const mockUserKey = isEmail ? 
+          `mock_email_${emailOrUsername}` : 
+          `mock_username_${emailOrUsername}`;
+          
+        if (localStorage.getItem(mockUserKey)) {
+          console.log('AuthService: Found registered mock user for', emailOrUsername);
+        }
+        
+        // Create a custom user based on the provided credentials
+        const mockUser = {
+          id: `user-${Date.now()}`,
+          username: isEmail ? emailOrUsername.split('@')[0] : emailOrUsername,
+          email: isEmail ? emailOrUsername : `${emailOrUsername}@example.com`,
+          role: 'user'
+        };
+        
+        console.log('AuthService: Successfully authenticated as mock user:', mockUser);
+        
         return {
-          user: this.mockUser,
-          token: 'mock-jwt-token'
+          user: mockUser,
+          token: `mock-jwt-token-${Date.now()}`
         };
       }
 
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', {
-        email,
-        password
-      });
-      
-      return response.data.data as AuthResponse;
+      // For real API, try to determine if it's an email or username
+      if (isEmail) {
+        console.log('AuthService: Using email authentication with real API');
+        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', {
+          email: emailOrUsername,
+          password
+        });
+        return response.data.data as AuthResponse;
+      } else {
+        console.log('AuthService: Using username authentication with real API');
+        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', {
+          username: emailOrUsername,
+          password
+        });
+        return response.data.data as AuthResponse;
+      }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('AuthService: Login error:', error);
       throw new Error(error instanceof Error ? error.message : 'Login failed');
     }
   }

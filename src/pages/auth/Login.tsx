@@ -20,7 +20,7 @@ interface LocationState {
 }
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,18 +39,18 @@ const Login: React.FC = () => {
 
     try {
       // Basic validation
-      if (!email || !password) {
-        setError('Please enter both email and password');
-        return;
-      }
-
-      // Simple email validation
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError('Please enter a valid email address');
+      if (!emailOrUsername || !password) {
+        setError('Please enter both email/username and password');
         return;
       }
       
-      await login(email, password);
+      // Determine if input is email or username
+      const isEmail = emailOrUsername.includes('@');
+      
+      // Log the login attempt for debugging
+      console.log('Login attempt with:', isEmail ? 'email' : 'username', emailOrUsername);
+      
+      await login(emailOrUsername, password);
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
@@ -61,9 +61,9 @@ const Login: React.FC = () => {
         
         if (errorMessage.includes('invalid') && 
            (errorMessage.includes('credentials') || errorMessage.includes('password'))) {
-          setError('Invalid email or password. Please try again.');
+          setError('Invalid username/email or password. Please try again.');
         } else if (errorMessage.includes('not found') || errorMessage.includes('no user')) {
-          setError('No account found with this email. Please register first.');
+          setError('No account found with these credentials. Please register first.');
         } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
           setError('Network error. Please check your internet connection and try again.');
         } else {
@@ -114,13 +114,14 @@ const Login: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="emailOrUsername"
+              label="Email or Username"
+              name="emailOrUsername"
+              autoComplete="email username"
               autoFocus
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              value={emailOrUsername}
+              onChange={e => setEmailOrUsername(e.target.value)}
+              placeholder="Enter your email or username"
             />
             <TextField
               margin="normal"

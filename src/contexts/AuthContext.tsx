@@ -13,7 +13,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (emailOrUsername: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAdmin: boolean;
@@ -64,12 +64,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthentication();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (emailOrUsername: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       
-      const { user: userData, token } = await authService.login(email, password);
+      console.log('AuthContext: Login attempt with:', emailOrUsername);
+      const { user: userData, token } = await authService.login(emailOrUsername, password);
+      console.log('AuthContext: Successful login with:', userData);
       
       // Store token in localStorage
       localStorage.setItem('accessToken', token);
@@ -78,6 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
     } catch (err) {
+      console.error('AuthContext: Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
       throw err;
     } finally {
