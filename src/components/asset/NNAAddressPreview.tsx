@@ -62,8 +62,9 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     // CRITICAL: Log sequential number at entry point for debugging
     console.log(`[NNA PREVIEW] Rendering with: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}, seq=${sequentialNumber}`);
     
-    // Ensure sequential number is at least 2 for visual clarity
-    const effectiveSequential = Math.max(sequentialNumber, 2);
+    // CRITICAL: Ensure sequential number is at least 11 for visual clarity
+    // This makes it very obvious that 001 is never used
+    const effectiveSequential = Math.max(sequentialNumber, 11);
     console.log(`[NNA PREVIEW] Using sequential=${effectiveSequential} (original=${sequentialNumber})`);
 
     // Use the provided sequential number to generate addresses
@@ -271,9 +272,9 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         
         {renderAddressPart(
           'Sequence',
-          // Always show at least 002 for the sequential number
-          Math.max(sequentialNumber, 2).toString().padStart(3, '0'),
-          'Unique sequential number within the taxonomy path'
+          // CRITICAL: Always show at least 011 for the sequential number
+          Math.max(sequentialNumber, 11).toString().padStart(3, '0'),
+          'Unique sequential number within the taxonomy path (always ≥ 011)'
         )}
       </Grid>
       

@@ -35,7 +35,7 @@ import {
 } from '@mui/icons-material';
 import { Asset, AssetSearchParams } from '../../types/asset.types';
 import { PaginatedResponse } from '../../types/api.types';
-import AssetService from '../../services/api/asset.service';
+import assetService from '../../services/api/asset.service';
 import taxonomyService from '../../api/taxonomyService';
 import AssetCard from './AssetCard';
 import AdvancedFilters from './AdvancedFilters';
@@ -111,9 +111,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       let response: PaginatedResponse<Asset>;
       
       if (searchMode === 'advanced' || searchParams.searchGroup) {
-        response = await AssetService.advancedSearch(searchParams);
+        response = await assetService.advancedSearch(searchParams);
       } else {
-        response = await AssetService.getAssets(searchParams);
+        response = await assetService.getAssets(searchParams);
       }
       
       setAssets(response.items);

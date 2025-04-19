@@ -54,7 +54,7 @@ import {
   SearchGroup,
   SearchOperator 
 } from '../../types/asset.types';
-import AssetService from '../../services/api/asset.service';
+import assetService from '../../services/api/asset.service';
 import { format } from 'date-fns';
 
 interface AdvancedFiltersProps {
@@ -141,6 +141,10 @@ const OPERATORS_BY_TYPE: Record<SearchConditionType, { value: SearchComparisonOp
     { value: 'contains', label: 'Contains' },
     { value: 'notContains', label: 'Not Contains' },
   ],
+  field: [
+    { value: 'equals', label: 'Equals' },
+    { value: '=', label: 'Is' },
+  ],
 };
 
 // Define sorting options
@@ -212,7 +216,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   useEffect(() => {
     const loadSavedSearches = async () => {
       try {
-        const searches = await AssetService.getSavedSearches();
+        const searches = await assetService.getSavedSearches();
         setSavedSearches(searches);
       } catch (error) {
         console.error('Error loading saved searches:', error);
@@ -529,7 +533,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         isDefault: false
       };
       
-      const savedSearch = await AssetService.saveSearch(searchToSave);
+      const savedSearch = await assetService.saveSearch(searchToSave);
       setSavedSearches(prev => [...prev, savedSearch]);
       
       // Reset form
@@ -544,7 +548,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   // Delete a saved search
   const handleDeleteSavedSearch = async (id: string) => {
     try {
-      await AssetService.deleteSavedSearch(id);
+      await assetService.deleteSavedSearch(id);
       setSavedSearches(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Error deleting saved search:', error);
@@ -554,7 +558,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   // Set a saved search as default
   const handleSetDefaultSearch = async (id: string) => {
     try {
-      const updatedSearch = await AssetService.setDefaultSavedSearch(id);
+      const updatedSearch = await assetService.setDefaultSavedSearch(id);
       setSavedSearches(prev => prev.map(s => ({
         ...s,
         isDefault: s.id === id

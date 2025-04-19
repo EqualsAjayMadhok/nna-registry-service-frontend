@@ -57,7 +57,7 @@ import {
 import AssetUsageChart from '../../components/analytics/AssetUsageChart';
 import TopAssetsTable from '../../components/analytics/TopAssetsTable';
 import UsageMetricsCard from '../../components/analytics/UsageMetricsCard';
-import AssetService from '../../services/api/asset.service';
+import assetService from '../../services/api/asset.service';
 import {
   AssetAnalyticsFilters,
   AssetsByCategoryData,
@@ -227,7 +227,7 @@ const AssetAnalyticsDashboard: React.FC = () => {
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
-      const data = await AssetService.getAssetsAnalytics(filters);
+      const data = await assetService.getAssetsAnalytics(filters);
       setAnalyticsData(data);
     } catch (error) {
       console.error('Error fetching analytics data:', error);

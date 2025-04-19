@@ -37,7 +37,7 @@ export interface AssetFile {
 
 export type SearchOperator = 'AND' | 'OR';
 
-export type SearchConditionType = 'text' | 'date' | 'number' | 'boolean' | 'select' | 'tags';
+export type SearchConditionType = 'text' | 'date' | 'number' | 'boolean' | 'select' | 'tags' | 'field';
 
 export type SearchComparisonOperator =
   | 'equals'
@@ -52,7 +52,8 @@ export type SearchComparisonOperator =
   | 'lessThanOrEqual'
   | 'between'
   | 'in'
-  | 'exists';
+  | 'exists'
+  | '=';  // Simple equals operator for backward compatibility
 
 export interface SearchCondition {
   field: string;
@@ -103,7 +104,10 @@ export interface SavedSearch {
   id: string;
   name: string;
   description?: string;
-  params: AssetSearchParams;
+  params?: AssetSearchParams;
+  query?: SearchGroup; // Some implementations use query directly instead of params
+  sort?: string;
+  sortDirection?: 'asc' | 'desc';
   createdAt: string;
   userId: string;
   isDefault?: boolean;
@@ -117,11 +121,13 @@ export interface FileUpload {
   status: 'pending' | 'uploading' | 'completed' | 'error' | 'cancelled';
   error?: string;
   errorCode?: string; // Optional error code from server
-  abortController: AbortController;
+  abortController?: AbortController;
+  cancel?: () => void; // Function to cancel the upload
   startTime?: number; // Timestamp when upload started
   endTime?: number; // Timestamp when upload completed or failed
   estimatedTimeRemaining?: number; // Estimated seconds remaining
   uploadSpeed?: number; // Upload speed in bytes/second
+  response?: FileUploadResponse; // Response after successful upload
 }
 
 export interface FileUploadResponse {
@@ -143,6 +149,7 @@ export interface AssetCreateRequest {
   tags?: string[];
   metadata?: Record<string, any>;
   files?: File[];
+  sequentialNumber?: number; // Optional sequential number for NNA address
 }
 
 export interface AssetUpdateRequest {
@@ -178,8 +185,9 @@ export interface FileUploadOptions {
 
 export interface AssetUploadResult {
   asset: Asset;
-  uploadedFiles: FileUploadResponse[];
-  failedFiles: { file: File; error: string }[];
+  files?: FileUploadResponse[]; // Changed from uploadedFiles to files
+  uploadedFiles?: FileUploadResponse[]; // Kept for backward compatibility
+  failedFiles?: { file: File; error: string }[];
 }
 
 export interface BatchUploadItem {
@@ -196,7 +204,7 @@ export interface BatchUploadItem {
 
 export interface BatchItemMetadata {
   name?: string;
-  layer: string;
+  layer?: string; // Make layer optional for flexibility
   category?: string;
   subcategory?: string;
   description?: string;
@@ -225,23 +233,16 @@ export interface BatchUploadResult {
   totalCount: number;
   successCount: number;
   failureCount: number;
+  cancelCount?: number; // Add optional cancelCount field
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
-}
+// Import PaginatedResponse from api.types.ts instead of duplicating it here
 
 export interface CSVTemplateField {
   name: string;
   description: string;
   required: boolean;
-  example: string;
+  example?: string; // Make example optional
 }
 
 export interface CSVTemplate {
@@ -255,7 +256,7 @@ export interface CSVTemplate {
 export interface VersionInfo {
   number: string;
   createdAt: string;
-  createdBy: string;
+  createdBy?: string; // Make optional
   message: string;
   changes?: VersionChanges;
   hash?: string; // Unique hash for this version
@@ -336,11 +337,16 @@ export interface AssetAnalyticsFilters {
 export interface AssetUsageMetrics {
   totalViews: number;
   totalDownloads: number;
-  totalUniquePlatforms: number;
-  totalUniqueUsers: number;
-  viewsChange: number; // percentage change from previous period
-  downloadsChange: number; // percentage change from previous period
-  uniqueUsersChange: number; // percentage change from previous period
+  totalUniquePlatforms?: number;
+  totalUniqueUsers?: number;
+  totalAssets?: number; // Total number of assets
+  uniqueUsers?: number; // Alternative name for totalUniqueUsers
+  averageDailyViews?: number; // Average views per day
+  popularLayer?: string; // Most popular layer
+  popularCategory?: string; // Most popular category
+  viewsChange?: number; // percentage change from previous period
+  downloadsChange?: number; // percentage change from previous period
+  uniqueUsersChange?: number; // percentage change from previous period
 }
 
 export interface AssetTimeseriesDataPoint {
@@ -365,7 +371,8 @@ export interface TopAssetData {
   views: number;
   downloads: number;
   thumbnailUrl?: string;
-  createdBy: string;
+  createdBy?: string; // Make optional
+  registeredBy?: string; // Alternative field name
   createdAt: string;
   lastViewedAt?: string;
 }
@@ -398,8 +405,8 @@ export interface AssetsAnalyticsData {
   assetsByCategory: AssetsByCategoryData[];
   assetsByLayer: Record<string, number>;
   totalAssets: number;
-  newAssetsThisPeriod: number;
-  newAssetsPercentageChange: number;
+  newAssetsThisPeriod?: number; // Make optional
+  newAssetsPercentageChange?: number; // Make optional
 }
 
 /**

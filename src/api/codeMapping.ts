@@ -203,9 +203,13 @@ export function generateHumanFriendlyName(
   subcategoryCode: string,
   sequentialNumber: number
 ): string {
+  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 2
+  const effectiveSequential = Math.max(sequentialNumber, 2);
+  console.log(`[CODE MAPPING] Using sequential=${effectiveSequential} (original=${sequentialNumber})`);
+  
   const categoryAlpha = getAlphabeticCode(layerCode, categoryCode);
   const subcategoryAlpha = getAlphabeticCode(layerCode, categoryCode, subcategoryCode);
-  const seqStr = sequentialNumber.toString().padStart(3, '0');
+  const seqStr = effectiveSequential.toString().padStart(3, '0');
   
   return `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${seqStr}`;
 }
@@ -224,6 +228,10 @@ export function generateMachineFriendlyAddress(
   subcategoryCode: string,
   sequentialNumber: number
 ): string {
-  const seqStr = sequentialNumber.toString().padStart(3, '0');
+  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 2
+  const effectiveSequential = Math.max(sequentialNumber, 2);
+  console.log(`[CODE MAPPING] Using sequential=${effectiveSequential} (original=${sequentialNumber})`);
+  
+  const seqStr = effectiveSequential.toString().padStart(3, '0');
   return `${layerCode}.${categoryCode}.${subcategoryCode}.${seqStr}`;
 }

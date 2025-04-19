@@ -58,7 +58,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import MediaPlayer, { formatFileSize } from '../components/asset/MediaPlayer';
-import AssetService from '../services/api/asset.service';
+import assetService from '../services/api/asset.service';
 import { Asset, CreateVersionRequest, AssetRights } from '../types/asset.types';
 import taxonomyService from '../api/taxonomyService';
 import VersionHistory from '../components/asset/VersionHistory';
@@ -163,7 +163,7 @@ const AssetDetail: React.FC = () => {
         setLoading(true);
         if (!id) throw new Error('Asset ID is required');
 
-        const loadedAsset = await AssetService.getAssetById(id);
+        const loadedAsset = await assetService.getAssetById(id);
         if (loadedAsset.gcpStorageUrl) {
           const asset = await fetchMedia(loadedAsset.gcpStorageUrl);
 
@@ -269,12 +269,12 @@ const AssetDetail: React.FC = () => {
       // If switching back to current version
       if (versionNumber === asset?.version?.number) {
         // Just refresh the current asset
-        const currentAsset = await AssetService.getAssetById(id);
+        const currentAsset = await assetService.getAssetById(id);
         setAsset(currentAsset);
         setCurrentVersionNumber(currentAsset?.version?.number || '');
       } else {
         // Get the specific version
-        const versionedAsset = await AssetService.getAssetVersion(id, versionNumber);
+        const versionedAsset = await assetService.getAssetVersion(id, versionNumber);
         setAsset(versionedAsset);
         setCurrentVersionNumber(versionNumber);
       }
@@ -306,7 +306,7 @@ const AssetDetail: React.FC = () => {
         files: versionChanges.length > 0 ? versionChanges : undefined,
       };
 
-      const updatedAsset = await AssetService.createVersion(request);
+      const updatedAsset = await assetService.createVersion(request);
       setAsset(updatedAsset);
       setCurrentVersionNumber(updatedAsset?.version?.number || '');
       setCreateVersionDialogOpen(false);
@@ -324,7 +324,7 @@ const AssetDetail: React.FC = () => {
 
     try {
       setLoading(true);
-      const refreshedAsset = await AssetService.getAssetById(id);
+      const refreshedAsset = await assetService.getAssetById(id);
       setAsset(refreshedAsset);
 
       // If we were viewing a specific version, switch back to the current version

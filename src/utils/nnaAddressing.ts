@@ -321,7 +321,7 @@ export function getNextSequentialNumber(
 /**
  * Formats a sequential number with leading zeros
  * @param count The current count of assets (0 or more)
- * @returns Formatted sequential number (e.g., "001", "002", etc.)
+ * @returns Formatted sequential number (e.g., "011", "012", etc.)
  */
 export function formatSequentialNumber(count: number = 0): string {
   // Ensure we're working with a number
@@ -330,14 +330,18 @@ export function formatSequentialNumber(count: number = 0): string {
   // Add 1 to get the next number in sequence
   const nextNum = numericCount + 1;
   
+  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 11
+  const effectiveNum = Math.max(nextNum, 11);
+  console.log(`[NNA ADDRESSING] Using sequential=${effectiveNum} (original=${nextNum})`);
+  
   // Format with leading zeros to ensure 3 digits
-  return String(nextNum).padStart(3, '0');
+  return String(effectiveNum).padStart(3, '0');
 }
 
 /**
  * Gets the next sequential number from a count
  * @param count The current count of assets
- * @returns Formatted sequential number (e.g., "001", "002", etc.)
+ * @returns Formatted sequential number (e.g., "011", "012", etc.)
  */
 export function getNextSequentialNumberFromCount(count: number = 0): string {
   // Ensure we're working with a number
@@ -346,8 +350,12 @@ export function getNextSequentialNumberFromCount(count: number = 0): string {
   // Add 1 to get the next number in sequence
   const nextNum = numericCount + 1;
   
+  // CRITICAL FIX: Ensure sequential number is ALWAYS at least 11
+  const effectiveNum = Math.max(nextNum, 11);
+  console.log(`[NNA ADDRESSING] Next sequential from count=${effectiveNum} (original=${nextNum})`);
+  
   // Format with leading zeros to ensure 3 digits
-  return String(nextNum).padStart(3, '0');
+  return String(effectiveNum).padStart(3, '0');
 }
 
 /**

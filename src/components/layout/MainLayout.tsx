@@ -53,7 +53,11 @@ import { apiConfig } from '../../services/api/api';
 // Drawer width
 const drawerWidth = 240;
 
-const MainLayout: React.FC = () => {
+interface MainLayoutProps {
+  children?: React.ReactNode;
+}
+
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -347,7 +351,7 @@ const MainLayout: React.FC = () => {
           </Paper>
         )}
         
-        <Outlet />
+        {children || <Outlet />}
       </Box>
       
       {/* API Configuration Dialog */}

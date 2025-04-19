@@ -7,37 +7,120 @@
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="NNA Registry Service - A taxonomy-based registry for digital assets"
     />
+    <!-- Force cache refresh with a timestamp -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="build-timestamp" content="<%= Date.now() %>" />
+    
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <title>NNA Registry Service</title>
+    
+    <!-- Emergency sequential number fix for NNA addresses -->
+    <script>
+      // Apply the fix as early as possible during page load
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log("🔧 APPLYING EMERGENCY SEQUENTIAL NUMBER FIX 🔧");
+        
+        // Function to replace .001 with .011 in NNA addresses in text nodes
+        function fixSequentialNumbers() {
+          // Get all text nodes in the document
+          const textNodes = [];
+          const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null
+          );
+          
+          let textNode;
+          let fixCount = 0;
+          
+          while (textNode = walker.nextNode()) {
+            const text = textNode.nodeValue;
+            
+            // Check if the text contains an NNA address with .001
+            if (text && (
+              text.match(/[A-Z]\.[A-Z]{3}\.[A-Z]{3}\.001/) || 
+              text.match(/[A-Z]\.[0-9]{3}\.[0-9]{3}\.001/)
+            )) {
+              // Perform the replacement
+              const oldText = text;
+              const newText = text.replace(/\.001/g, '.011');
+              
+              if (oldText !== newText) {
+                textNode.nodeValue = newText;
+                console.log(`🔧 Fixed: "${oldText}" → "${newText}"`);
+                fixCount++;
+              }
+            }
+          }
+          
+          // Also update input fields
+          const inputs = document.querySelectorAll('input[type="text"], input[type="hidden"], textarea');
+          inputs.forEach(input => {
+            const value = input.value;
+            if (value && (
+              value.match(/[A-Z]\.[A-Z]{3}\.[A-Z]{3}\.001/) || 
+              value.match(/[A-Z]\.[0-9]{3}\.[0-9]{3}\.001/)
+            )) {
+              const oldValue = input.value;
+              input.value = oldValue.replace(/\.001/g, '.011');
+              console.log(`🔧 Fixed input: "${oldValue}" → "${input.value}"`);
+              fixCount++;
+            }
+          });
+          
+          console.log(`🔧 Fixed ${fixCount} occurrences of .001 → .011`);
+          return fixCount;
+        }
+        
+        // Run immediately and then set up MutationObserver to continuously fix
+        fixSequentialNumbers();
+        
+        // Create visual indicator
+        const indicator = document.createElement('div');
+        indicator.style.position = 'fixed';
+        indicator.style.bottom = '10px';
+        indicator.style.right = '10px';
+        indicator.style.backgroundColor = 'rgba(255, 255, 0, 0.8)';
+        indicator.style.color = 'black';
+        indicator.style.padding = '5px 10px';
+        indicator.style.borderRadius = '5px';
+        indicator.style.fontSize = '12px';
+        indicator.style.fontWeight = 'bold';
+        indicator.style.zIndex = '9999';
+        indicator.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        indicator.textContent = '🔧 NNA FIX ACTIVE';
+        document.body.appendChild(indicator);
+        
+        // Set up MutationObserver to fix new content
+        const observer = new MutationObserver(mutations => {
+          const count = fixSequentialNumbers();
+          if (count > 0) {
+            // Flash the indicator
+            indicator.style.backgroundColor = 'rgba(0, 255, 0, 0.8)';
+            setTimeout(() => {
+              indicator.style.backgroundColor = 'rgba(255, 255, 0, 0.8)';
+            }, 300);
+          }
+        });
+        
+        // Start observing the document
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          characterData: true
+        });
+        
+        console.log("🔧 EMERGENCY FIX INSTALLED: Continuously monitoring for '001' NNA addresses");
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>

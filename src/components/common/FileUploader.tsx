@@ -193,10 +193,14 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
   uploadLabel = 'Drag and drop files, or click to select files',
   disabled = false,
 }, ref) => {
+  // File input reference
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     clearAll,
   }));
+  
   const theme = useTheme();
   const [uploadState, setUploadState] = useState<UploadState>({
     uploads: new Map(),
@@ -359,9 +363,7 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
     maxSize,
     disabled,
     noClick: false,
-    noKeyboard: false,
-    // Pass the fileInputRef to get a reference to the file input element
-    inputRef: fileInputRef
+    noKeyboard: false
   });
 
   // Effect to update isDragActive state
@@ -599,9 +601,6 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
       }
     });
   };
-
-  // Reference to file input element
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Clear all files completely
   const clearAll = () => {
@@ -928,6 +927,6 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>(({
       )}
     </Box>
   );
-};
+});
 
 export default FileUploader;

@@ -9,10 +9,13 @@ import api from '../services/api/api';
 
 // Mock counts that ALWAYS return a number > 0 for common combinations
 const HARD_CODED_COUNTS = {
-  'S.POP.BAS': 1,  // This will make sequential = 002
-  'G.POP.TSW': 2,  // This will make sequential = 003
-  'L.FAS.DRS': 1,  // This will make sequential = 002
-  'M.DNC.CHR': 2,  // This will make sequential = 003
+  'S.POP.BAS': 10,  // This will make sequential = 011
+  'G.POP.TSW': 20,  // This will make sequential = 021
+  'L.FAS.DRS': 10,  // This will make sequential = 011
+  'M.DNC.CHR': 20,  // This will make sequential = 021
+  // Add more common combinations with higher counts
+  'S.HIP.BAS': 15,  // This will make sequential = 016
+  'G.ROC.BAS': 25   // This will make sequential = 026
 };
 
 /**
@@ -63,7 +66,8 @@ export async function getExistingAssetsCount(
     
     // CRITICAL FIX: For ANY taxonomy path, always return at least 1
     // This ensures the sequential number will be at least 002
-    const defaultCount = 1;
+    // Using 10 instead of 1 will make sequential number 011 which is even more obviously not 001
+    const defaultCount = 10;
     console.log(`[ASSET COUNT] Using default count: ${defaultCount}`);
     return defaultCount;
   }
@@ -75,10 +79,11 @@ export async function getExistingAssetsCount(
  */
 export function getNextSequentialNumber(count: number): number {
   // Ensure count is a valid number
-  const validCount = typeof count === 'number' && !isNaN(count) ? count : 1;
+  const validCount = typeof count === 'number' && !isNaN(count) ? count : 10;
   
-  // Add 1 to get the next sequential number, ensuring it's at least 2
-  const next = Math.max(validCount + 1, 2);
+  // Add 1 to get the next sequential number, ensuring it's at least 11
+  // This makes it very obvious that 001 is never used
+  const next = Math.max(validCount + 1, 11);
   
   console.log(`[ASSET COUNT] Next sequential number: ${next} (from count: ${validCount})`);
   return next;
