@@ -80,7 +80,3 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           vercel-args: '--prod --force'
-          # Ensure unique deployment each time
-          alias-domains: |
-            nna-registry-service-frontend-${{ github.run_id }}.vercel.app
-            nna-registry-service-frontend.vercel.app
