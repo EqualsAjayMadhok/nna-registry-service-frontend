@@ -106,24 +106,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Improve error handling by preserving more details
       let errorMessage = 'Registration failed';
       
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'object' && err !== null) {
-        // Try to extract error message from axios or other error objects
-        if ('response' in err && err.response && typeof err.response === 'object') {
-          const response = err.response as any;
-          if (response.data && response.data.message) {
-            errorMessage = response.data.message;
-          } else if (response.data && response.data.error) {
-            errorMessage = response.data.error;
-          } else if (response.statusText) {
-            errorMessage = `Server error: ${response.statusText}`;
+      // Try to get the most useful error information possible
+      try {
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null) {
+          // Try to extract error message from axios or other error objects
+          if ('response' in err && err.response && typeof err.response === 'object') {
+            const response = err.response as any;
+            if (response.data && response.data.message) {
+              errorMessage = response.data.message;
+            } else if (response.data && response.data.error) {
+              errorMessage = response.data.error;
+            } else if (response.statusText) {
+              errorMessage = `Server error: ${response.statusText}`;
+            }
+          } else if ('message' in err && typeof (err as any).message === 'string') {
+            errorMessage = (err as any).message;
+          } else {
+            // Last resort: Try to convert to JSON string
+            const errStr = JSON.stringify(err);
+            if (errStr && errStr !== '{}' && errStr !== 'null') {
+              errorMessage = errStr;
+            }
           }
+        } else if (typeof err === 'string') {
+          errorMessage = err;
         }
+      } catch (e) {
+        console.error('Error while parsing error object:', e);
       }
       
       setError(errorMessage);
-      throw new Error(errorMessage); // Throw with enhanced error message
+      
+      // Return the original error if it's already an Error instance
+      if (err instanceof Error) {
+        throw err;
+      } else {
+        // Otherwise create a new Error with the extracted message
+        throw new Error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

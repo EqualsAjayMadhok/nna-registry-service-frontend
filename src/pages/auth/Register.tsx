@@ -77,8 +77,13 @@ const Register: React.FC = () => {
     } catch (err) {
       console.error('Registration error details:', err);
       
-      // Always log the full error object for debugging
-      console.error('Full error object:', JSON.stringify(err, null, 2));
+      try {
+        // Always log the full error object for debugging
+        console.error('Full error object:', JSON.stringify(err, null, 2));
+      } catch (e) {
+        console.error('Could not stringify error:', e);
+        console.error('Raw error object:', err);
+      }
       
       // Display any error response data if available
       if (err && (err as any).response && (err as any).response.data) {
@@ -109,12 +114,34 @@ const Register: React.FC = () => {
           setError('Password does not meet requirements. Please use a stronger password.');
         } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
           setError('Network error. Please check your internet connection and try again.');
+        } else if (errorMessage === '[object object]') {
+          setError('Registration failed. Please try again later.');
         } else {
           // Display the full error message for better debugging
-          setError(`Error: ${err.message}`);
+          setError(`${err.message}`);
         }
+      } else if (typeof err === 'string') {
+        setError(err);
       } else {
-        setError('Registration failed. Please check your inputs and try again.');
+        // Try to extract more meaningful information
+        let errorMessage = 'Registration failed. Please check your inputs and try again.';
+        
+        try {
+          if (err !== null && typeof err === 'object') {
+            if ('message' in err && typeof (err as any).message === 'string') {
+              errorMessage = (err as any).message;
+            } else if ('error' in err && typeof (err as any).error === 'string') {
+              errorMessage = (err as any).error;
+            } else {
+              // Try to get a string representation
+              errorMessage = `Registration error: ${JSON.stringify(err)}`;
+            }
+          }
+        } catch (e) {
+          console.error('Error extracting message:', e);
+        }
+        
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);
