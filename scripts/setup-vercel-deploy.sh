@@ -59,7 +59,8 @@ vercel git connect
 
 # Set up production deployments for main branch
 echo -e "${YELLOW}Setting up automatic production deployments for main branch...${NC}"
-vercel env add VERCEL_GIT_COMMIT_MESSAGE
+# Skip adding environment variables
+# vercel env add VERCEL_GIT_COMMIT_MESSAGE
 
 # Create a new deployment to trigger the integration
 echo -e "${YELLOW}Creating initial deployment to activate the integration...${NC}"
