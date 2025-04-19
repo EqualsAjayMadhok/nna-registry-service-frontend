@@ -65,8 +65,26 @@ echo -e "${YELLOW}Setting up automatic production deployments for main branch...
 # Create a new deployment to trigger the integration
 echo -e "${YELLOW}Creating initial deployment to activate the integration...${NC}"
 BUILD_TIMESTAMP=$(date +%s)
-echo "REACT_APP_BUILD_TIMESTAMP=$BUILD_TIMESTAMP" > .env.production
-vercel --prod
+
+# Create .env.production with correct API URLs
+cat > .env.production << EOL
+REACT_APP_BUILD_TIMESTAMP=$BUILD_TIMESTAMP
+REACT_APP_API_URL=https://registry.reviz.dev/api
+REACT_APP_REAL_API_URL=https://registry.reviz.dev
+REACT_APP_ENV=production
+REACT_APP_USE_MOCK_DATA=false
+EOL
+
+echo -e "${GREEN}Created .env.production with production settings${NC}"
+
+# Clean the build directory first
+rm -rf build
+echo -e "${YELLOW}Building project for production...${NC}"
+GENERATE_SOURCEMAP=false npm run build
+echo -e "${GREEN}Build complete!${NC}"
+
+# Force deploy to Vercel with production environment
+vercel deploy --prod --force
 
 echo -e "${BLUE}==================================================${NC}"
 echo -e "${GREEN}  Vercel auto-deployment setup complete!          ${NC}"
