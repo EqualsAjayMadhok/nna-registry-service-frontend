@@ -8,7 +8,8 @@
     "REACT_APP_REAL_API_URL": "https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api",
     "REACT_APP_ENV": "production",
     "REACT_APP_USE_MOCK_DATA": "false",
-    "GENERATE_SOURCEMAP": "false"
+    "GENERATE_SOURCEMAP": "false",
+    "REACT_APP_BUILD_TIME": "${Date.now()}"
   },
   "routes": [
     {
