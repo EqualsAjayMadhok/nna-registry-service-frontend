@@ -38,11 +38,40 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
+      // Basic validation
+      if (!email || !password) {
+        setError('Please enter both email and password');
+        return;
+      }
+
+      // Simple email validation
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please check your credentials and try again.');
+      
+      // Handle specific error types
+      if (err instanceof Error) {
+        const errorMessage = err.message.toLowerCase();
+        
+        if (errorMessage.includes('invalid') && 
+           (errorMessage.includes('credentials') || errorMessage.includes('password'))) {
+          setError('Invalid email or password. Please try again.');
+        } else if (errorMessage.includes('not found') || errorMessage.includes('no user')) {
+          setError('No account found with this email. Please register first.');
+        } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+          setError('Network error. Please check your internet connection and try again.');
+        } else {
+          setError(errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1));
+        }
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
     } finally {
       setIsLoading(false);
     }

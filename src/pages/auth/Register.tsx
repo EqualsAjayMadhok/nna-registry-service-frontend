@@ -26,9 +26,32 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
+    // More comprehensive validation
     if (!username || !email || !password) {
       setError('Please fill out all required fields');
+      return;
+    }
+    
+    // Username validation - at least 3 characters, no special chars except underscore
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters long');
+      return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError('Username can only contain letters, numbers, and underscores');
+      return;
+    }
+    
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    // Password validation - at least 8 chars
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
       return;
     }
     
@@ -44,7 +67,27 @@ const Register: React.FC = () => {
       await register(username, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      console.error('Registration error details:', err);
+      
+      // Handle specific error cases
+      if (err instanceof Error) {
+        const errorMessage = err.message.toLowerCase();
+        
+        if (errorMessage.includes('username') && errorMessage.includes('taken')) {
+          setError('This username is already taken. Please choose another one.');
+        } else if (errorMessage.includes('email') && errorMessage.includes('taken')) {
+          setError('This email is already registered. Please use a different email or login instead.');
+        } else if (errorMessage.includes('password') && 
+                 (errorMessage.includes('weak') || errorMessage.includes('requirements'))) {
+          setError('Password does not meet requirements. Please use a stronger password.');
+        } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+          setError('Network error. Please check your internet connection and try again.');
+        } else {
+          setError(errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1));
+        }
+      } else {
+        setError('Registration failed. Please check your inputs and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
