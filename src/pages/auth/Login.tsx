@@ -48,30 +48,34 @@ const Login: React.FC = () => {
       const isEmail = emailOrUsername.includes('@');
       
       // Log the login attempt for debugging
-      console.log('Login attempt with:', isEmail ? 'email' : 'username', emailOrUsername);
+      console.log('🔑 Login attempt with:', isEmail ? 'email' : 'username', emailOrUsername);
       
       await login(emailOrUsername, password);
+      console.log('✅ Login successful, navigating to:', from);
       navigate(from, { replace: true });
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
       
-      // Handle specific error types
+      // Keep error handling simple
+      let errorMessage = 'Login failed. Please check your credentials and try again.';
+      
       if (err instanceof Error) {
-        const errorMessage = err.message.toLowerCase();
+        // If it's an Error object, use its message
+        errorMessage = err.message;
         
-        if (errorMessage.includes('invalid') && 
-           (errorMessage.includes('credentials') || errorMessage.includes('password'))) {
-          setError('Invalid username/email or password. Please try again.');
-        } else if (errorMessage.includes('not found') || errorMessage.includes('no user')) {
-          setError('No account found with these credentials. Please register first.');
-        } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-          setError('Network error. Please check your internet connection and try again.');
-        } else {
-          setError(errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1));
+        // Special case for common errors
+        if (errorMessage.toLowerCase().includes('invalid') || 
+            errorMessage.toLowerCase().includes('not found')) {
+          errorMessage = 'Invalid username/email or password. Please try again.';
         }
-      } else {
-        setError('Login failed. Please check your credentials and try again.');
       }
+      
+      // Handle object errors (like server response objects)
+      if (errorMessage.includes('[object Object]')) {
+        errorMessage = 'Login error. Please try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

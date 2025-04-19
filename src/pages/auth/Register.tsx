@@ -64,85 +64,29 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Enhanced debug logging
-      console.log('Attempting registration with:', { username, email, password: '***' });
-      console.log('API config:', {
-        useMockData: window.localStorage.getItem('useMockData') || 'Not set in localStorage',
-        apiUrl: process.env.REACT_APP_API_URL,
-        realApiUrl: process.env.REACT_APP_REAL_API_URL
-      });
+      console.log('🚀 Starting registration with username:', username);
       
+      // Register the user
       await register(username, email, password);
+      console.log('✅ Registration successful, navigating to dashboard');
       navigate('/dashboard');
     } catch (err) {
-      console.error('Registration error details:', err);
+      console.error('❌ Registration failed:', err);
       
-      try {
-        // Always log the full error object for debugging
-        console.error('Full error object:', JSON.stringify(err, null, 2));
-      } catch (e) {
-        console.error('Could not stringify error:', e);
-        console.error('Raw error object:', err);
-      }
+      // Keep error handling simple
+      let errorMessage = 'Registration failed. Please try again.';
       
-      // Display any error response data if available
-      if (err && (err as any).response && (err as any).response.data) {
-        console.error('Error response data:', (err as any).response.data);
-        
-        // Try to get a more detailed message from the API response
-        const responseData = (err as any).response.data;
-        if (responseData.message) {
-          setError(`Server error: ${responseData.message}`);
-          return;
-        } else if (responseData.error) {
-          setError(`Server error: ${responseData.error}`);
-          return;
-        }
-      }
-      
-      // Handle specific error cases
       if (err instanceof Error) {
-        const errorMessage = err.message.toLowerCase();
-        console.log('Processing error message:', errorMessage);
-        
-        if (errorMessage.includes('username') && errorMessage.includes('taken')) {
-          setError('This username is already taken. Please choose another one.');
-        } else if (errorMessage.includes('email') && errorMessage.includes('taken')) {
-          setError('This email is already registered. Please use a different email or login instead.');
-        } else if (errorMessage.includes('password') && 
-                 (errorMessage.includes('weak') || errorMessage.includes('requirements'))) {
-          setError('Password does not meet requirements. Please use a stronger password.');
-        } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-          setError('Network error. Please check your internet connection and try again.');
-        } else if (errorMessage === '[object object]') {
-          setError('Registration failed. Please try again later.');
-        } else {
-          // Display the full error message for better debugging
-          setError(`${err.message}`);
-        }
-      } else if (typeof err === 'string') {
-        setError(err);
-      } else {
-        // Try to extract more meaningful information
-        let errorMessage = 'Registration failed. Please check your inputs and try again.';
-        
-        try {
-          if (err !== null && typeof err === 'object') {
-            if ('message' in err && typeof (err as any).message === 'string') {
-              errorMessage = (err as any).message;
-            } else if ('error' in err && typeof (err as any).error === 'string') {
-              errorMessage = (err as any).error;
-            } else {
-              // Try to get a string representation
-              errorMessage = `Registration error: ${JSON.stringify(err)}`;
-            }
-          }
-        } catch (e) {
-          console.error('Error extracting message:', e);
-        }
-        
-        setError(errorMessage);
+        // If it's an Error object, use its message
+        errorMessage = err.message;
       }
+      
+      // Handle object errors (like server response objects)
+      if (errorMessage.includes('[object Object]')) {
+        errorMessage = 'Registration error. Please try with a different username or email.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
