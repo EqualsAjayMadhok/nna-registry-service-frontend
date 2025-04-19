@@ -24,6 +24,7 @@ import { APP_VERSION, BUILD_TIMESTAMP } from '../../utils/version';
 import { getExistingAssetsCount } from '../../utils/assetCountService';
 import { formatSequentialNumber } from '../../utils/nnaAddressing';
 import { apiConfig } from '../../services/api/api';
+import authService from '../../services/api/auth.service';
 
 interface DebugTestResult {
   name: string;
@@ -378,6 +379,32 @@ const DebugPanel: React.FC = () => {
               size="small"
             >
               Environment Info
+            </Button>
+          </Box>
+          
+          {/* User Management */}
+          <Typography variant="subtitle2" gutterBottom>
+            User Management
+          </Typography>
+          <Box display="flex" gap={1} mb={2}>
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={() => {
+                authService.clearMockStorage();
+                setTestResults(prev => [
+                  ...prev,
+                  {
+                    name: 'Mock Storage Cleared',
+                    output: { success: true },
+                    timestamp: new Date().toISOString()
+                  }
+                ]);
+              }}
+              fullWidth
+              size="small"
+            >
+              Clear Mock User Data
             </Button>
           </Box>
           
