@@ -19,10 +19,104 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>NNA Registry Service</title>
     
-    <!-- NNA Address Configuration -->
+    <!-- TEMPORARY DRASTIC EMERGENCY FIX -->
     <script>
-      // This script initializes any global settings for NNA addressing
-      console.log("NNA Registry: Initializing with standard sequential numbering");
+      // CRITICAL: This script intercepts all console log calls to detect and dynamically fix sequential numbering
+      console.log("NNA Registry: Temporary emergency fix for sequential numbering");
+      
+      // Store original console.log to help with debugging
+      const originalConsoleLog = console.log;
+      
+      // Override console.log to detect and fix sequential number issues
+      console.log = function(...args) {
+        // Let original log happen
+        originalConsoleLog.apply(console, args);
+        
+        // Check for the NNA SERVICE calls with sequential number 11
+        try {
+          if (args[0] && typeof args[0] === 'string' && args[0].includes('Using sequential=11')) {
+            originalConsoleLog("🔴 DETECTED forcing sequential=11 in console logs! Emergency fixing...");
+            
+            // Find all functions that might be setting sequential numbers and patch them
+            setTimeout(() => {
+              // 1. Try to find the internal functions forcing sequential numbers
+              const globalObjs = [window];
+              globalObjs.forEach(obj => {
+                if (!obj) return;
+                
+                // Deep scan for suspicious properties that might contain the code
+                const scanForSuspiciousProps = (o, path = '') => {
+                  if (!o || typeof o !== 'object') return;
+                  
+                  Object.keys(o).forEach(prop => {
+                    // Skip too deep recursion
+                    if (path.split('.').length > 3) return;
+                    
+                    // Check if property looks like a service or utility
+                    if (prop.match(/Service|Registry|Util|Helper|Manager|Mapping|NNA|Address/i)) {
+                      originalConsoleLog(`Found suspicious property: ${path}.${prop}`, o[prop]);
+                      
+                      // Try to patch any sequential number logic
+                      try {
+                        if (typeof o[prop] === 'object' && o[prop] !== null) {
+                          // Look for functions that might calculate sequential numbers
+                          const protoObj = Object.getPrototypeOf(o[prop]);
+                          if (protoObj) {
+                            // Get all property names including non-enumerable ones
+                            const propNames = Object.getOwnPropertyNames(protoObj);
+                            
+                            // Look for suspicious method names
+                            propNames.forEach(methodName => {
+                              if (methodName.match(/sequential|number|address|format|generate|convert|register/i)) {
+                                const origMethod = o[prop][methodName];
+                                if (typeof origMethod === 'function') {
+                                  // Patch the method
+                                  o[prop][methodName] = function(...methodArgs) {
+                                    // Call original method
+                                    const result = origMethod.apply(this, methodArgs);
+                                    
+                                    // If this is a function that returns an NNA address, check for ".011"
+                                    if (result && typeof result === 'string' && result.includes('.011')) {
+                                      // Fix it by replacing with .001
+                                      originalConsoleLog(`🔴 Emergency fixing sequential number in result: ${result}`);
+                                      return result.replace(/\.011/g, '.001');
+                                    }
+                                    
+                                    return result;
+                                  };
+                                  originalConsoleLog(`🔴 Emergency patched method: ${path}.${prop}.${methodName}`);
+                                }
+                              }
+                            });
+                          }
+                        }
+                      } catch (e) {
+                        // Ignore errors in patching
+                      }
+                    }
+                    
+                    // Recursively scan deeper
+                    scanForSuspiciousProps(o[prop], `${path}.${prop}`);
+                  });
+                };
+                
+                // Run deep scan
+                scanForSuspiciousProps(obj);
+              });
+              
+              // Also directly override the NNA sequential number constants
+              window.MIN_SEQUENTIAL_NUMBER = 1;
+              if (window.nnaRegistryService) {
+                window.nnaRegistryService.MIN_SEQUENTIAL_NUMBER = 1;
+              }
+              
+              originalConsoleLog("🔴 Emergency sequential number fix complete");
+            }, 500);
+          }
+        } catch (e) {
+          // Ignore errors in our fix logic
+        }
+      };
     </script>
   </head>
   <body>

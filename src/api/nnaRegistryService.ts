@@ -417,9 +417,8 @@ class NNARegistryService {
     subcategoryMapping: CodeMapping,
     sequentialNumber: number
   ): RegistryEntry {
-    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
-    // VERSION: ${new Date().toISOString()}
-    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
+    // Use the natural sequential number
+    const adjustedSequentialNumber = sequentialNumber;
     
     console.log(`[NNA SERVICE] Registering address: layer=${layerCode}, category=${categoryMapping.alphabeticCode}, subcategory=${subcategoryMapping.alphabeticCode}`);
     console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
@@ -462,9 +461,8 @@ class NNARegistryService {
       return '';
     }
     
-    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
-    // VERSION: ${new Date().toISOString()}
-    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
+    // Use the natural sequential number
+    const adjustedSequentialNumber = sequentialNumber;
     
     // Log with clear markers for debugging
     console.log(`[NNA SERVICE] Generating HFN: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
@@ -512,9 +510,8 @@ class NNARegistryService {
       return '';
     }
     
-    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
-    // VERSION: ${new Date().toISOString()}
-    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
+    // Use the natural sequential number
+    const adjustedSequentialNumber = sequentialNumber;
     
     // Log with clear markers for debugging
     console.log(`[NNA SERVICE] Generating MFA: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
@@ -678,8 +675,8 @@ class NNARegistryService {
     // Parse the sequential number and apply the force rule
     let sequentialNumber = parseInt(sequentialStr, 10);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
+    // Use natural sequential number
+    const forceHigherSequential = false; // Set to false to use natural numbering
     if (forceHigherSequential && sequentialNumber < 2) {
       sequentialNumber = 2;
       console.log(`[NNA] Forced sequential number to ${sequentialNumber} in convertToMachineFriendly`);
@@ -733,8 +730,8 @@ class NNARegistryService {
     // Parse the sequential number and apply the force rule
     let sequentialNumber = parseInt(sequentialStr, 10);
     
-    // IMPORTANT: Force sequential number to at least 2 for testing
-    const forceHigherSequential = true; // Toggle this for testing
+    // Use natural sequential number
+    const forceHigherSequential = false; // Set to false to use natural numbering
     if (forceHigherSequential && sequentialNumber < 2) {
       sequentialNumber = 2;
       console.log(`[NNA] Forced sequential number to ${sequentialNumber} in convertToHumanFriendly`);
@@ -797,9 +794,8 @@ class NNARegistryService {
     subcategoryName: string,
     sequentialNumber: number = 1
   ): string {
-    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
-    // VERSION: ${new Date().toISOString()}
-    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
+    // Use the natural sequential number
+    const adjustedSequentialNumber = sequentialNumber;
     
     console.log(`[NNA SERVICE] Getting HFN: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
     console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
@@ -838,9 +834,8 @@ class NNARegistryService {
     subcategoryName: string,
     sequentialNumber: number = 1
   ): string {
-    // CRITICAL FIX: Sequential number must ALWAYS be at least 2
-    // VERSION: ${new Date().toISOString()}
-    const adjustedSequentialNumber = Math.max(sequentialNumber, 2);
+    // Use the natural sequential number
+    const adjustedSequentialNumber = sequentialNumber;
     
     console.log(`[NNA SERVICE] Getting MFA: layer=${layerCode}, category=${categoryName}, subcategory=${subcategoryName}`);
     console.log(`[NNA SERVICE] Using sequential=${adjustedSequentialNumber} (original=${sequentialNumber})`);
