@@ -155,4 +155,6 @@ The frontend is currently deployed at:
 - Production: https://nna-registry-service-frontend.vercel.app
 - Connected to backend at: https://registry.reviz.dev
 
-Last deployment test: Sat Apr 19 18:42:26 MDT 2025
+Auto-deployment has been restored. The frontend will now be automatically deployed when changes are pushed to the main branch.
+
+Last deployment test: Sat Apr 19 18:48:30 MDT 2025
