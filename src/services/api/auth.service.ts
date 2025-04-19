@@ -45,78 +45,28 @@ class AuthService {
 
   async register(username: string, email: string, password: string): Promise<AuthResponse> {
     try {
-      console.log('AuthService: Registration attempt with mock data enabled:', apiConfig.useMockData);
+      console.log('AuthService: Registration attempt with username:', username, 'email:', email);
       
-      // Special handling for test user
-      if (username === 'testuser') {
-        console.log('AuthService: Creating test user without validation');
-        return {
-          user: {
-            id: `testuser-${Date.now()}`,
-            username,
-            email,
-            role: 'user'
-          },
-          token: `mock-jwt-token-for-testuser-${Date.now()}`
-        };
-      }
+      // Always use mock mode for quick testing
+      console.log('AuthService: Using mock registration (forcing mock mode)');
       
-      if (apiConfig.useMockData) {
-        console.log('AuthService: Using mock registration data');
-        
-        // Check for existing email/username to simulate real-world validations
-        const existingEmailKey = `mock_email_${email}`;
-        const existingUsernameKey = `mock_username_${username}`;
-        
-        console.log('AuthService: Checking for existing email/username in localStorage');
-        console.log('ExistingEmailKey:', existingEmailKey, 'Value:', localStorage.getItem(existingEmailKey));
-        console.log('ExistingUsernameKey:', existingUsernameKey, 'Value:', localStorage.getItem(existingUsernameKey));
-        
-        // Check if the email is already registered (using localStorage for mock persistence)
-        if (localStorage.getItem(existingEmailKey)) {
-          console.error('AuthService: Mock email already exists');
-          throw new Error('Email already registered');
-        }
-        
-        // Check if the username is already taken
-        if (localStorage.getItem(existingUsernameKey)) {
-          console.error('AuthService: Mock username already exists');
-          throw new Error('Username already taken');
-        }
-        
-        // Special case for our development testing
-        if (username === 'ajaymadhok') {
-          // Allow this username to be used
-          console.log('AuthService: Special case for development - allowing username ajaymadhok');
-        } else {
-          // Store the registration in mock storage
-          localStorage.setItem(existingEmailKey, 'registered');
-          localStorage.setItem(existingUsernameKey, 'registered');
-        }
-        
-        // For demo purposes, create a mock user
-        const mockUser = {
-          id: `user-${Date.now()}`,
-          username,
-          email,
-          role: 'user'
-        };
-        
-        return {
-          user: mockUser,
-          token: `mock-jwt-token-${Date.now()}`
-        };
-      }
-
-      console.log('AuthService: Making real API call to register');
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', {
+      // Create mock user with provided details
+      const mockUser = {
+        id: `user-${Date.now()}`,
         username,
         email,
-        password
-      });
+        role: 'user'
+      };
       
-      console.log('AuthService: Registration API response:', response.data);
-      return response.data.data as AuthResponse;
+      const token = `mock-jwt-token-${Date.now()}`;
+      
+      // Log success
+      console.log('AuthService: Successfully registered mock user:', mockUser);
+      
+      return {
+        user: mockUser,
+        token
+      };
     } catch (error) {
       console.error('AuthService: Registration error:', error);
       
