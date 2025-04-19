@@ -6,7 +6,15 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build",
-        "buildCommand": "npm run build"
+        "buildCommand": "npm run build",
+        "env": {
+          "REACT_APP_API_URL": "https://registry.reviz.dev/api",
+          "REACT_APP_REAL_API_URL": "https://registry.reviz.dev",
+          "REACT_APP_ENV": "production",
+          "REACT_APP_USE_MOCK_DATA": "false",
+          "GENERATE_SOURCEMAP": "false",
+          "REACT_APP_BUILD_TIMESTAMP": "1745095737"
+        }
       }
     }
   ],

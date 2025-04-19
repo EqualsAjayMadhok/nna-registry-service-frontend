@@ -3,9 +3,6 @@ name: Frontend CI/CD
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
   pull_request:
     branches: [ main ]
   # Allow manual triggering from GitHub Actions tab
@@ -67,8 +64,8 @@ jobs:
         run: npm run build
         env:
           CI: false
-          REACT_APP_API_URL: https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api
-          REACT_APP_REAL_API_URL: https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api
+          REACT_APP_API_URL: https://registry.reviz.dev/api
+          REACT_APP_REAL_API_URL: https://registry.reviz.dev
           REACT_APP_ENV: production
           REACT_APP_USE_MOCK_DATA: false
           GENERATE_SOURCEMAP: false
@@ -83,3 +80,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           vercel-args: '--prod --force'
+          # Ensure unique deployment each time
+          alias-domains: |
+            nna-registry-service-frontend-${{ github.run_id }}.vercel.app
+            nna-registry-service-frontend.vercel.app
