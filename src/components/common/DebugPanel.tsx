@@ -386,26 +386,52 @@ const DebugPanel: React.FC = () => {
           <Typography variant="subtitle2" gutterBottom>
             User Management
           </Typography>
-          <Box display="flex" gap={1} mb={2}>
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={() => {
-                authService.clearMockStorage();
-                setTestResults(prev => [
-                  ...prev,
-                  {
-                    name: 'Mock Storage Cleared',
-                    output: { success: true },
-                    timestamp: new Date().toISOString()
-                  }
-                ]);
-              }}
-              fullWidth
-              size="small"
-            >
-              Clear Mock User Data
-            </Button>
+          <Box display="flex" flexDirection="column" gap={1} mb={2}>
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={() => {
+                  authService.clearStorage();
+                  setTestResults(prev => [
+                    ...prev,
+                    {
+                      name: 'Mock Storage Cleared',
+                      output: { success: true },
+                      timestamp: new Date().toISOString()
+                    }
+                  ]);
+                }}
+                fullWidth
+                size="small"
+              >
+                Clear Mock User Data
+              </Button>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                color="success"
+                onClick={() => {
+                  authService.createTestUser();
+                  setTestResults(prev => [
+                    ...prev,
+                    {
+                      name: 'Test User Created',
+                      output: { 
+                        success: true,
+                        message: 'Created test user. Login with username "testuser" and any password.'
+                      },
+                      timestamp: new Date().toISOString()
+                    }
+                  ]);
+                }}
+                fullWidth
+                size="small"
+              >
+                Create Test User
+              </Button>
+            </Box>
           </Box>
           
           {/* Test Results */}

@@ -49,9 +49,9 @@ const Register: React.FC = () => {
       return;
     }
     
-    // Password validation - at least 8 chars
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    // Password validation - at least 6 chars (matching backend requirement)
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
     
@@ -66,6 +66,43 @@ const Register: React.FC = () => {
     try {
       console.log('🚀 Starting registration with username:', username);
       
+      // First check if we might be in mock mode
+      const useMockData = localStorage.getItem('useMockData') === 'true';
+      if (useMockData) {
+        console.log('📝 Mock mode detected, checking for existing users with same username or email');
+        
+        // Check for existing user with the same username or email
+        const existingUserKey = `registered_user_${username}`;
+        const existingUser = localStorage.getItem(existingUserKey);
+        
+        if (existingUser) {
+          console.log('⚠️ Username already exists in mock storage');
+          throw new Error('Username already exists');
+        }
+        
+        // Check all items in localStorage for a matching email
+        let emailExists = false;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('registered_user_')) {
+            try {
+              const userData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (userData.email === email) {
+                emailExists = true;
+                break;
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+        
+        if (emailExists) {
+          console.log('⚠️ Email already exists in mock storage');
+          throw new Error('Email already exists');
+        }
+      }
+      
       // Register the user
       await register(username, email, password);
       console.log('✅ Registration successful, navigating to dashboard');
@@ -73,12 +110,22 @@ const Register: React.FC = () => {
     } catch (err) {
       console.error('❌ Registration failed:', err);
       
-      // Keep error handling simple
+      // Provide user-friendly error messages
       let errorMessage = 'Registration failed. Please try again.';
       
       if (err instanceof Error) {
         // If it's an Error object, use its message
         errorMessage = err.message;
+        
+        // Check for common registration errors and provide clear messages
+        const errorLower = errorMessage.toLowerCase();
+        if (errorLower.includes('username') && errorLower.includes('exists')) {
+          errorMessage = 'This username is already taken. Please choose another one.';
+        } else if (errorLower.includes('email') && errorLower.includes('exists')) {
+          errorMessage = 'This email address is already registered. Please use another email or try logging in.';
+        } else if (errorLower.includes('password') && (errorLower.includes('weak') || errorLower.includes('short'))) {
+          errorMessage = 'Password is too weak. Please use at least 6 characters with a mix of letters and numbers.';
+        }
       }
       
       // Handle object errors (like server response objects)

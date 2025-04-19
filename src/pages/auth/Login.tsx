@@ -41,6 +41,7 @@ const Login: React.FC = () => {
       // Basic validation
       if (!emailOrUsername || !password) {
         setError('Please enter both email/username and password');
+        setIsLoading(false);
         return;
       }
       
@@ -49,6 +50,9 @@ const Login: React.FC = () => {
       
       // Log the login attempt for debugging
       console.log('🔑 Login attempt with:', isEmail ? 'email' : 'username', emailOrUsername);
+      
+      // Add extra logging for debug purposes
+      console.log(`Login details: ${emailOrUsername}, password length: ${password.length}`);
       
       await login(emailOrUsername, password);
       console.log('✅ Login successful, navigating to:', from);
@@ -73,6 +77,12 @@ const Login: React.FC = () => {
       // Handle object errors (like server response objects)
       if (errorMessage.includes('[object Object]')) {
         errorMessage = 'Login error. Please try again.';
+      }
+      
+      // Add login instructions for better user experience
+      const loginWithEmail = emailOrUsername.includes('@');
+      if (!loginWithEmail) {
+        errorMessage += " (Tip: You can also try logging in with your email address)";
       }
       
       setError(errorMessage);

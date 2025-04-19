@@ -8,17 +8,23 @@ interface ApiConfig {
 }
 
 // Get configuration from environment variables with fallbacks
+// IMPORTANT: For production deployments, we always use the real API
+const isProduction = process.env.NODE_ENV === 'production';
+
 const config: ApiConfig = {
-  useMockData: process.env.REACT_APP_USE_MOCK_DATA === 'true',
+  // Force mock mode OFF for production
+  useMockData: isProduction ? false : process.env.REACT_APP_USE_MOCK_DATA === 'true',
   apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
-  realApiUrl: process.env.REACT_APP_REAL_API_URL || 'http://localhost:3000/api'
+  realApiUrl: process.env.REACT_APP_REAL_API_URL || 'http://localhost:8080/api'
 };
 
-// For development, allow overriding mock mode via localStorage
-// This lets developers switch between mock and real API without affecting Vercel deployments
-const localStorageMockOverride = localStorage.getItem('useMockData');
-if (localStorageMockOverride !== null) {
-  config.useMockData = localStorageMockOverride === 'true';
+// For development-only, allow overriding mock mode via localStorage
+// This is disabled in production to ensure consistent behavior
+if (!isProduction) {
+  const localStorageMockOverride = localStorage.getItem('useMockData');
+  if (localStorageMockOverride !== null) {
+    config.useMockData = localStorageMockOverride === 'true';
+  }
 }
 
 // Log current API configuration

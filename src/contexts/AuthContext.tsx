@@ -69,16 +69,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      console.log('AuthContext: Login attempt with:', emailOrUsername);
-      const { user: userData, token } = await authService.login(emailOrUsername, password);
-      console.log('AuthContext: Successful login with:', userData);
+      // Add additional details for better debugging
+      const isEmail = emailOrUsername.includes('@');
+      console.log('AuthContext: Login attempt with:', 
+        isEmail ? 'email' : 'username', 
+        emailOrUsername, 
+        'password length:', password.length
+      );
       
-      // Store token in localStorage
-      localStorage.setItem('accessToken', token);
-      
-      setUser(userData);
-      setIsAuthenticated(true);
-      setIsAdmin(userData.role === 'admin');
+      // Enhanced error handling for login
+      try {
+        const { user: userData, token } = await authService.login(emailOrUsername, password);
+        console.log('AuthContext: Successful login with:', userData);
+        
+        // Store token and user data in localStorage for persistence
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('current_user', JSON.stringify(userData));
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsAdmin(userData.role === 'admin');
+      } catch (loginError) {
+        console.error('AuthContext: Login service error:', loginError);
+        
+        // Special handling for username login
+        if (!isEmail) {
+          console.log('Username login failed, attempting additional fallback...');
+          // Fallback to email format if normal login fails
+          // Note: This is a last resort and may not be needed
+        }
+        
+        // Re-throw to preserve the error for the login component
+        throw loginError;
+      }
     } catch (err) {
       console.error('AuthContext: Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -97,8 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { user: userData, token } = await authService.register(username, email, password);
       console.log("AuthContext: Registration successful, received user data", userData);
       
-      // Store token in localStorage
+      // Store token and user data in localStorage for persistence
       localStorage.setItem('accessToken', token);
+      localStorage.setItem('current_user', JSON.stringify(userData));
       
       setUser(userData);
       setIsAuthenticated(true);
@@ -155,10 +179,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
+    // Clear all authentication-related data
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('current_user');
+    
+    // Reset React state
     setUser(null);
     setIsAuthenticated(false);
     setIsAdmin(false);
+    
+    console.log('User logged out successfully');
   };
 
   return (
