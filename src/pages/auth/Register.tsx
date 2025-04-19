@@ -41,15 +41,6 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Force mock data for demo
-      (window as any).process = {
-        ...((window as any).process || {}),
-        env: {
-          ...((window as any).process?.env || {}),
-          REACT_APP_USE_MOCK_DATA: 'true',
-        },
-      };
-      
       await register(username, email, password);
       navigate('/dashboard');
     } catch (err) {
