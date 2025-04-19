@@ -147,4 +147,12 @@ docker run -p 80:80 nna-frontend
 
 ## License
 
-This project is proprietary and confidential.# Auto-deploy test timestamp: Sat Apr 19 14:52:22 MDT 2025
+This project is proprietary and confidential.
+
+## Deployment Status
+
+The frontend is currently deployed at:
+- Production: https://nna-registry-service-frontend.vercel.app
+- Connected to backend at: https://registry.reviz.dev
+
+Last deployment test: Sat Apr 19 18:42:26 MDT 2025
