@@ -35,19 +35,16 @@ jobs:
         run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
         
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # Only use cache if specifically requested
-          cache: ${{ github.event.inputs.cache_level == 'npm' || github.event.inputs.cache_level == 'full' && 'npm' || 'none' }}
+          # Don't use cache by default
+          cache: 'npm'
           
       - name: Install dependencies
         run: |
-          echo "Installing with CLEAN dependencies (no cache)"
-          npm cache clean --force
-          rm -rf node_modules
-          rm -f package-lock.json
-          npm install
+          echo "Installing dependencies..."
+          npm ci
           
       - name: Clean build directory
         run: |
