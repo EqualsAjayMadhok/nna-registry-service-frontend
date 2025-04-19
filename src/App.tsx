@@ -27,6 +27,7 @@ import AssetAnalyticsDashboard from './pages/dashboard/AssetAnalyticsDashboard';
 import TaxonomyPage from './pages/TaxonomyPage';
 import CollectionsPage from './pages/collections/CollectionsPage';
 import CollectionDetailPage from './pages/collections/CollectionDetailPage';
+import SequentialNumberTestPage from './pages/SequentialNumberTestPage';
 import NotFound from './pages/NotFound';
 
 // Set up Material UI theme
@@ -100,6 +101,9 @@ function App() {
                 <Route path="/assets/edit/:id" element={<UpdateAssetPage />} />
                 <Route path="/assets/:id" element={<AssetDetail />} />
                 <Route path="/taxonomy" element={<TaxonomyPage />} />
+                
+                {/* Test Pages */}
+                <Route path="/test/sequential-numbers" element={<SequentialNumberTestPage />} />
                 
                 {/* Collections Routes */}
                 <Route path="/collections" element={<CollectionsPage />} />

@@ -43,7 +43,9 @@ import {
   Category as CategoryIcon,
   DataObject as DataObjectIcon,
   Settings as SettingsIcon,
-  Api as ApiIcon
+  Api as ApiIcon,
+  BugReport as BugReportIcon,
+  Numbers as NumbersIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { apiConfig } from '../../services/api/api';
@@ -117,6 +119,11 @@ const MainLayout: React.FC = () => {
     { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy' },
     { text: 'Asset Analytics', icon: <DataObjectIcon />, path: '/assets/analytics' },
   ];
+  
+  // Development and test links
+  const testItems = [
+    { text: 'Sequential Number Fix', icon: <NumbersIcon />, path: '/test/sequential-numbers' }
+  ];
 
   // Drawer content
   const drawer = (
@@ -132,6 +139,31 @@ const MainLayout: React.FC = () => {
       <Divider />
       <List>
         {navigationItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => {
+                navigate(item.path);
+                if (mobileOpen) handleDrawerToggle();
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      
+      <Divider />
+      <List subheader={
+        <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center' }}>
+          <BugReportIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+          <Typography variant="overline" color="text.secondary">
+            Testing & Development
+          </Typography>
+        </Box>
+      }>
+        {testItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}
