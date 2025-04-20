@@ -4,14 +4,27 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "env": {
-    "REACT_APP_API_URL": "https://nna-registry-service-backend.onrender.com",
-    "REACT_APP_ENV": "production"
+    "REACT_APP_API_URL": "https://registry.reviz.dev/api",
+    "REACT_APP_REAL_API_URL": "https://registry.reviz.dev/api",
+    "REACT_APP_ENV": "production",
+    "REACT_APP_USE_MOCK_DATA": "false",
+    "GENERATE_SOURCEMAP": "false"
   },
   "github": {
     "enabled": true,
-    "silent": true
+    "silent": false,
+    "autoJobCancelation": true
   },
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
     {
       "source": "/static/(.*)",
       "headers": [
@@ -64,6 +77,10 @@
       "dest": "/static/$1"
     },
     {
+      "src": "/demo.html",
+      "dest": "/demo.html"
+    },
+    {
       "src": "/favicon.ico",
       "dest": "/favicon.ico"
     },
@@ -86,8 +103,7 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "main": true,
-      "dev": false
+      "main": true
     }
   }
 }
