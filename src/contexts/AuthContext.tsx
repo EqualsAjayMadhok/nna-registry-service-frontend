@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/api/auth.service';
 import { AuthContextType, User, LoginRequest, RegisterRequest } from '../types/auth.types';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -79,4 +79,5 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthContext;
+// Export both named and default exports
+export { AuthContext as default };
