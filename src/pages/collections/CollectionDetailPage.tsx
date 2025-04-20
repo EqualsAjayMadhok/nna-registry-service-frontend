@@ -38,7 +38,8 @@ import {
   Star as StarIcon,
   Collections as CollectionsIcon,
   MoreVert as MoreIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import collectionService from '../../api/collectionService';
@@ -241,7 +242,7 @@ const CollectionDetailPage: React.FC = () => {
       case CollectionVisibility.SHARED:
         return <GroupIcon fontSize="small" />;
       default:
-        return null;
+        return <VisibilityIcon fontSize="small" />;
     }
   };
   
