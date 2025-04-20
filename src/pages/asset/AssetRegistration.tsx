@@ -344,6 +344,8 @@ const AssetRegistration: React.FC = () => {
               initialData={{
                 ...metadata,
                 name: humanFriendlyName || metadata?.name || 'Auto-generated NNA Name',
+                description: metadata?.description || '',
+                tags: metadata?.tags || [],
               }}
               onFormChange={(data, isValid) => {
                 // Preserve the human-friendly name if we've already generated it
