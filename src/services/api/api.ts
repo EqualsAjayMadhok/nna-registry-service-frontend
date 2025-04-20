@@ -15,8 +15,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const formatApiUrl = (url: string) => {
   // Remove trailing slash if present
   const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-  // Always include /api in the base URL
-  return `${baseUrl}/api`;
+  // Only append /api if it's not already present
+  return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
 };
 
 const config: ApiConfig = {
