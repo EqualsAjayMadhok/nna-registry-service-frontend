@@ -126,29 +126,29 @@ const UsageMetricsCard: React.FC<UsageMetricsCardProps> = ({
   const metricsConfig = [
     {
       title: 'Total Views',
-      value: metrics.totalViews,
-      changePercentage: metrics.viewsChange,
+      value: metrics.totalViews || 0,
+      changePercentage: metrics.viewsChange || 0,
       icon: <VisibilityIcon />,
       color: theme.palette.primary.main
     },
     {
       title: 'Total Downloads',
-      value: metrics.totalDownloads,
-      changePercentage: metrics.downloadsChange,
+      value: metrics.totalDownloads || 0,
+      changePercentage: metrics.downloadsChange || 0,
       icon: <DownloadIcon />,
       color: theme.palette.secondary.main
     },
     {
       title: 'Unique Users',
-      value: metrics.totalUniqueUsers,
-      changePercentage: metrics.uniqueUsersChange,
+      value: metrics.totalUniqueUsers || metrics.uniqueUsers || 0,
+      changePercentage: metrics.uniqueUsersChange || 0,
       icon: <PersonIcon />,
       color: theme.palette.success.main
     },
     {
       title: 'Platforms',
-      value: metrics.totalUniquePlatforms,
-      changePercentage: 0, // Typically this doesn't have a change percentage
+      value: metrics.totalUniquePlatforms || 0,
+      changePercentage: 0,
       icon: <DevicesIcon />,
       color: theme.palette.info.main
     }
