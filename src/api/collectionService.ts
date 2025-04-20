@@ -42,6 +42,11 @@ class CollectionService {
       const response = await api.get<ApiResponse<PaginatedResponse<Collection>>>('/collections', { 
         params 
       });
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error('Failed to fetch collections: Invalid response format');
+      }
+      
       return response.data.data;
     } catch (error) {
       console.error('Error fetching collections:', error);
@@ -63,6 +68,9 @@ class CollectionService {
       }
 
       const response = await api.get<ApiResponse<Collection>>(`/collections/${id}`);
+      if (!response.data.success || !response.data.data) {
+        throw new Error(`Failed to fetch collection with ID ${id}: Invalid response format`);
+      }
       return response.data.data;
     } catch (error) {
       console.error(`Error fetching collection with ID ${id}:`, error);
@@ -103,6 +111,9 @@ class CollectionService {
       }
 
       const response = await api.post<ApiResponse<Collection>>('/collections', collection);
+      if (!response.data.success || !response.data.data) {
+        throw new Error('Failed to create collection: Invalid response format');
+      }
       return response.data.data;
     } catch (error) {
       console.error('Error creating collection:', error);
