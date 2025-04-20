@@ -43,7 +43,9 @@ describe('CollectionService', () => {
           items: [mockCollection],
           total: 1,
           page: 1,
-          limit: 10
+          limit: 10,
+          hasMore: false,
+          totalPages: 1
         }
       });
       mockApi.get.mockResolvedValueOnce(mockResponse);
