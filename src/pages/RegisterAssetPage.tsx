@@ -212,7 +212,7 @@ const RegisterAssetPage: React.FC = () => {
         );
 
         // Update the regular files to exclude training-specific files
-        const regularFiles = files.filter(file => !promptFiles.some(pf => pf.name === file.name));
+        const regularFiles = files.filter(file => !promptFiles.some((pf: File) => pf.name === file.name));
 
         // Keep the list of files up to date
         setFiles(regularFiles);
