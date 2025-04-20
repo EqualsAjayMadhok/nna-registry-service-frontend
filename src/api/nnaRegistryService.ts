@@ -108,7 +108,7 @@ class NNARegistryService {
                 layerCode,
                 alphabeticCode,
                 subAlphabeticCode,
-                subcategory.numericCode,
+                subcategory.numericCode || this.getNextAvailableSubcategoryNumericCode(layerCode, alphabeticCode),
                 subcategory.name
               );
             }
