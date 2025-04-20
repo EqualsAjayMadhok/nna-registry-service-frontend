@@ -58,6 +58,7 @@ describe('AssetService', () => {
           page: 1,
           limit: 10,
           hasMore: false,
+          totalPages: 1
         },
       };
 
