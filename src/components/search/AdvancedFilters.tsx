@@ -950,21 +950,21 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                         
                         {/* Display some query preview */}
                         <Box sx={{ mt: 1 }}>
-                          {search.params.layer && (
+                          {search.params?.layer && (
                             <Chip 
                               label={`Layer: ${search.params.layer}`} 
                               size="small" 
                               sx={{ mr: 0.5, mb: 0.5 }}
                             />
                           )}
-                          {search.params.createdAfter && (
+                          {search.params?.createdAfter && (
                             <Chip 
                               label={`After: ${formatDateStr(search.params.createdAfter as string)}`} 
                               size="small" 
                               sx={{ mr: 0.5, mb: 0.5 }}
                             />
                           )}
-                          {search.params.createdBefore && (
+                          {search.params?.createdBefore && (
                             <Chip 
                               label={`Before: ${formatDateStr(search.params.createdBefore as string)}`} 
                               size="small" 
