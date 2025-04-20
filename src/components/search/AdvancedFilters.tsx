@@ -494,11 +494,14 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   // Load a saved search
   const handleLoadSavedSearch = (search: SavedSearch) => {
     // Load search parameters
-    setSearchParams(search.params);
+    if (!search.params) return;
+    
+    const params = search.params as AssetSearchParams;
+    setSearchParams(params);
     
     // Load search group if available
-    if (search.params.searchGroup) {
-      setRootGroup(search.params.searchGroup);
+    if (params.searchGroup) {
+      setRootGroup(params.searchGroup);
     } else {
       setRootGroup({
         operator: 'AND',
@@ -507,18 +510,18 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     }
     
     // Load date filters
-    setStartDate(search.params.createdAfter ? new Date(search.params.createdAfter as string) : null);
-    setEndDate(search.params.createdBefore ? new Date(search.params.createdBefore as string) : null);
+    setStartDate(params.createdAfter ? new Date(params.createdAfter as string) : null);
+    setEndDate(params.createdBefore ? new Date(params.createdBefore as string) : null);
     
     // Load sorting
-    setSortBy(search.params.sortBy || 'createdAt');
-    setSortDirection(search.params.sortDirection || 'desc');
+    setSortBy(params.sortBy || 'createdAt');
+    setSortDirection(params.sortDirection || 'desc');
     
     // Hide saved searches panel
     setShowSavedSearches(false);
     
     // Apply the search
-    onSearch(search.params);
+    onSearch(params);
   };
   
   // Save the current search
