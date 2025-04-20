@@ -70,7 +70,7 @@ const AssetList: React.FC = () => {
   const fetchAssets = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await AssetService.getAssets({ page, limit: searchParams.limit });
+      const response = await AssetService.getAssets({ ...searchParams, page });
       setAssets(response.items);
       setPagination({
         page: response.page,
