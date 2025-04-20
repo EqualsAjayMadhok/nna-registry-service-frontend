@@ -1,7 +1,7 @@
 import { Asset, AssetFile, AssetCreateRequest, AssetUpdateRequest, AssetSearchParams } from '../../../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../../../types/api.types';
 import assetService from '../../../services/api/asset.service';
-import { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
 // Mock the API module
 const mockApi = {
