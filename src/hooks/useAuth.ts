@@ -1,10 +1,11 @@
 import { useContext } from 'react';
-import { AuthContext, AuthContextType } from '../contexts/AuthContext';
+import { AuthContext } from '../contexts/AuthContext';
+import { AuthContextType } from '../types/auth.types';
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   
