@@ -417,7 +417,7 @@ const CollectionsPage: React.FC = () => {
       case CollectionVisibility.SHARED:
         return <GroupIcon fontSize="small" />;
       default:
-        return null;
+        return <VisibilityIcon fontSize="small" />;
     }
   };
   
