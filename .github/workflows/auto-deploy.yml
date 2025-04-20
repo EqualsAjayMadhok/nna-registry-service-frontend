@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+env:
+  REACT_APP_API_URL: 'https://registry.reviz.dev/api'
+  REACT_APP_REAL_API_URL: 'https://registry.reviz.dev/api'
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -26,8 +30,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-          REACT_APP_REAL_API_URL: ${{ secrets.REACT_APP_REAL_API_URL }}
+          REACT_APP_API_URL: ${{ env.REACT_APP_API_URL }}
+          REACT_APP_REAL_API_URL: ${{ env.REACT_APP_REAL_API_URL }}
           
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
