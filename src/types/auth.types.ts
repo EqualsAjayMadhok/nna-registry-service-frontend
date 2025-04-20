@@ -3,13 +3,14 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: string;
+  role?: string;
   roles?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LoginRequest {
-  email?: string;
-  username?: string;
+  username: string;
   password: string;
 }
 
@@ -21,7 +22,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   user: User;
-  access_token: string;
+  token: string;
 }
 
 export interface AuthContextType {
