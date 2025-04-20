@@ -162,7 +162,7 @@ const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({
                     Created At:
                   </Typography>
                   <Typography variant="body2">
-                    {new Date(asset.createdAt).toLocaleString()}
+                    {asset.createdAt ? new Date(asset.createdAt).toLocaleString() : 'N/A'}
                   </Typography>
                 </Grid>
                 

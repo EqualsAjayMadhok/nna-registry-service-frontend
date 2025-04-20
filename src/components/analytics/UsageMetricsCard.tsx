@@ -26,21 +26,23 @@ interface UsageMetricsCardProps {
   loading?: boolean;
 }
 
-/**
- * Metric Item component to display a single metric with icon and change indicator
- */
-const MetricItem = ({ 
-  title, 
-  value, 
-  changePercentage, 
-  icon,
-  color
-}: {
+interface MetricItemProps {
   title: string;
   value: number;
   changePercentage: number;
   icon: React.ReactNode;
   color: string;
+}
+
+/**
+ * Metric Item component to display a single metric with icon and change indicator
+ */
+const MetricItem: React.FC<MetricItemProps> = ({ 
+  title, 
+  value, 
+  changePercentage, 
+  icon,
+  color
 }) => {
   const theme = useTheme();
   const isPositive = changePercentage >= 0;
@@ -123,31 +125,31 @@ const UsageMetricsCard: React.FC<UsageMetricsCardProps> = ({
   const theme = useTheme();
 
   // Define metrics with their icons and colors
-  const metricsConfig = [
+  const metricsConfig: MetricItemProps[] = [
     {
       title: 'Total Views',
-      value: metrics.totalViews || 0,
-      changePercentage: metrics.viewsChange || 0,
+      value: Number(metrics.totalViews || 0),
+      changePercentage: Number(metrics.viewsChange || 0),
       icon: <VisibilityIcon />,
       color: theme.palette.primary.main
     },
     {
       title: 'Total Downloads',
-      value: metrics.totalDownloads || 0,
-      changePercentage: metrics.downloadsChange || 0,
+      value: Number(metrics.totalDownloads || 0),
+      changePercentage: Number(metrics.downloadsChange || 0),
       icon: <DownloadIcon />,
       color: theme.palette.secondary.main
     },
     {
       title: 'Unique Users',
-      value: metrics.totalUniqueUsers || metrics.uniqueUsers || 0,
-      changePercentage: metrics.uniqueUsersChange || 0,
+      value: Number(metrics.totalUniqueUsers || metrics.uniqueUsers || 0),
+      changePercentage: Number(metrics.uniqueUsersChange || 0),
       icon: <PersonIcon />,
       color: theme.palette.success.main
     },
     {
       title: 'Platforms',
-      value: metrics.totalUniquePlatforms || 0,
+      value: Number(metrics.totalUniquePlatforms || 0),
       changePercentage: 0,
       icon: <DevicesIcon />,
       color: theme.palette.info.main

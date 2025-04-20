@@ -116,7 +116,7 @@ function isFileUploadOptions(callbacks: UploadCallbacks | FileUploadOptions): ca
   return 'onComplete' in callbacks && callbacks.onComplete?.length === 2;
 }
 
-export default class AssetService {
+export class AssetService {
   private uploads = new Map<string, Upload>();
 
   /**
@@ -576,6 +576,9 @@ export default class AssetService {
     }
   }
 }
+
+const assetService = new AssetService();
+export default assetService;
 
 
 

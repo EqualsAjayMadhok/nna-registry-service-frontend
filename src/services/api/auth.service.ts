@@ -1,32 +1,22 @@
-import { LoginRequest, RegisterRequest, User } from '../../types/auth.types';
+import { LoginRequest, RegisterRequest, User, AuthResponse } from '../../types/auth.types';
 import { ApiResponse } from '../../types/api.types';
-import createApiClient from './axios';
+import api from './api';
 
-const api = createApiClient(process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
+export class AuthService {
+  private storage: Storage;
 
-export interface AuthResponse {
-  access_token: string;
-  user: User;
-}
+  constructor(storage: Storage = window.localStorage) {
+    this.storage = storage;
+  }
 
-class AuthService {
-  async login(data: LoginRequest): Promise<AuthResponse> {
+  async login(loginRequest: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
-      
-      if (!response.data.success || !response.data.data) {
-        throw new Error(response.data.error || 'Login failed');
-      }
-      
-      const { access_token, user } = response.data.data;
-      
-      // Store token and user data consistently
-      localStorage.setItem('accessToken', access_token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', loginRequest);
+      const { token, user } = response.data.data;
+      this.storage.setItem('accessToken', token);
+      this.storage.setItem('user', JSON.stringify(user));
       return response.data.data;
     } catch (error: any) {
-      console.error('Login error:', error);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.error) {
@@ -36,23 +26,14 @@ class AuthService {
     }
   }
 
-  async register(data: RegisterRequest): Promise<AuthResponse> {
+  async register(registerRequest: RegisterRequest): Promise<AuthResponse> {
     try {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
-      
-      if (!response.data.success || !response.data.data) {
-        throw new Error(response.data.error || 'Registration failed');
-      }
-      
-      const { access_token, user } = response.data.data;
-      
-      // Store token and user data consistently
-      localStorage.setItem('accessToken', access_token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', registerRequest);
+      const { token, user } = response.data.data;
+      this.storage.setItem('accessToken', token);
+      this.storage.setItem('user', JSON.stringify(user));
       return response.data.data;
     } catch (error: any) {
-      console.error('Registration error:', error);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.error) {
@@ -83,34 +64,41 @@ class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    this.storage.removeItem('accessToken');
+    this.storage.removeItem('user');
   }
 
   getCurrentUser(): User | null {
-    const userStr = localStorage.getItem('user');
+    const userStr = this.storage.getItem('user');
     if (!userStr) return null;
     try {
-      return JSON.parse(userStr);
-    } catch (error) {
-      console.error('Failed to parse user data:', error);
-      this.logout(); // Clear invalid data
+      return JSON.parse(userStr) as User;
+    } catch {
       return null;
     }
   }
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('accessToken');
+    const token = this.storage.getItem('accessToken');
+    return token !== null;
   }
 
   isAdmin(): boolean {
     const user = this.getCurrentUser();
-    return user ? user.role === 'admin' || (user.roles && user.roles.includes('admin')) : false;
+    if (!user) return false;
+    
+    if (user.role === 'admin') return true;
+    
+    if (user.roles && Array.isArray(user.roles)) {
+      return user.roles.includes('admin');
+    }
+    
+    return false;
   }
 
   clearStorage(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    this.storage.removeItem('accessToken');
+    this.storage.removeItem('user');
     sessionStorage.clear();
   }
 
@@ -130,5 +118,5 @@ class AuthService {
   }
 }
 
-export const authService = new AuthService();
+const authService = new AuthService();
 export default authService;

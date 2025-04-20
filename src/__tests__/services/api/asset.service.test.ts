@@ -1,6 +1,6 @@
 import { Asset, AssetFile, AssetCreateRequest, AssetUpdateRequest, AssetSearchParams } from '../../../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../../../types/api.types';
-import AssetService from '../../../services/api/asset.service';
+import assetService from '../../../services/api/asset.service';
 import api from '../../../services/api/api';
 
 // Mock the API module
@@ -19,14 +19,9 @@ jest.mock('../../../services/api/api', () => ({
 }));
 
 describe('AssetService', () => {
-  let assetService: InstanceType<typeof AssetService>;
-
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
-    
-    // Create a new instance of AssetService for each test
-    assetService = new AssetService();
   });
 
   // Mock data
@@ -179,8 +174,9 @@ describe('AssetService', () => {
       const mockUploadId = 'upload1';
       
       // Mock the upload methods
-      jest.spyOn(assetService, 'uploadFile').mockResolvedValueOnce(mockUploadId);
-      jest.spyOn(assetService, 'getUploadStatus').mockReturnValueOnce({
+      const uploadFileSpy = jest.spyOn(assetService, 'uploadFile').mockResolvedValueOnce(mockUploadId);
+      const getUploadStatusSpy = jest.spyOn(assetService, 'getUploadStatus').mockReturnValueOnce({
+        id: mockUploadId,
         status: 'completed',
         file: mockFile,
         progress: 100,
@@ -201,16 +197,20 @@ describe('AssetService', () => {
 
       const result = await assetService.createAssetWithFiles(createRequest);
 
-      expect(assetService.uploadFile).toHaveBeenCalledWith(mockFile, undefined);
-      expect(assetService.getUploadStatus).toHaveBeenCalledWith(mockUploadId);
+      expect(uploadFileSpy).toHaveBeenCalledWith(mockFile, undefined);
+      expect(getUploadStatusSpy).toHaveBeenCalledWith(mockUploadId);
       expect(api.post).toHaveBeenCalled();
       expect(result.asset).toEqual(mockAsset);
+
+      // Clean up spies
+      uploadFileSpy.mockRestore();
+      getUploadStatusSpy.mockRestore();
     });
 
     it('should handle errors during file upload', async () => {
       const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       
-      jest.spyOn(assetService, 'uploadFile').mockRejectedValueOnce(new Error('Upload failed'));
+      const uploadFileSpy = jest.spyOn(assetService, 'uploadFile').mockRejectedValueOnce(new Error('Upload failed'));
 
       const createRequest: AssetCreateRequest = {
         name: 'Test Asset',
@@ -219,6 +219,9 @@ describe('AssetService', () => {
       };
 
       await expect(assetService.createAssetWithFiles(createRequest)).rejects.toThrow('Upload failed');
+
+      // Clean up spy
+      uploadFileSpy.mockRestore();
     });
   });
 }); 

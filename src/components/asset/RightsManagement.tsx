@@ -33,7 +33,7 @@ import {
   Alert,
   CircularProgress,
   useTheme,
-  SelectChangeEvent
+  SelectChangeEvent,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -77,6 +77,12 @@ import {
 } from '../../types/asset.types';
 import rightsService from '../../api/rightsService';
 import { format } from 'date-fns';
+import Timeline from '@mui/lab/Timeline';
+import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
 
 // Map status to colors and icons
 const STATUS_CONFIG = {
@@ -195,33 +201,40 @@ const LIMITATION_TYPE_INFO = {
   }
 };
 
-// Map verification methods to labels
+// Map verification methods to labels and descriptions
 const VERIFICATION_METHOD_INFO = {
   [RightsVerificationMethod.BLOCKCHAIN]: {
-    label: 'Blockchain',
-    description: 'Verified using blockchain technology'
+    label: 'Blockchain Verification',
+    description: 'Verified through blockchain transaction'
   },
   [RightsVerificationMethod.CONTRACT]: {
-    label: 'Contract',
-    description: 'Verified using contract evidence'
+    label: 'Contract Evidence',
+    description: 'Verified through contract documentation'
   },
   [RightsVerificationMethod.LICENSE]: {
-    label: 'License',
-    description: 'Verified using license agreement'
+    label: 'License Agreement',
+    description: 'Verified through license documentation'
   },
   [RightsVerificationMethod.DECLARATION]: {
     label: 'Declaration',
-    description: 'Verified using declaration of rights'
+    description: 'Verified through rights declaration'
   },
   [RightsVerificationMethod.REGISTRY]: {
-    label: 'Registry',
-    description: 'Verified using registry lookup'
+    label: 'Registry Lookup',
+    description: 'Verified through registry records'
   },
   [RightsVerificationMethod.LEGAL]: {
     label: 'Legal Documentation',
-    description: 'Verified using legal documentation'
+    description: 'Verified through legal documentation'
   }
 };
+
+interface VerificationStatusDetails {
+  verifiedRights?: RightsType[];
+  verificationTimestamp?: string;
+  verificationMethod?: RightsVerificationMethod;
+  verificationId?: string;
+}
 
 // Common license types
 const LICENSE_TYPES = [
@@ -315,7 +328,7 @@ const RightsManagement: React.FC<RightsManagementProps> = ({
     status: RightsStatus;
     completed: boolean;
     message?: string;
-    details?: any;
+    details?: VerificationStatusDetails;
   }>(null);
   
   // Handle adding a new clearance
@@ -1505,50 +1518,49 @@ const RightsManagement: React.FC<RightsManagementProps> = ({
       >
         <DialogTitle>Rights Management History</DialogTitle>
         <DialogContent>
-          {rights.updateHistory && rights.updateHistory.length > 0 ? (
-            <List>
-              {rights.updateHistory.map((update, index) => (
-                <React.Fragment key={index}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemIcon>
-                      <HistoryIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Typography variant="subtitle2">
-                          {formatDate(update.updatedAt)} by {update.updatedBy}
+          {/* History Section */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Rights History
+            </Typography>
+            {rights?.updateHistory && rights.updateHistory.length > 0 ? (
+              <Timeline>
+                {rights.updateHistory.map((update, index) => (
+                  <TimelineItem key={`history-${index}`}>
+                    <TimelineSeparator>
+                      <TimelineDot color="primary" />
+                      <TimelineConnector />
+                    </TimelineSeparator>
+                    <TimelineContent>
+                      <Typography variant="subtitle2">
+                        {new Date(update.updatedAt).toLocaleString()}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Updated by: {update.updatedBy}
+                      </Typography>
+                      <Typography variant="body2">
+                        Changed fields: {update.changedFields.join(', ')}
+                      </Typography>
+                      {update.previousStatus && (
+                        <Typography variant="body2" color="text.secondary">
+                          Previous status: {update.previousStatus}
                         </Typography>
-                      }
-                      secondary={
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" component="div">
-                            Changed fields: {update.changedFields.join(', ')}
-                          </Typography>
-                          {update.previousStatus && (
-                            <Typography variant="body2" component="div">
-                              Status changed from {update.previousStatus} to {rights.status}
-                            </Typography>
-                          )}
-                          {update.notes && (
-                            <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-                              Notes: {update.notes}
-                            </Typography>
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  {index < rights.updateHistory.length - 1 && <Divider variant="inset" component="li" />}
-                </React.Fragment>
-              ))}
-            </List>
-          ) : (
-            <Box sx={{ py: 3, textAlign: 'center' }}>
+                      )}
+                      {update.notes && (
+                        <Typography variant="body2" color="text.secondary">
+                          Notes: {update.notes}
+                        </Typography>
+                      )}
+                    </TimelineContent>
+                  </TimelineItem>
+                ))}
+              </Timeline>
+            ) : (
               <Typography variant="body2" color="text.secondary">
-                No rights management history available
+                No history available
               </Typography>
-            </Box>
-          )}
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setHistoryDialogOpen(false)}>Close</Button>
@@ -1648,10 +1660,12 @@ const RightsManagement: React.FC<RightsManagementProps> = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setVerificationStatusDialogOpen(false)}>Close</Button>
+          <Button onClick={() => setVerificationStatusDialogOpen(false)}>
+            Close
+          </Button>
           {currentVerificationJobId && !loading && !verificationStatus && (
             <Button 
-              onClick={() => checkVerificationStatus(currentVerificationJobId)} 
+              onClick={() => checkVerificationStatus(currentVerificationJobId)}
               variant="contained"
             >
               Check Status
@@ -1662,6 +1676,5 @@ const RightsManagement: React.FC<RightsManagementProps> = ({
     </Box>
   );
 };
-
 
 export default RightsManagement;

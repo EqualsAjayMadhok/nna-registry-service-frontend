@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
                       {asset.description}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
-                      Created {new Date(asset.createdAt).toLocaleDateString()}
+                      Created {asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A'}
                     </Typography>
                   </CardContent>
                   <CardActions>
@@ -267,7 +267,7 @@ const Dashboard: React.FC = () => {
                     </Avatar>
                   }
                   title={asset.name}
-                  subheader={`${asset.type} • ${new Date(asset.createdAt).toLocaleDateString()}`}
+                  subheader={`${asset.type} • ${asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A'}`}
                 />
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

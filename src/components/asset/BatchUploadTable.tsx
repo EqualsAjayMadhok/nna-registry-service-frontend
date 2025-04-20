@@ -704,7 +704,7 @@ const BatchUploadTable: React.FC<BatchUploadTableProps> = ({
                                     <strong>NNA Address:</strong> {item.asset.nna_address}
                                   </Typography>
                                   <Typography variant="body2">
-                                    <strong>Created:</strong> {new Date(item.asset.createdAt).toLocaleString()}
+                                    <strong>Created:</strong> {item.asset.createdAt ? new Date(item.asset.createdAt).toLocaleString() : 'N/A'}
                                   </Typography>
                                   
                                   <Button 
