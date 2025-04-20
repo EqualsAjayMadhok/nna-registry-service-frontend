@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "framework": "create-react-app",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
