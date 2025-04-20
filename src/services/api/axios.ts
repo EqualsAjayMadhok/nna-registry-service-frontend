@@ -2,13 +2,8 @@ import axios, { InternalAxiosRequestConfig } from 'axios';
 
 // Create configurable axios instance for backend API
 const createApiClient = (baseURL: string) => {
-  // Remove /api suffix if present, as we'll add it consistently
-  const normalizedBaseURL = baseURL.endsWith('/api') 
-    ? baseURL.slice(0, -4) // Remove /api
-    : baseURL;
-  
   const api = axios.create({
-    baseURL: `${normalizedBaseURL}/api`,
+    baseURL: baseURL,
     timeout: 30000, // 30 second timeout
     headers: {
       'Content-Type': 'application/json',
