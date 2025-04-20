@@ -40,6 +40,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "alias": ["nna-registry-service-frontend.vercel.app"]
+  ]
 }
