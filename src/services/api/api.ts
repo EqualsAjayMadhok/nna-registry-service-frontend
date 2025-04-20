@@ -20,8 +20,8 @@ const formatApiUrl = (url: string) => {
 const config: ApiConfig = {
   // Force mock mode OFF for production
   useMockData: isProduction ? false : process.env.REACT_APP_USE_MOCK_DATA === 'true',
-  apiUrl: formatApiUrl(process.env.REACT_APP_API_URL || 'http://localhost:3000'),
-  realApiUrl: formatApiUrl(process.env.REACT_APP_REAL_API_URL || 'http://localhost:8080')
+  apiUrl: formatApiUrl(process.env.REACT_APP_API_URL || 'https://registry.reviz.dev'),
+  realApiUrl: formatApiUrl(process.env.REACT_APP_REAL_API_URL || 'https://registry.reviz.dev')
 };
 
 // For development-only, allow overriding mock mode via localStorage
