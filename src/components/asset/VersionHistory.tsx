@@ -316,8 +316,11 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({
     : [];
 
   // Add current version to the top if not already included
-  if (asset.version && sortedVersions.findIndex(v => v.number === asset.version.number) === -1) {
-    sortedVersions.unshift(asset.version);
+  if (asset.version && asset.version.number) {
+    const versionExists = sortedVersions.some(v => v.number === asset.version?.number);
+    if (!versionExists) {
+      sortedVersions.unshift(asset.version);
+    }
   }
 
   // Toggle version expansion
@@ -860,7 +863,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({
           </ListItemIcon>
           <ListItemText>Compare with Current</ListItemText>
         </MenuItem>
-        {contextVersion && contextVersion.number !== asset.version.number && (
+        {contextVersion && asset.version && contextVersion.number !== asset.version.number && (
           <MenuItem
             onClick={() => {
               if (contextVersion) {
