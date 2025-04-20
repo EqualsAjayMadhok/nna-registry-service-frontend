@@ -1,4 +1,5 @@
-import createApiClient from './axios';
+import { createApiClient } from './axios';
+import { AxiosInstance } from 'axios';
 
 // API Configuration
 interface ApiConfig {
@@ -49,6 +50,6 @@ export const apiConfig = {
 };
 
 // Create API client with appropriate URL based on mode
-const api = createApiClient(apiConfig.getApiUrl());
+const api: AxiosInstance = createApiClient(apiConfig.getApiUrl());
 
 export default api;
