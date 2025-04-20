@@ -3,6 +3,7 @@
  * 
  * A dedicated service for getting asset counts by layer, category, and subcategory.
  * This provides guaranteed count values to ensure sequential numbers work correctly.
+ * Last updated: ${new Date().toISOString()}
  */
 
 import api from '../services/api/api';
