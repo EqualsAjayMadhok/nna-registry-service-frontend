@@ -54,19 +54,13 @@ class AuthService {
         console.log('REAL API MODE: Attempting login');
         const isEmail = emailOrUsername.includes('@');
         
-        if (isEmail) {
-          const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', {
-            email: emailOrUsername,
-            password
-          });
-          return response.data.data as AuthResponse;
-        } else {
-          const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', {
-            username: emailOrUsername,
-            password
-          });
-          return response.data.data as AuthResponse;
-        }
+        // Prepare login data based on input type
+        const loginData = isEmail 
+          ? { email: emailOrUsername, password }
+          : { username: emailOrUsername, password };
+        
+        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', loginData);
+        return response.data.data as AuthResponse;
       }
     } catch (error) {
       console.error('LOGIN ERROR:', error);

@@ -106,74 +106,69 @@ const AssetRegistration: React.FC = () => {
       // Get existing sequential numbers for this taxonomy combination
       const checkAddressAndGetNextNumber = async () => {
         try {
-          setSequentialNumber(1); // Default to 1 initially
+          // Get the count from the backend
+          const count = await assetService.getExistingAssetsCount({
+            layer: selectedLayer.code,
+            category: selectedCategory.code,
+            subcategory: selectedSubcategory.code
+          });
 
-          // Generate human-friendly name with the current sequential number
+          console.log(`Got count ${count} for ${selectedLayer.code}.${selectedCategory.code}.${selectedSubcategory.code}`);
+
+          // Next sequential number is count + 1
+          const nextNumber = count + 1;
+          console.log(`Setting sequential number to ${nextNumber}`);
+          setSequentialNumber(nextNumber);
+
+          // Generate human-friendly name with the new sequential number
           const hfName = nnaRegistryService.generateHumanFriendlyName(
             selectedLayer.code,
             selectedCategory.name,
             selectedSubcategory.name,
-            1
+            nextNumber
           );
+          setHumanFriendlyName(hfName);
 
-          // Check if address exists
-          const exists = await taxonomyService.checkNNAAddressExists(hfName);
-
-          if (exists) {
-            // Get next available number using the taxonomy service
-            const nextNumber = taxonomyService.getNextSequentialNumber(
-              selectedLayer.code,
-              selectedCategory.code,
-              selectedSubcategory.code,
-              [1] // The initial number we tried
-            );
-
-            setSequentialNumber(nextNumber);
-
-            // Generate updated human-friendly name with new sequential number
-            const updatedHfName = nnaRegistryService.generateHumanFriendlyName(
-              selectedLayer.code,
-              selectedCategory.name,
-              selectedSubcategory.name,
-              nextNumber
-            );
-            setHumanFriendlyName(updatedHfName);
-
-            // Generate machine-friendly address with new sequential number
-            const updatedMfAddress = nnaRegistryService.generateMachineFriendlyAddress(
-              selectedLayer.code,
-              selectedCategory.name,
-              selectedSubcategory.name,
-              nextNumber
-            );
-
-            setMachineFriendlyAddress(updatedMfAddress);
-          } else {
-            // If the address doesn't exist, we can use the first one
-            setHumanFriendlyName(hfName);
-
-            // Generate machine-friendly address
-            const mfAddress = nnaRegistryService.generateMachineFriendlyAddress(
-              selectedLayer.code,
-              selectedCategory.name,
-              selectedSubcategory.name,
-              1
-            );
-
-            setMachineFriendlyAddress(mfAddress);
-          }
+          // Generate machine-friendly address with the new sequential number
+          const mfAddress = nnaRegistryService.generateMachineFriendlyAddress(
+            selectedLayer.code,
+            selectedCategory.name,
+            selectedSubcategory.name,
+            nextNumber
+          );
+          setMachineFriendlyAddress(mfAddress);
 
           // Update metadata with the generated name
           if (metadata) {
             const updatedMetadata = {
               ...metadata,
-              name: humanFriendlyName || hfName,
+              name: hfName,
             };
             setMetadata(updatedMetadata);
-            console.log('Setting metadata name to:', humanFriendlyName || hfName);
+            console.log('Setting metadata name to:', hfName);
           }
-        } catch (err) {
-          console.error('Error generating NNA addresses:', err);
+        } catch (error) {
+          console.error('Error getting asset count:', error);
+          // On error, use a default sequential number of 2 to ensure we're not using 001
+          const defaultNumber = 2;
+          setSequentialNumber(defaultNumber);
+          
+          // Generate names with default sequential number
+          const hfName = nnaRegistryService.generateHumanFriendlyName(
+            selectedLayer.code,
+            selectedCategory.name,
+            selectedSubcategory.name,
+            defaultNumber
+          );
+          setHumanFriendlyName(hfName);
+
+          const mfAddress = nnaRegistryService.generateMachineFriendlyAddress(
+            selectedLayer.code,
+            selectedCategory.name,
+            selectedSubcategory.name,
+            defaultNumber
+          );
+          setMachineFriendlyAddress(mfAddress);
         }
       };
 

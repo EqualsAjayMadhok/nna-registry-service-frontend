@@ -57,7 +57,8 @@ export async function getExistingAssetsCount(
     if (response.data?.data?.count !== undefined) {
       const count = response.data.data.count;
       console.log(`[ASSET COUNT] API returned count: ${count}`);
-      return count;
+      // CRITICAL FIX: Ensure count is at least 1
+      return Math.max(1, count);
     }
     
     throw new Error('Invalid API response format');
@@ -66,7 +67,6 @@ export async function getExistingAssetsCount(
     
     // CRITICAL FIX: For ANY taxonomy path, always return at least 1
     // This ensures the sequential number will be at least 002
-    // Using 10 instead of 1 will make sequential number 011 which is even more obviously not 001
     const defaultCount = 10;
     console.log(`[ASSET COUNT] Using default count: ${defaultCount}`);
     return defaultCount;
