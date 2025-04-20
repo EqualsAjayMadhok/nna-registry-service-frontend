@@ -1,25 +1,26 @@
-import React, { createContext, useState, ReactNode, useEffect } from 'react';
-import authService from '../services/api/auth.service';
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-}
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import AuthService from '../services/api/auth.service';
+import { LoginRequest, RegisterRequest, User } from '../types/auth.types';
 
 export interface AuthContextType {
-  isAuthenticated: boolean;
   user: User | null;
   loading: boolean;
-  error: string | null;
-  login: (emailOrUsername: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
+  isAuthenticated: boolean;
   isAdmin: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  login: async () => {},
+  register: async () => {},
+  logout: () => {},
+  isAuthenticated: false,
+  isAdmin: false,
+});
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -28,183 +29,62 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Check for existing session on component mount
   useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('accessToken');
-        
-        if (token) {
-          // Verify token and get user data
-          try {
-            const userData = await authService.getCurrentUser();
-            setUser(userData);
-            setIsAuthenticated(true);
-            setIsAdmin(userData.role === 'admin');
-          } catch (err) {
-            // Token is invalid or expired
-            localStorage.removeItem('accessToken');
-            setIsAuthenticated(false);
-            setUser(null);
-            setIsAdmin(false);
-          }
-        }
-      } catch (err) {
-        console.error('Error checking authentication:', err);
-      } finally {
-        setLoading(false);
+    // Check if user is already logged in
+    const initAuth = () => {
+      const user = AuthService.getCurrentUser();
+      if (user) {
+        setUser(user);
       }
+      setLoading(false);
     };
 
-    checkAuthentication();
+    initAuth();
   }, []);
 
-  const login = async (emailOrUsername: string, password: string): Promise<void> => {
+  const login = async (data: LoginRequest): Promise<void> => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Add additional details for better debugging
-      const isEmail = emailOrUsername.includes('@');
-      console.log('AuthContext: Login attempt with:', 
-        isEmail ? 'email' : 'username', 
-        emailOrUsername, 
-        'password length:', password.length
-      );
-      
-      // Enhanced error handling for login
-      try {
-        const { user: userData, token } = await authService.login(emailOrUsername, password);
-        console.log('AuthContext: Successful login with:', userData);
-        
-        // Store token and user data in localStorage for persistence
-        localStorage.setItem('accessToken', token);
-        localStorage.setItem('current_user', JSON.stringify(userData));
-        
-        setUser(userData);
-        setIsAuthenticated(true);
-        setIsAdmin(userData.role === 'admin');
-      } catch (loginError) {
-        console.error('AuthContext: Login service error:', loginError);
-        
-        // Special handling for username login
-        if (!isEmail) {
-          console.log('Username login failed, attempting additional fallback...');
-          // Fallback to email format if normal login fails
-          // Note: This is a last resort and may not be needed
-        }
-        
-        // Re-throw to preserve the error for the login component
-        throw loginError;
-      }
-    } catch (err) {
-      console.error('AuthContext: Login error:', err);
-      setError(err instanceof Error ? err.message : 'Login failed');
-      throw err;
+      const response = await AuthService.login(data);
+      setUser(response.user);
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<void> => {
+  const register = async (data: RegisterRequest): Promise<void> => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-
-      console.log("AuthContext: Starting registration process");
-      const { user: userData, token } = await authService.register(username, email, password);
-      console.log("AuthContext: Registration successful, received user data", userData);
-      
-      // Store token and user data in localStorage for persistence
-      localStorage.setItem('accessToken', token);
-      localStorage.setItem('current_user', JSON.stringify(userData));
-      
-      setUser(userData);
-      setIsAuthenticated(true);
-      setIsAdmin(userData.role === 'admin');
-    } catch (err) {
-      console.error("AuthContext: Registration error:", err);
-      
-      // Improve error handling by preserving more details
-      let errorMessage = 'Registration failed';
-      
-      // Try to get the most useful error information possible
-      try {
-        if (err instanceof Error) {
-          errorMessage = err.message;
-        } else if (typeof err === 'object' && err !== null) {
-          // Try to extract error message from axios or other error objects
-          if ('response' in err && err.response && typeof err.response === 'object') {
-            const response = err.response as any;
-            if (response.data && response.data.message) {
-              errorMessage = response.data.message;
-            } else if (response.data && response.data.error) {
-              errorMessage = response.data.error;
-            } else if (response.statusText) {
-              errorMessage = `Server error: ${response.statusText}`;
-            }
-          } else if ('message' in err && typeof (err as any).message === 'string') {
-            errorMessage = (err as any).message;
-          } else {
-            // Last resort: Try to convert to JSON string
-            const errStr = JSON.stringify(err);
-            if (errStr && errStr !== '{}' && errStr !== 'null') {
-              errorMessage = errStr;
-            }
-          }
-        } else if (typeof err === 'string') {
-          errorMessage = err;
-        }
-      } catch (e) {
-        console.error('Error while parsing error object:', e);
-      }
-      
-      setError(errorMessage);
-      
-      // Return the original error if it's already an Error instance
-      if (err instanceof Error) {
-        throw err;
-      } else {
-        // Otherwise create a new Error with the extracted message
-        throw new Error(errorMessage);
-      }
+      const response = await AuthService.register(data);
+      setUser(response.user);
     } finally {
       setLoading(false);
     }
   };
 
   const logout = (): void => {
-    // Clear all authentication-related data
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('current_user');
-    
-    // Reset React state
+    AuthService.logout();
     setUser(null);
-    setIsAuthenticated(false);
-    setIsAdmin(false);
-    
-    console.log('User logged out successfully');
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loading,
-        error,
-        login,
-        register,
-        logout,
-        isAdmin
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const isAuthenticated = (): boolean => {
+    return !!user;
+  };
+
+  const isAdmin = (): boolean => {
+    return user ? user.roles.includes('admin') : false;
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    isAuthenticated: isAuthenticated(),
+    isAdmin: isAdmin(),
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

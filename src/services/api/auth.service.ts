@@ -1,185 +1,120 @@
-import api, { apiConfig } from './api';
-import { User } from '../../contexts/AuthContext';
-import { ApiResponse } from '../../types/api.types';
+import { LoginRequest, RegisterRequest, AuthResponse, ApiResponse } from '../../types/auth.types';
+import createApiClient from './axios';
 
-interface AuthResponse {
-  user: User;
-  token: string;
-}
+const api = createApiClient(process.env.REACT_APP_API_URL || 'http://localhost:3000');
 
-// ULTRA SIMPLE AUTH SERVICE
-// This is a minimal implementation that works reliably in mock mode
-class AuthService {
-  // Default mock user
-  private defaultUser: User = {
-    id: 'default-user',
-    username: 'user',
-    email: 'user@example.com',
-    role: 'user'
-  };
-
-  // MINIMAL LOGIN - ALWAYS WORKS
-  async login(emailOrUsername: string, password: string): Promise<AuthResponse> {
-    console.log('LOGIN ATTEMPT:', emailOrUsername);
-    
+const AuthService = {
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
     try {
-      // MOCK MODE - Accept any credentials
-      if (apiConfig.useMockData) {
-        console.log('MOCK MODE: Accepting all logins');
-        
-        // Create a user based on the input
-        const isEmail = emailOrUsername.includes('@');
-        const username = isEmail ? emailOrUsername.split('@')[0] : emailOrUsername;
-        const email = isEmail ? emailOrUsername : `${emailOrUsername}@example.com`;
-        
-        // Store the user in localStorage
-        const user = { 
-          id: `user-${Date.now()}`, 
-          username, 
-          email, 
-          role: 'user' 
-        };
-        
-        // Save user for session persistence
-        localStorage.setItem('current_user', JSON.stringify(user));
-        
-        return {
-          user,
-          token: 'mock-token'
-        };
-      } 
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
       
-      // REAL API MODE
-      else {
-        console.log('REAL API MODE: Attempting login');
-        const isEmail = emailOrUsername.includes('@');
-        
-        // Prepare login data based on input type
-        const loginData = isEmail 
-          ? { email: emailOrUsername, password }
-          : { username: emailOrUsername, password };
-        
-        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', loginData);
-        return response.data.data as AuthResponse;
+      if (!response.data.data) {
+        throw new Error('Invalid response format');
       }
-    } catch (error) {
-      console.error('LOGIN ERROR:', error);
-      throw new Error('Login failed. Please check your credentials.');
+      
+      const authData = response.data.data;
+      
+      if (authData?.access_token && authData?.user) {
+        // Store token consistently as 'accessToken'
+        localStorage.setItem('accessToken', authData.access_token);
+        localStorage.setItem('user', JSON.stringify(authData.user));
+        return authData;
+      }
+      
+      throw new Error('Invalid response format');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.message) {
+        throw new Error(error.message);
+      }
+      throw new Error('Login failed. Please try again.');
     }
-  }
+  },
 
-  // SIMPLIFIED REGISTRATION
-  async register(username: string, email: string, password: string): Promise<AuthResponse> {
-    console.log('REGISTRATION ATTEMPT:', username, email);
-    
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
     try {
-      // MOCK MODE - Always succeed
-      if (apiConfig.useMockData) {
-        console.log('MOCK MODE: Registration always succeeds');
-        
-        // Basic validation
-        if (username.length < 3) {
-          throw new Error('Username must be at least 3 characters');
-        }
-        
-        // Create new user
-        const user = {
-          id: `user-${Date.now()}`,
-          username,
-          email,
-          role: 'user'
-        };
-        
-        // Save user info
-        localStorage.setItem('current_user', JSON.stringify(user));
-        
-        return {
-          user,
-          token: 'mock-token'
-        };
-      } 
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
       
-      // REAL API MODE
-      else {
-        console.log('REAL API MODE: Registration request');
-        const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', {
-          username,
-          email,
-          password
-        });
-        return response.data.data as AuthResponse;
+      if (!response.data.data) {
+        throw new Error('Invalid response format');
       }
-    } catch (error) {
-      console.error('REGISTRATION ERROR:', error);
+      
+      const authData = response.data.data;
+      
+      if (authData?.access_token && authData?.user) {
+        // Store token consistently as 'accessToken'
+        localStorage.setItem('accessToken', authData.access_token);
+        localStorage.setItem('user', JSON.stringify(authData.user));
+        return authData;
+      }
+      
+      throw new Error('Invalid response format');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.message) {
+        throw new Error(error.message);
+      }
       throw new Error('Registration failed. Please try again.');
     }
-  }
+  },
 
-  // GET CURRENT USER
-  async getCurrentUser(): Promise<User> {
-    try {
-      // Check for token
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('No authentication token found');
+  logout: (): void => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+  },
+
+  getCurrentUser: (): any => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        // Clear invalid data
+        localStorage.removeItem('user');
+        return null;
       }
-      
-      // MOCK MODE
-      if (apiConfig.useMockData) {
-        console.log('MOCK MODE: Getting current user');
-        
-        // Get stored user
-        const storedUser = localStorage.getItem('current_user');
-        if (storedUser) {
-          try {
-            return JSON.parse(storedUser);
-          } catch (e) {
-            console.error('Error parsing stored user');
-          }
-        }
-        
-        // Return default user if nothing else works
-        return this.defaultUser;
-      } 
-      
-      // REAL API MODE
-      else {
-        console.log('REAL API MODE: Getting user profile');
-        const response = await api.get<ApiResponse<User>>('/auth/profile');
-        return response.data.data as User;
-      }
-    } catch (error) {
-      console.error('GET USER ERROR:', error);
-      throw new Error('Failed to get user profile');
     }
-  }
-  
-  // CLEAR STORAGE
-  clearStorage(): void {
-    console.log('Clearing all storage');
-    localStorage.clear();
-  }
-  
-  // TOGGLE MOCK MODE
-  toggleMockData(useMock: boolean): void {
-    apiConfig.setUseMockData(useMock);
-    console.log('Mock mode:', useMock ? 'ON' : 'OFF');
-  }
-  
-  // CREATE TEST USER
-  createTestUser(): void {
+    return null;
+  },
+
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('accessToken');
+  },
+
+  isAdmin: (): boolean => {
+    const user = AuthService.getCurrentUser();
+    return user ? (user.role === 'admin' || (user.roles && user.roles.includes('admin'))) : false;
+  },
+
+  clearStorage: (): void => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+  },
+
+  createTestUser: async (): Promise<void> => {
     const testUser = {
-      id: 'test-user',
-      username: 'testuser',
-      email: 'test@example.com',
-      role: 'user'
+      username: `test_user_${Date.now()}`,
+      email: `test_user_${Date.now()}@example.com`,
+      password: 'Test123!@#'
     };
     
-    localStorage.setItem('current_user', JSON.stringify(testUser));
-    console.log('Created test user');
+    try {
+      await AuthService.register(testUser);
+    } catch (error) {
+      console.error('Error creating test user:', error);
+      throw error;
+    }
   }
-}
+};
 
-// Export singleton instance
-const authService = new AuthService();
-export default authService;
+export default AuthService;

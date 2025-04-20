@@ -1,27 +1,43 @@
 // Auth related types
-interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-  };
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  roles?: string[];
 }
 
-interface LoginRequest {
-  email: string;
+export interface LoginRequest {
+  email?: string;
+  username?: string;
   password: string;
 }
 
-interface RegisterRequest {
+export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
 }
 
-// Export the types
-export type { AuthResponse, LoginRequest, RegisterRequest };
+export interface AuthResponse {
+  user: User;
+  access_token: string;
+}
 
-// Also export an empty object to satisfy TypeScript
-export {};
+export interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+}
+
+// API response wrapper type
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}

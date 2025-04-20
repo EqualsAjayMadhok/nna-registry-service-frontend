@@ -142,6 +142,28 @@ export function useFileUpload(
     // Increment active uploads count
     activeUploadsRef.current += 1;
     
+    // Create a temporary ID for tracking before the actual upload starts
+    const tempId = `temp-${file.name}-${Date.now()}`;
+    
+    // Add file to tracking state with temporary ID
+    setUploadState(prevState => {
+      const files = new Map(prevState.files);
+      const fileUpload = {
+        id: tempId,
+        file,
+        status: 'pending' as const,
+        progress: 0,
+        startTime: Date.now()
+      };
+      files.set(tempId, fileUpload);
+      
+      return {
+        ...prevState,
+        files,
+        isUploading: true
+      };
+    });
+
     // Create options with our callbacks
     const uploadOptions: FileUploadOptions = {
       ...options,
@@ -152,10 +174,10 @@ export function useFileUpload(
         setUploadState(prevState => {
           // Update the specific file's progress
           const files = new Map(prevState.files);
-          const fileUpload = files.get(fileId);
+          const fileUpload = files.get(tempId);
           
           if (fileUpload) {
-            files.set(fileId, { ...fileUpload, progress });
+            files.set(tempId, { ...fileUpload, progress });
             
             // Calculate overall progress
             const overallProgress = calculateOverallProgress(files);
@@ -177,12 +199,15 @@ export function useFileUpload(
         setUploadState(prevState => {
           // Update the specific file's status
           const files = new Map(prevState.files);
-          const fileUpload = files.get(fileId);
+          const fileUpload = files.get(tempId);
           
           if (fileUpload) {
+            // Remove the temporary entry and add the final one
+            files.delete(tempId);
             files.set(fileId, { 
-              ...fileUpload, 
-              status: 'completed', 
+              ...fileUpload,
+              id: fileId,
+              status: 'completed',
               progress: 100,
               endTime: Date.now(),
               estimatedTimeRemaining: 0
@@ -222,13 +247,13 @@ export function useFileUpload(
         setUploadState(prevState => {
           // Update the specific file's status
           const files = new Map(prevState.files);
-          const fileUpload = files.get(fileId);
+          const fileUpload = files.get(tempId);
           
           if (fileUpload) {
-            files.set(fileId, { 
-              ...fileUpload, 
-              status: 'error', 
-              error, 
+            files.set(tempId, { 
+              ...fileUpload,
+              status: 'error',
+              error,
               errorCode,
               endTime: Date.now()
             });
@@ -261,68 +286,11 @@ export function useFileUpload(
           
           return prevState;
         });
-      },
-      
-      // Handle cancellation
-      onCancel: (fileId) => {
-        setUploadState(prevState => {
-          // Update the specific file's status
-          const files = new Map(prevState.files);
-          const fileUpload = files.get(fileId);
-          
-          if (fileUpload) {
-            files.set(fileId, { 
-              ...fileUpload, 
-              status: 'cancelled', 
-              endTime: Date.now() 
-            });
-            
-            // Calculate new overall status and progress
-            const overallStatus = determineOverallStatus(files);
-            const overallProgress = calculateOverallProgress(files);
-            
-            const result = {
-              ...prevState,
-              files,
-              overallStatus,
-              overallProgress,
-              isUploading: overallStatus === 'uploading'
-            };
-            
-            // Decrement active uploads count
-            activeUploadsRef.current -= 1;
-            
-            // Process any pending files
-            processPendingFiles(options);
-            
-            return result;
-          }
-          
-          return prevState;
-        });
       }
     };
     
     // Start the actual upload
-    const fileUpload = assetService.uploadFile(file, uploadOptions);
-    
-    // Add the file to our tracking state
-    setUploadState(prevState => {
-      const files = new Map(prevState.files);
-      files.set(fileUpload.id, fileUpload);
-      
-      // Calculate new overall status and progress
-      const overallStatus = determineOverallStatus(files);
-      const overallProgress = calculateOverallProgress(files);
-      
-      return {
-        ...prevState,
-        files,
-        overallStatus,
-        overallProgress,
-        isUploading: true
-      };
-    });
+    assetService.uploadFile(file, uploadOptions);
   }, [calculateOverallProgress, determineOverallStatus, processPendingFiles, validateFile]);
   
   /**
@@ -351,36 +319,34 @@ export function useFileUpload(
    * Cancel a specific upload
    */
   const cancelUpload = useCallback((fileId: string) => {
-    const cancelled = assetService.cancelUpload(fileId);
+    assetService.cancelUpload(fileId);
     
-    if (cancelled) {
-      setUploadState(prevState => {
-        const files = new Map(prevState.files);
-        const fileUpload = files.get(fileId);
+    setUploadState(prevState => {
+      const files = new Map(prevState.files);
+      const fileUpload = files.get(fileId);
+      
+      if (fileUpload) {
+        files.set(fileId, {
+          ...fileUpload,
+          status: 'cancelled',
+          endTime: Date.now()
+        });
         
-        if (fileUpload) {
-          files.set(fileId, {
-            ...fileUpload,
-            status: 'cancelled',
-            endTime: Date.now()
-          });
-          
-          // Calculate new overall status and progress
-          const overallStatus = determineOverallStatus(files);
-          const overallProgress = calculateOverallProgress(files);
-          
-          return {
-            ...prevState,
-            files,
-            overallStatus,
-            overallProgress,
-            isUploading: overallStatus === 'uploading'
-          };
-        }
+        // Calculate new overall status and progress
+        const overallStatus = determineOverallStatus(files);
+        const overallProgress = calculateOverallProgress(files);
         
-        return prevState;
-      });
-    }
+        return {
+          ...prevState,
+          files,
+          overallStatus,
+          overallProgress,
+          isUploading: overallStatus === 'uploading'
+        };
+      }
+      
+      return prevState;
+    });
   }, [calculateOverallProgress, determineOverallStatus]);
   
   /**

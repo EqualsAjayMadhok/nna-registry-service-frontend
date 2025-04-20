@@ -16,20 +16,20 @@ const createApiClient = (baseURL: string) => {
     (config) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
     (error) => {
+      console.error('Request interceptor error:', error);
       return Promise.reject(error);
     }
   );
 
   // Add response interceptor for error handling
   api.interceptors.response.use(
-    (response) => {
-      return response;
-    },
+    (response) => response,
     (error) => {
       if (error.response) {
         console.error('API Error Response:', error.response.data);
@@ -37,14 +37,19 @@ const createApiClient = (baseURL: string) => {
         // Handle 401 Unauthorized - token expired or invalid
         if (error.response.status === 401) {
           localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
           // Could redirect to login if needed
           // window.location.href = '/login';
         }
         
-        error.message = error.response.data?.message || 'An error occurred';
+        // Extract error message from response
+        const message = error.response.data?.message || 
+                       error.response.data?.error || 
+                       'An error occurred';
+        error.message = message;
       } else if (error.request) {
         console.error('API No Response:', error.request);
-        error.message = 'No response from server';
+        error.message = 'No response from server. Please check your connection.';
       } else {
         console.error('API Error:', error.message);
       }

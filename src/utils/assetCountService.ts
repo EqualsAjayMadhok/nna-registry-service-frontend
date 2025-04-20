@@ -6,6 +6,7 @@
  */
 
 import api from '../services/api/api';
+import { ApiResponse } from '../types/api.types';
 
 // Mock counts that ALWAYS return a number > 0 for common combinations
 const HARD_CODED_COUNTS = {
@@ -17,6 +18,11 @@ const HARD_CODED_COUNTS = {
   'S.HIP.BAS': 15,  // This will make sequential = 016
   'G.ROC.BAS': 25   // This will make sequential = 026
 };
+
+interface AssetCountResponse {
+  count: number;
+  taxonomy?: string;
+}
 
 /**
  * Get the count of existing assets for a specific layer, category, subcategory combination
@@ -44,7 +50,7 @@ export async function getExistingAssetsCount(
   try {
     // Attempt to call API
     console.log(`[ASSET COUNT] Attempting API call for ${key}`);
-    const response = await api.get(`/assets/count`, { 
+    const response = await api.get<ApiResponse<AssetCountResponse>>('/assets/count', { 
       params: {
         layer,
         category,

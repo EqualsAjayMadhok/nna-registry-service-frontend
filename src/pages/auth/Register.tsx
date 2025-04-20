@@ -12,6 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
+import { RegisterRequest } from '../../types/auth.types';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -64,109 +65,51 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
-      console.log('🚀 Starting registration with username:', username);
+      const registerRequest: RegisterRequest = {
+        username,
+        email,
+        password
+      };
       
-      // First check if we might be in mock mode
-      const useMockData = localStorage.getItem('useMockData') === 'true';
-      if (useMockData) {
-        console.log('📝 Mock mode detected, checking for existing users with same username or email');
-        
-        // Check for existing user with the same username or email
-        const existingUserKey = `registered_user_${username}`;
-        const existingUser = localStorage.getItem(existingUserKey);
-        
-        if (existingUser) {
-          console.log('⚠️ Username already exists in mock storage');
-          throw new Error('Username already exists');
-        }
-        
-        // Check all items in localStorage for a matching email
-        let emailExists = false;
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('registered_user_')) {
-            try {
-              const userData = JSON.parse(localStorage.getItem(key) || '{}');
-              if (userData.email === email) {
-                emailExists = true;
-                break;
-              }
-            } catch (e) {
-              // Ignore parse errors
-            }
-          }
-        }
-        
-        if (emailExists) {
-          console.log('⚠️ Email already exists in mock storage');
-          throw new Error('Email already exists');
-        }
-      }
-      
-      // Register the user
-      await register(username, email, password);
-      console.log('✅ Registration successful, navigating to dashboard');
+      await register(registerRequest);
       navigate('/dashboard');
     } catch (err) {
-      console.error('❌ Registration failed:', err);
-      
-      // Provide user-friendly error messages
-      let errorMessage = 'Registration failed. Please try again.';
-      
       if (err instanceof Error) {
-        // If it's an Error object, use its message
-        errorMessage = err.message;
-        
-        // Check for common registration errors and provide clear messages
-        const errorLower = errorMessage.toLowerCase();
-        if (errorLower.includes('username') && errorLower.includes('exists')) {
-          errorMessage = 'This username is already taken. Please choose another one.';
-        } else if (errorLower.includes('email') && errorLower.includes('exists')) {
-          errorMessage = 'This email address is already registered. Please use another email or try logging in.';
-        } else if (errorLower.includes('password') && (errorLower.includes('weak') || errorLower.includes('short'))) {
-          errorMessage = 'Password is too weak. Please use at least 6 characters with a mix of letters and numbers.';
-        }
+        setError(err.message);
+      } else {
+        setError('Registration failed. Please try again.');
       }
-      
-      // Handle object errors (like server response objects)
-      if (errorMessage.includes('[object Object]')) {
-        errorMessage = 'Registration error. Please try with a different username or email.';
-      }
-      
-      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container component="main" maxWidth="xs">
       <Box
         sx={{
+          marginTop: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
         }}
       >
         <Paper
           elevation={3}
           sx={{
-            p: 4,
+            padding: 4,
             width: '100%',
-            maxWidth: 450,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
-          <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Create an Account
-          </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Register to access the NNA Registry Service
+          <Typography component="h1" variant="h5">
+            Create Account
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
               {error}
             </Alert>
           )}
@@ -182,7 +125,7 @@ const Register: React.FC = () => {
               autoComplete="username"
               autoFocus
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -193,7 +136,7 @@ const Register: React.FC = () => {
               name="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -205,7 +148,7 @@ const Register: React.FC = () => {
               id="password"
               autoComplete="new-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -215,8 +158,9 @@ const Register: React.FC = () => {
               label="Confirm Password"
               type="password"
               id="confirmPassword"
+              autoComplete="new-password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
             />
             <Button
               type="submit"
@@ -227,9 +171,10 @@ const Register: React.FC = () => {
             >
               {isLoading ? <CircularProgress size={24} /> : 'Sign Up'}
             </Button>
+
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <Link component={RouterLink} to="/login" variant="body2">
-                {"Already have an account? Sign In"}
+                {'Already have an account? Sign In'}
               </Link>
             </Box>
           </Box>

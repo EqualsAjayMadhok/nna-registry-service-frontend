@@ -673,3 +673,11 @@ export interface RightsClearanceRequest {
   paymentDetails?: string; // Payment details
   notes?: string; // Additional notes
 }
+
+export enum UploadStatus {
+  PENDING = 'pending',
+  UPLOADING = 'uploading',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  ERROR = 'error'
+}

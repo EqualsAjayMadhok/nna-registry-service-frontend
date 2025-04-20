@@ -171,29 +171,25 @@ class CollectionService {
           throw new Error(`Collection with ID ${id} not found`);
         }
         
-        const collection = { ...this.mockCollections[collectionIndex] };
-        const currentAssetIds = collection.assets.map(a => a.assetId);
-        const now = new Date().toISOString();
+        const collection = this.mockCollections[collectionIndex];
+        const currentOrder = collection.assets.length;
         
-        // Add only new assets that aren't already in the collection
-        const newAssets = request.assetIds
-          .filter(assetId => !currentAssetIds.includes(assetId))
-          .map((assetId, index) => ({
-            assetId,
-            addedAt: now,
-            addedBy: 'current-user',
-            order: collection.assets.length + index,
-            notes: request.notes
-          }));
+        const newAssets = request.assetIds.map((assetId, index) => ({
+          assetId,
+          addedAt: new Date().toISOString(),
+          addedBy: 'current-user',
+          order: currentOrder + index
+        }));
         
-        if (newAssets.length > 0) {
-          collection.assets = [...collection.assets, ...newAssets];
-          collection.assetCount = collection.assets.length;
-          collection.updatedAt = now;
-          this.mockCollections[collectionIndex] = collection;
-        }
+        const updatedCollection = {
+          ...collection,
+          assets: [...collection.assets, ...newAssets],
+          assetCount: collection.assetCount + request.assetIds.length,
+          updatedAt: new Date().toISOString()
+        };
         
-        return collection;
+        this.mockCollections[collectionIndex] = updatedCollection;
+        return updatedCollection;
       }
 
       const response = await api.post<ApiResponse<Collection>>(`/collections/${id}/assets`, request);
@@ -215,25 +211,23 @@ class CollectionService {
           throw new Error(`Collection with ID ${id} not found`);
         }
         
-        const collection = { ...this.mockCollections[collectionIndex] };
-        collection.assets = collection.assets.filter(asset => !request.assetIds.includes(asset.assetId));
-        collection.assetCount = collection.assets.length;
-        collection.updatedAt = new Date().toISOString();
+        const collection = this.mockCollections[collectionIndex];
+        const updatedAssets = collection.assets.filter(
+          asset => !request.assetIds.includes(asset.assetId)
+        );
         
-        // Reorder remaining assets
-        collection.assets = collection.assets.map((asset, index) => ({
-          ...asset,
-          order: index
-        }));
+        const updatedCollection = {
+          ...collection,
+          assets: updatedAssets,
+          assetCount: updatedAssets.length,
+          updatedAt: new Date().toISOString()
+        };
         
-        this.mockCollections[collectionIndex] = collection;
-        return collection;
+        this.mockCollections[collectionIndex] = updatedCollection;
+        return updatedCollection;
       }
 
-      const response = await api.post<ApiResponse<Collection>>(
-        `/collections/${id}/assets/remove`,
-        request
-      );
+      const response = await api.post<ApiResponse<Collection>>(`/collections/${id}/assets/remove`, request);
       return response.data.data;
     } catch (error) {
       console.error(`Error removing assets from collection with ID ${id}:`, error);
@@ -242,7 +236,7 @@ class CollectionService {
   }
 
   /**
-   * Reorder assets within a collection
+   * Reorder assets in a collection
    */
   async reorderCollectionAssets(id: string, request: CollectionReorderAssetsRequest): Promise<Collection> {
     try {
@@ -252,31 +246,25 @@ class CollectionService {
           throw new Error(`Collection with ID ${id} not found`);
         }
         
-        const collection = { ...this.mockCollections[collectionIndex] };
+        const collection = this.mockCollections[collectionIndex];
+        const assetMap = new Map(collection.assets.map(asset => [asset.assetId, asset]));
         
-        // Update orders for specified assets
-        request.assets.forEach(item => {
-          const assetIndex = collection.assets.findIndex(a => a.assetId === item.assetId);
-          if (assetIndex !== -1) {
-            collection.assets[assetIndex] = {
-              ...collection.assets[assetIndex],
-              order: item.order
-            };
-          }
-        });
+        const updatedAssets = request.assets.map((item, index) => ({
+          ...assetMap.get(item.assetId)!,
+          order: item.order || index
+        }));
         
-        // Sort assets by order
-        collection.assets.sort((a, b) => a.order - b.order);
-        collection.updatedAt = new Date().toISOString();
+        const updatedCollection = {
+          ...collection,
+          assets: updatedAssets,
+          updatedAt: new Date().toISOString()
+        };
         
-        this.mockCollections[collectionIndex] = collection;
-        return collection;
+        this.mockCollections[collectionIndex] = updatedCollection;
+        return updatedCollection;
       }
 
-      const response = await api.put<ApiResponse<Collection>>(
-        `/collections/${id}/assets/order`, 
-        request
-      );
+      const response = await api.post<ApiResponse<Collection>>(`/collections/${id}/assets/reorder`, request);
       return response.data.data;
     } catch (error) {
       console.error(`Error reordering assets in collection with ID ${id}:`, error);

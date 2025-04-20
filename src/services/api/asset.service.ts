@@ -1,4 +1,4 @@
-import axios, { AxiosProgressEvent } from 'axios';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { 
@@ -52,10 +52,39 @@ import {
   RightsUsage
 } from '../../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../../types/api.types';
-import { Upload, UploadStatus } from './upload.service';
 import api from './api';
 
+type ProgressEvent = {
+  loaded: number;
+  total?: number;
+};
+
+interface UploadConfig {
+  headers?: Record<string, string>;
+  onUploadProgress?: (progressEvent: ProgressEvent) => void;
+}
+
+interface UploadProgress {
+  loaded: number;
+  total: number;
+}
+
 type UploadStatus = 'pending' | 'uploading' | 'completed' | 'cancelled' | 'error';
+
+interface Upload {
+  id: string;
+  file: File;
+  progress: number;
+  status: UploadStatus;
+  error?: string;
+  response?: Asset;
+}
+
+interface UploadCallbacks {
+  onProgress?: (progress: number) => void;
+  onComplete?: (asset: Asset) => void;
+  onError?: (error: string) => void;
+}
 
 export interface AssetMetadata {
   layer: string;
@@ -65,49 +94,38 @@ export interface AssetMetadata {
   description?: string;
 }
 
-export interface UploadType {
+interface FileUpload {
   id: string;
   file: File;
   progress: number;
   status: UploadStatus;
-  cancel: () => void;
-  metadata?: AssetMetadata;
-  abortController?: AbortController;
-  startTime?: number;
-  endTime?: number;
-  uploadSpeed?: number;
-  estimatedTimeRemaining?: number;
   error?: string;
-  response?: any;
+  startTime: number;
+  endTime?: number;
+  response?: Asset;
 }
 
-export const activeUploads = new Map<string, UploadType>();
+interface UploadOptions {
+  onProgress?: (progress: number, total: number) => void;
+  onComplete?: (response: Asset) => void;
+  onError?: (error: string) => void;
+  metadata?: Record<string, unknown>;
+}
 
-export const createUpload = (file: File, metadata?: AssetMetadata): UploadType => {
-  const upload: UploadType = {
-    id: uuidv4(),
-    file,
-    progress: 0,
-    status: 'pending',
-    cancel: () => {},
-    metadata
-  };
-  activeUploads.set(upload.id, upload);
-  return upload;
-};
+function isFileUploadOptions(callbacks: UploadCallbacks | FileUploadOptions): callbacks is FileUploadOptions {
+  return 'onComplete' in callbacks && callbacks.onComplete?.length === 2;
+}
 
 class AssetService {
+  private uploads = new Map<string, Upload>();
+
   /**
    * Get the count of existing assets with the specified layer, category, and subcategory
    */
-  async getExistingAssetsCount(
-    layer: string,
-    category: string,
-    subcategory: string
-  ): Promise<number> {
+  async getExistingAssetsCount(params: { layer: string; category: string; subcategory: string }): Promise<number> {
     try {
       const response = await api.get<ApiResponse<number>>(
-        `/assets/count?layer=${layer}&category=${category}&subcategory=${subcategory}`
+        `/assets/count?layer=${params.layer}&category=${params.category}&subcategory=${params.subcategory}`
       );
       return response.data.data;
     } catch (error) {
@@ -119,26 +137,18 @@ class AssetService {
   /**
    * Upload a new asset
    */
-  async uploadAsset(file: File, metadata: AssetMetadata): Promise<UploadType> {
+  async uploadFile(file: File, callbacks?: UploadCallbacks | FileUploadOptions): Promise<string> {
     const uploadId = uuidv4();
-    const abortController = new AbortController();
-
-    const upload: UploadType = {
+    const upload: Upload = {
       id: uploadId,
       file,
       progress: 0,
-      status: 'pending',
-      abortController,
-      cancel: () => {
-        abortController.abort();
-        upload.status = 'cancelled';
-        activeUploads.delete(uploadId);
-      },
-      metadata
+      status: 'pending'
     };
 
-    activeUploads.set(uploadId, upload);
-    return upload;
+    this.uploads.set(uploadId, upload);
+    this.processUpload(upload, callbacks);
+    return uploadId;
   }
 
   /**
@@ -177,6 +187,26 @@ class AssetService {
     }
   }
 
+  async getAssetVersion(id: string, versionNumber: string): Promise<Asset> {
+    try {
+      const response = await api.get<ApiResponse<Asset>>(`/assets/${id}/versions/${versionNumber}`);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error fetching asset ${id} version ${versionNumber}:`, error);
+      throw error;
+    }
+  }
+
+  async createVersion(request: CreateVersionRequest): Promise<Asset> {
+    try {
+      const response = await api.post<ApiResponse<Asset>>(`/assets/${request.assetId}/versions`, request);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error creating version for asset ${request.assetId}:`, error);
+      throw error;
+    }
+  }
+
   async createAsset(data: AssetCreateRequest): Promise<Asset> {
     try {
       const response = await api.post<ApiResponse<Asset>>('/assets', data);
@@ -206,109 +236,124 @@ class AssetService {
     }
   }
 
-  uploadFile(file: File, options?: FileUploadOptions): UploadType {
-    const uploadId = uuidv4();
-    const abortController = new AbortController();
-    
-    const upload: UploadType = {
-      id: uploadId,
-      file,
-      progress: 0,
-      status: 'pending',
-      abortController,
-      cancel: () => {
-        abortController.abort();
-        upload.status = 'cancelled';
-        activeUploads.delete(uploadId);
-        options?.onCancel?.(uploadId);
-      },
-      metadata: options?.metadata ? {
-        layer: options.metadata.layer as string,
-        category: options.metadata.category as string,
-        subcategory: options.metadata.subcategory as string,
-        name: options.metadata.name as string,
-        description: options.metadata.description as string | undefined
-      } : undefined
-    };
-    
-    activeUploads.set(uploadId, upload);
-    
-    setTimeout(() => {
-      this.processFileUpload(upload, options);
-    }, 0);
-    
-    return upload;
+  async getSavedSearches(): Promise<SavedSearch[]> {
+    try {
+      const response = await api.get<ApiResponse<SavedSearch[]>>('/assets/searches');
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching saved searches:', error);
+      throw error;
+    }
   }
 
-  private async processFileUpload(upload: UploadType, options?: FileUploadOptions): Promise<void> {
+  async saveSearch(search: Omit<SavedSearch, 'id' | 'createdAt' | 'userId'>): Promise<SavedSearch> {
+    try {
+      const response = await api.post<ApiResponse<SavedSearch>>('/assets/searches', search);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error saving search:', error);
+      throw error;
+    }
+  }
+
+  async deleteSavedSearch(id: string): Promise<void> {
+    try {
+      await api.delete<ApiResponse<void>>(`/assets/searches/${id}`);
+    } catch (error) {
+      console.error('Error deleting saved search:', error);
+      throw error;
+    }
+  }
+
+  async setDefaultSavedSearch(id: string): Promise<SavedSearch> {
+    try {
+      const response = await api.put<ApiResponse<SavedSearch>>(`/assets/searches/${id}/default`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error setting default saved search:', error);
+      throw error;
+    }
+  }
+
+  async revertToVersion(params: { assetId: string; versionNumber: string; message: string }): Promise<Asset> {
+    try {
+      const response = await api.post<ApiResponse<Asset>>(`/assets/${params.assetId}/versions/${params.versionNumber}/revert`, {
+        message: params.message
+      });
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.error || 'Failed to revert to version');
+      }
+    } catch (error) {
+      console.error('Error reverting to version:', error);
+      throw error;
+    }
+  }
+
+  private async processUpload(upload: Upload, callbacks?: UploadCallbacks | FileUploadOptions): Promise<void> {
     try {
       upload.status = 'uploading';
-      upload.startTime = Date.now();
-      options?.onProgress?.(upload.id, 0);
-      
       const formData = new FormData();
       formData.append('file', upload.file);
-      
-      const response = await api.post<ApiResponse<FileUploadResponse>>(
-        '/assets/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 100)
-            );
-            upload.progress = progress;
-            
-            // Calculate upload speed and estimated time remaining
-            const currentTime = Date.now();
-            const elapsedTime = (currentTime - (upload.startTime || currentTime)) / 1000; // in seconds
-            const uploadSpeed = progressEvent.loaded / elapsedTime; // bytes per second
-            const remainingBytes = (progressEvent.total || 0) - progressEvent.loaded;
-            const estimatedTimeRemaining = remainingBytes / uploadSpeed;
-            
-            upload.uploadSpeed = uploadSpeed;
-            upload.estimatedTimeRemaining = estimatedTimeRemaining;
-            
-            options?.onProgress?.(upload.id, progress);
-          },
+
+      const response = await axios.post<ApiResponse<Asset>>('/api/assets/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-      );
-      
-      upload.status = 'completed';
-      upload.progress = 100;
-      upload.endTime = Date.now();
-      upload.response = response.data.data;
-      options?.onComplete?.(upload.id, response.data.data);
-      
-      activeUploads.delete(upload.id);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log('Upload cancelled:', error.message);
-        return;
+      });
+
+      if (response.data.success && response.data.data) {
+        const asset = response.data.data;
+        upload.status = 'completed';
+        upload.progress = 100;
+        upload.response = asset;
+
+        if (callbacks?.onComplete) {
+          if ('onProgress' in callbacks) {
+            const fileData: FileUploadResponse = {
+              id: asset.id,
+              filename: upload.file.name,
+              contentType: upload.file.type,
+              size: upload.file.size,
+              url: asset.files?.[0]?.url || '',
+              uploadedAt: new Date().toISOString()
+            };
+            (callbacks as FileUploadOptions).onComplete(fileData.id, fileData);
+          } else {
+            (callbacks as UploadCallbacks).onComplete(asset);
+          }
+        }
+      } else {
+        throw new Error(response.data.error || 'Upload failed');
       }
-      
+    } catch (error) {
       upload.status = 'error';
-      upload.endTime = Date.now();
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       upload.error = errorMessage;
-      options?.onError?.(upload.id, errorMessage);
-      
-      activeUploads.delete(upload.id);
-      console.error('Error uploading file:', error);
+      if (callbacks?.onError) {
+        if ('onProgress' in callbacks) {
+          (callbacks as FileUploadOptions).onError(upload.id, errorMessage);
+        } else {
+          (callbacks as UploadCallbacks).onError(errorMessage);
+        }
+      }
+    } finally {
+      this.uploads.delete(upload.id);
     }
   }
 
-  async cancelUpload(uploadId: string): Promise<boolean> {
-    const upload = activeUploads.get(uploadId);
-    if (upload) {
-      upload.cancel();
-      activeUploads.delete(uploadId);
-      return true;
+  getUploadStatus(uploadId: string): Upload | undefined {
+    return this.uploads.get(uploadId);
+  }
+
+  cancelUpload(uploadId: string): void {
+    const upload = this.uploads.get(uploadId);
+    if (upload && upload.status === 'uploading') {
+      upload.status = 'cancelled';
+      this.uploads.delete(uploadId);
     }
-    return false;
   }
 
   /**
@@ -324,23 +369,11 @@ class AssetService {
       if (assetData.files && assetData.files.length > 0) {
         for (const file of assetData.files) {
           if (file instanceof File) {
-            const upload = this.uploadFile(file, options);
+            const uploadId = await this.uploadFile(file, options);
+            const upload = this.getUploadStatus(uploadId);
             
-            await new Promise<void>((resolve) => {
-              const checkStatus = () => {
-                if ([UploadStatus.COMPLETED, UploadStatus.ERROR, UploadStatus.CANCELLED].includes(upload.status)) {
-                  resolve();
-                } else {
-                  setTimeout(checkStatus, 500);
-                }
-              };
-              checkStatus();
-            });
-            
-            if (upload.status === UploadStatus.ERROR) {
+            if (upload && upload.status !== 'completed') {
               throw new Error('File upload failed');
-            } else if (upload.status === UploadStatus.CANCELLED) {
-              throw new Error('File upload was cancelled');
             }
           }
         }
@@ -444,7 +477,7 @@ class AssetService {
           category: values[3],
           subcategory: values[4],
           description: values[5],
-          tags: values[6]
+          tags: values[6] ? values[6].split(';') : []
         };
         metadata.push(metadataItem);
       }
@@ -455,4 +488,98 @@ class AssetService {
       return { error: 'Error parsing CSV' };
     }
   }
+
+  batchUploadAssets(
+    items: BatchUploadItem[],
+    options: BatchUploadOptions
+  ): Promise<BatchUploadResult> {
+    const { maxConcurrentUploads = 3, onItemStart, onItemProgress, onItemComplete, onItemError } = options;
+    
+    let activeUploads = 0;
+    const queue = [...items];
+    const results: BatchUploadResult = {
+      successful: [],
+      failed: [],
+      totalCount: items.length,
+      successCount: 0,
+      failureCount: 0
+    };
+
+    return new Promise((resolve) => {
+      const processNext = async () => {
+        if (queue.length === 0 && activeUploads === 0) {
+          resolve(results);
+          return;
+        }
+
+        while (queue.length > 0 && activeUploads < maxConcurrentUploads) {
+          const item = queue.shift();
+          if (!item) continue;
+
+          activeUploads++;
+          onItemStart?.(item.id);
+
+          try {
+            const uploadId = await this.uploadFile(item.file, {
+              onProgress: (progress) => onItemProgress?.(item.id, progress),
+              onComplete: (asset) => {
+                results.successful.push(asset);
+                results.successCount++;
+                onItemComplete?.(item.id, asset);
+              },
+              onError: (error) => {
+                results.failed.push({
+                  id: item.id,
+                  file: item.file,
+                  error
+                });
+                results.failureCount++;
+                onItemError?.(item.id, error);
+              }
+            });
+          } catch (error) {
+            console.error(`Error uploading item ${item.id}:`, error);
+            results.failed.push({
+              id: item.id,
+              file: item.file,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            });
+            results.failureCount++;
+            onItemError?.(item.id, error instanceof Error ? error.message : 'Unknown error');
+          }
+
+          activeUploads--;
+          processNext();
+        }
+      };
+
+      processNext();
+    });
+  }
+
+  cancelBatchUploadItem(id: string): void {
+    const upload = Array.from(this.uploads.values()).find(u => u.id === id);
+    if (upload) {
+      this.cancelUpload(id);
+    }
+  }
+
+  async getAssetsAnalytics(filters: AssetAnalyticsFilters): Promise<AssetsAnalyticsData> {
+    try {
+      const response = await api.get<ApiResponse<AssetsAnalyticsData>>('/assets/analytics', {
+        params: filters
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching assets analytics:', error);
+      throw error;
+    }
+  }
 }
+
+export default new AssetService();
+
+
+
+
+

@@ -12,6 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
+import { LoginRequest } from '../../types/auth.types';
 
 interface LocationState {
   from?: {
@@ -48,41 +49,26 @@ const Login: React.FC = () => {
       // Determine if input is email or username
       const isEmail = emailOrUsername.includes('@');
       
-      // Log the login attempt for debugging
-      console.log('🔑 Login attempt with:', isEmail ? 'email' : 'username', emailOrUsername);
+      // Create login request
+      const loginRequest: LoginRequest = {
+        password,
+        ...(isEmail ? { email: emailOrUsername } : { username: emailOrUsername })
+      };
       
-      // Add extra logging for debug purposes
-      console.log(`Login details: ${emailOrUsername}, password length: ${password.length}`);
-      
-      await login(emailOrUsername, password);
-      console.log('✅ Login successful, navigating to:', from);
+      await login(loginRequest);
       navigate(from, { replace: true });
     } catch (err) {
-      console.error('❌ Login error:', err);
+      console.error('Login error:', err);
       
-      // Keep error handling simple
       let errorMessage = 'Login failed. Please check your credentials and try again.';
       
       if (err instanceof Error) {
-        // If it's an Error object, use its message
         errorMessage = err.message;
         
-        // Special case for common errors
         if (errorMessage.toLowerCase().includes('invalid') || 
             errorMessage.toLowerCase().includes('not found')) {
           errorMessage = 'Invalid username/email or password. Please try again.';
         }
-      }
-      
-      // Handle object errors (like server response objects)
-      if (errorMessage.includes('[object Object]')) {
-        errorMessage = 'Login error. Please try again.';
-      }
-      
-      // Add login instructions for better user experience
-      const loginWithEmail = emailOrUsername.includes('@');
-      if (!loginWithEmail) {
-        errorMessage += " (Tip: You can also try logging in with your email address)";
       }
       
       setError(errorMessage);
@@ -92,33 +78,31 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container component="main" maxWidth="xs">
       <Box
         sx={{
+          marginTop: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
         }}
       >
         <Paper
           elevation={3}
           sx={{
-            p: 4,
+            padding: 4,
             width: '100%',
-            maxWidth: 450,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
-          <Typography component="h1" variant="h5" align="center" gutterBottom>
-            NNA Registry Service
-          </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Log in to your account
+          <Typography component="h1" variant="h5">
+            Sign in
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
               {error}
             </Alert>
           )}
