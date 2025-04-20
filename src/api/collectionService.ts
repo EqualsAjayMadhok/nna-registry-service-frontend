@@ -230,9 +230,9 @@ class CollectionService {
         return collection;
       }
 
-      const response = await api.delete<ApiResponse<Collection>>(
-        `/collections/${id}/assets`, 
-        { data: request }
+      const response = await api.post<ApiResponse<Collection>>(
+        `/collections/${id}/assets/remove`,
+        request
       );
       return response.data.data;
     } catch (error) {
