@@ -76,7 +76,7 @@ class NNARegistryService {
           this.registerCategoryCode(
             layerCode,
             alphabeticCode,
-            category.numericCode,
+            category.numericCode || this.getNextAvailableNumericCode(layerCode),
             category.name
           );
           
