@@ -9,7 +9,7 @@ import api from '../services/api/api';
 import { ApiResponse } from '../types/api.types';
 
 // Mock counts that ALWAYS return a number > 0 for common combinations
-const HARD_CODED_COUNTS = {
+const HARD_CODED_COUNTS: Record<string, number> = {
   'S.POP.BAS': 10,  // This will make sequential = 011
   'G.POP.TSW': 20,  // This will make sequential = 021
   'L.FAS.DRS': 10,  // This will make sequential = 011
@@ -42,7 +42,7 @@ export async function getExistingAssetsCount(
   console.log(`[ASSET COUNT] Looking up count for ${key}`);
   
   // IMPORTANT: First check hard-coded counts
-  if (HARD_CODED_COUNTS[key] !== undefined) {
+  if (key in HARD_CODED_COUNTS) {
     console.log(`[ASSET COUNT] Using hard-coded count: ${HARD_CODED_COUNTS[key]}`);
     return HARD_CODED_COUNTS[key];
   }
