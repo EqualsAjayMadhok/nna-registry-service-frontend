@@ -316,7 +316,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({
     : [];
 
   // Add current version to the top if not already included
-  if (sortedVersions.findIndex(v => v.number === asset.version.number) === -1) {
+  if (asset.version && sortedVersions.findIndex(v => v.number === asset.version.number) === -1) {
     sortedVersions.unshift(asset.version);
   }
 
