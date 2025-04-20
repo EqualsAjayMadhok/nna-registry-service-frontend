@@ -1,4 +1,4 @@
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 
 // Create configurable axios instance for backend API
 const createApiClient = (baseURL: string) => {
@@ -13,7 +13,7 @@ const createApiClient = (baseURL: string) => {
 
   // Add request interceptor to include auth token
   api.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
+    (config: any) => {
       const token = localStorage.getItem('accessToken');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
