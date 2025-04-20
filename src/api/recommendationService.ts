@@ -4,6 +4,22 @@ import assetService from '../services/api/asset.service';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
+ * API Response interface
+ */
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: number;
+}
+
+/**
+ * Recommendation API Response interface
+ */
+interface RecommendationApiResponse {
+  recommendations: RecommendationItem[];
+}
+
+/**
  * Recommendation types supported by the AlgoRhythm service
  */
 export enum RecommendationType {
@@ -78,7 +94,7 @@ class RecommendationService {
         return this.getMockSimilarAssets(assetId, options);
       }
       
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<RecommendationApiResponse>>(
         `${this.baseUrl}/recommendations/similar/${assetId}`,
         {
           params: {
@@ -89,7 +105,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data.recommendations;
     } catch (error) {
       console.error('Error fetching similar assets:', error);
       throw new Error('Failed to fetch similar assets recommendations');
@@ -111,7 +127,7 @@ class RecommendationService {
         return this.getMockAssetsUsedTogether(assetId, options);
       }
       
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<RecommendationApiResponse>>(
         `${this.baseUrl}/recommendations/used-together/${assetId}`,
         {
           params: {
@@ -122,7 +138,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data.recommendations;
     } catch (error) {
       console.error('Error fetching assets used together:', error);
       throw new Error('Failed to fetch assets used together recommendations');
@@ -144,7 +160,7 @@ class RecommendationService {
         return this.getMockPersonalizedRecommendations(userId, options);
       }
       
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<RecommendationApiResponse>>(
         `${this.baseUrl}/recommendations/personalized/${userId}`,
         {
           params: {
@@ -155,7 +171,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data.recommendations;
     } catch (error) {
       console.error('Error fetching personalized recommendations:', error);
       throw new Error('Failed to fetch personalized recommendations');
@@ -175,7 +191,7 @@ class RecommendationService {
         return this.getMockTrendingAssets(options);
       }
       
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<RecommendationApiResponse>>(
         `${this.baseUrl}/recommendations/trending`,
         {
           params: {
@@ -186,7 +202,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data.recommendations;
     } catch (error) {
       console.error('Error fetching trending assets:', error);
       throw new Error('Failed to fetch trending assets recommendations');
@@ -208,7 +224,7 @@ class RecommendationService {
         return this.getMockComplementaryAssets(assetId, options);
       }
       
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<RecommendationApiResponse>>(
         `${this.baseUrl}/recommendations/complementary/${assetId}`,
         {
           params: {
@@ -219,7 +235,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data.recommendations;
     } catch (error) {
       console.error('Error fetching complementary assets:', error);
       throw new Error('Failed to fetch complementary assets recommendations');
@@ -243,7 +259,7 @@ class RecommendationService {
         return this.getMockBatchRecommendations(assetId, types, options);
       }
       
-      const response = await axios.post(
+      const response = await axios.post<ApiResponse<Record<RecommendationType, RecommendationItem[]>>>(
         `${this.baseUrl}/recommendations/batch`,
         {
           assetId,
@@ -254,7 +270,7 @@ class RecommendationService {
         }
       );
       
-      return response.data.recommendations;
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching batch recommendations:', error);
       throw new Error('Failed to fetch batch recommendations');

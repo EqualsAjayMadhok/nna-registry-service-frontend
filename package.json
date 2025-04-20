@@ -15,7 +15,6 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@types/axios": "^0.9.36",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.126",
     "@types/react": "^18.2.67",
@@ -67,6 +66,7 @@
     ]
   },
   "devDependencies": {
+    "@types/axios": "^0.9.36",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/uuid": "^10.0.0"
   }

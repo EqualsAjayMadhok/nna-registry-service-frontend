@@ -22,6 +22,7 @@ import { FileUploadResponse } from '../../types/asset.types';
 import assetService from '../../services/api/asset.service';
 import FileUploader, { FileUploaderHandle } from '../common/FileUploader';
 import FilePreview from '../common/FilePreview';
+import { Accept } from 'react-dropzone';
 
 interface FileUploadProps {
   /**
@@ -98,12 +99,12 @@ const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onFilesChange,
-  acceptedFileTypes,
-  maxFiles = 1, // Only allow one file for regular assets, multiple for .set type assets
-  maxSize = 104857600, // 100MB default
+  acceptedFileTypes = 'image/*,audio/*,video/*,application/pdf',
+  maxFiles = 5,
+  maxSize = 100 * 1024 * 1024, // 100MB
   layerCode,
-  initialFiles = [],
   options,
+  initialFiles = [],
   onUploadProgress,
   onUploadComplete,
   onUploadError,
@@ -120,8 +121,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
   const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>([]);
 
-  // Use layer-specific file types if none provided
-  const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
+  // Convert acceptedFileTypes string to Accept object
+  const accept: Accept = acceptedFileTypes.split(',').reduce((acc, type) => {
+    acc[type.trim()] = [];
+    return acc;
+  }, {} as Accept);
+
+  // Adapter for FileUploader which expects a different signature
+  const handleFileUploaderError = useCallback(
+    (file: File, error: Error) => {
+      const fileId = file.name; // Use filename as a fallback ID
+      if (onUploadError) {
+        onUploadError(fileId, error.message);
+      }
+    },
+    [onUploadError]
+  );
 
   // For layer-specific validation
   const validateFile = useCallback(
@@ -188,15 +203,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
       }
     },
     [files, onUploadError]
-  );
-
-  // Adapter for FileUploader which expects a different signature
-  const handleFileUploaderError = useCallback(
-    (file: File, error: string) => {
-      const fileId = file.name; // Use filename as a fallback ID
-      handleUploadError(fileId, error);
-    },
-    [handleUploadError]
   );
 
   // Handle retry of failed uploads
