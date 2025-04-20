@@ -3,7 +3,7 @@ import axios, { InternalAxiosRequestConfig } from 'axios';
 // Create configurable axios instance for backend API
 const createApiClient = (baseURL: string) => {
   const api = axios.create({
-    baseURL: baseURL,
+    baseURL,
     timeout: 30000, // 30 second timeout
     headers: {
       'Content-Type': 'application/json',
@@ -46,14 +46,11 @@ const createApiClient = (baseURL: string) => {
         }
         
         // Extract error message from response
-        const message = error.response.data?.error?.message || 
-                       error.response.data?.message || 
-                       error.response.data?.error || 
-                       'An error occurred';
+        const message = error.response.data?.message || error.response.data?.error || 'An error occurred';
         error.message = message;
       } else if (error.request) {
         console.error('API No Response:', error.request);
-        error.message = 'No response from server. Please check your connection.';
+        error.message = 'No response from server';
       } else {
         console.error('API Error:', error.message);
       }

@@ -2,9 +2,7 @@ import { LoginRequest, RegisterRequest, User } from '../../types/auth.types';
 import { ApiResponse } from '../../types/api.types';
 import createApiClient from './axios';
 
-// Remove /api suffix from URLs as it's handled by axios configuration
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-const api = createApiClient(BASE_URL);
+const api = createApiClient(process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
 
 export interface AuthResponse {
   access_token: string;
