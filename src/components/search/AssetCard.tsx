@@ -271,7 +271,7 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = tru
           <Divider sx={{ my: 1 }} />
 
           <Typography variant="caption" color="text.secondary">
-            Created: {formatDate(asset.createdAt)}
+            Created: {formatDate(asset.createdAt || new Date().toISOString())}
           </Typography>
         </CardContent>
       </CardActionArea>
