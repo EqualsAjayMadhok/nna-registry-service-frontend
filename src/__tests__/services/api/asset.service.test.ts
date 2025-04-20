@@ -2,6 +2,7 @@ import { Asset, AssetFile, AssetCreateRequest, AssetUpdateRequest, AssetSearchPa
 import { ApiResponse, PaginatedResponse } from '../../../types/api.types';
 import assetService from '../../../services/api/asset.service';
 import api from '../../../services/api/api';
+import { AxiosInstance } from 'axios';
 
 // Mock the API module
 jest.mock('../../../services/api/api', () => ({

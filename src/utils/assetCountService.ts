@@ -6,7 +6,7 @@
  * Last updated: ${new Date().toISOString()}
  */
 
-import api from '../services/api/api';
+import api from '../services/api/axios';
 import { ApiResponse } from '../types/api.types';
 
 // Mock counts that ALWAYS return a number > 0 for common combinations
