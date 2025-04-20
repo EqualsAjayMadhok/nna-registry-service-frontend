@@ -1,22 +1,24 @@
 import { Asset, AssetFile, AssetCreateRequest, AssetUpdateRequest, AssetSearchParams } from '../../../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../../../types/api.types';
 import assetService from '../../../services/api/asset.service';
-import api from '../../../services/api/api';
 import { AxiosInstance } from 'axios';
 
 // Mock the API module
+const mockApi = {
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  request: jest.fn(),
+  interceptors: {
+    request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+    response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() }
+  }
+} as unknown as AxiosInstance;
+
 jest.mock('../../../services/api/api', () => ({
   __esModule: true,
-  default: {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn() },
-      response: { use: jest.fn() }
-    }
-  }
+  default: mockApi
 }));
 
 describe('AssetService', () => {
@@ -63,18 +65,18 @@ describe('AssetService', () => {
         },
       };
 
-      (api.get as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
+      (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
       const params: AssetSearchParams = { page: 1, limit: 10 };
       const result = await assetService.getAssets(params);
 
-      expect(api.get).toHaveBeenCalledWith('/assets', { params });
+      expect(mockApi.get).toHaveBeenCalledWith('/assets', { params });
       expect(result).toEqual(mockResponse.data);
     });
 
     it('should handle errors when fetching assets', async () => {
       const error = new Error('Network error');
-      (api.get as jest.Mock).mockRejectedValueOnce(error);
+      (mockApi.get as jest.Mock).mockRejectedValueOnce(error);
 
       await expect(assetService.getAssets()).rejects.toThrow(error);
     });
@@ -87,17 +89,17 @@ describe('AssetService', () => {
         data: mockAsset,
       };
 
-      (api.get as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
+      (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
       const result = await assetService.getAssetById('asset1');
 
-      expect(api.get).toHaveBeenCalledWith('/assets/asset1');
+      expect(mockApi.get).toHaveBeenCalledWith('/assets/asset1');
       expect(result).toEqual(mockAsset);
     });
 
     it('should handle errors when fetching a single asset', async () => {
       const error = new Error('Asset not found');
-      (api.get as jest.Mock).mockRejectedValueOnce(error);
+      (mockApi.get as jest.Mock).mockRejectedValueOnce(error);
 
       await expect(assetService.getAssetById('invalid')).rejects.toThrow(error);
     });
@@ -110,7 +112,7 @@ describe('AssetService', () => {
         data: mockAsset,
       };
 
-      (api.post as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
+      (mockApi.post as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
       const createRequest: AssetCreateRequest = {
         name: 'Test Asset',
@@ -121,13 +123,13 @@ describe('AssetService', () => {
 
       const result = await assetService.createAsset(createRequest);
 
-      expect(api.post).toHaveBeenCalledWith('/assets', createRequest);
+      expect(mockApi.post).toHaveBeenCalledWith('/assets', createRequest);
       expect(result).toEqual(mockAsset);
     });
 
     it('should handle errors when creating an asset', async () => {
       const error = new Error('Invalid data');
-      (api.post as jest.Mock).mockRejectedValueOnce(error);
+      (mockApi.post as jest.Mock).mockRejectedValueOnce(error);
 
       const createRequest: AssetCreateRequest = {
         name: 'Test Asset',
@@ -146,7 +148,7 @@ describe('AssetService', () => {
         data: updatedAsset,
       };
 
-      (api.put as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
+      (mockApi.put as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
       const updateRequest: AssetUpdateRequest = {
         name: 'Updated Asset',
@@ -154,13 +156,13 @@ describe('AssetService', () => {
 
       const result = await assetService.updateAsset('asset1', updateRequest);
 
-      expect(api.put).toHaveBeenCalledWith('/assets/asset1', updateRequest);
+      expect(mockApi.put).toHaveBeenCalledWith('/assets/asset1', updateRequest);
       expect(result).toEqual(updatedAsset);
     });
 
     it('should handle errors when updating an asset', async () => {
       const error = new Error('Asset not found');
-      (api.put as jest.Mock).mockRejectedValueOnce(error);
+      (mockApi.put as jest.Mock).mockRejectedValueOnce(error);
 
       const updateRequest: AssetUpdateRequest = {
         name: 'Updated Asset',
@@ -189,7 +191,7 @@ describe('AssetService', () => {
         data: mockAsset,
       };
 
-      (api.post as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
+      (mockApi.post as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
       const createRequest: AssetCreateRequest = {
         name: 'Test Asset',
@@ -201,7 +203,7 @@ describe('AssetService', () => {
 
       expect(uploadFileSpy).toHaveBeenCalledWith(mockFile, undefined);
       expect(getUploadStatusSpy).toHaveBeenCalledWith(mockUploadId);
-      expect(api.post).toHaveBeenCalled();
+      expect(mockApi.post).toHaveBeenCalled();
       expect(result.asset).toEqual(mockAsset);
 
       // Clean up spies
