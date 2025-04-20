@@ -1,107 +1,122 @@
-import { LoginRequest, RegisterRequest, AuthResponse, ApiResponse } from '../../types/auth.types';
+import { LoginRequest, RegisterRequest, User } from '../../types/auth.types';
+import { ApiResponse } from '../../types/api.types';
 import createApiClient from './axios';
 
-const api = createApiClient(process.env.REACT_APP_API_URL || 'http://localhost:3000');
+// Remove /api suffix from URLs as it's handled by axios configuration
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+const api = createApiClient(BASE_URL.endsWith('/api') ? BASE_URL.slice(0, -4) : BASE_URL);
 
-const AuthService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+export interface AuthResponse {
+  access_token: string;
+  user: User;
+}
+
+class AuthService {
+  async login(data: LoginRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
       
-      if (!response.data.data) {
-        throw new Error('Invalid response format');
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Login failed');
       }
       
-      const authData = response.data.data;
+      const { access_token, user } = response.data.data;
       
-      if (authData?.access_token && authData?.user) {
-        // Store token consistently as 'accessToken'
-        localStorage.setItem('accessToken', authData.access_token);
-        localStorage.setItem('user', JSON.stringify(authData.user));
-        return authData;
-      }
+      // Store token and user data consistently
+      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('user', JSON.stringify(user));
       
-      throw new Error('Invalid response format');
+      return response.data.data;
     } catch (error: any) {
       console.error('Login error:', error);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
-      } else if (error.message) {
-        throw new Error(error.message);
       }
       throw new Error('Login failed. Please try again.');
     }
-  },
+  }
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
       
-      if (!response.data.data) {
-        throw new Error('Invalid response format');
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Registration failed');
       }
       
-      const authData = response.data.data;
+      const { access_token, user } = response.data.data;
       
-      if (authData?.access_token && authData?.user) {
-        // Store token consistently as 'accessToken'
-        localStorage.setItem('accessToken', authData.access_token);
-        localStorage.setItem('user', JSON.stringify(authData.user));
-        return authData;
-      }
+      // Store token and user data consistently
+      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('user', JSON.stringify(user));
       
-      throw new Error('Invalid response format');
+      return response.data.data;
     } catch (error: any) {
       console.error('Registration error:', error);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
-      } else if (error.message) {
-        throw new Error(error.message);
       }
       throw new Error('Registration failed. Please try again.');
     }
-  },
+  }
 
-  logout: (): void => {
+  async getProfile(): Promise<User> {
+    try {
+      const response = await api.get<ApiResponse<User>>('/auth/profile');
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get profile');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Get profile error:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error('Failed to get profile. Please try again.');
+    }
+  }
+
+  logout(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-  },
+  }
 
-  getCurrentUser: (): any => {
+  getCurrentUser(): User | null {
     const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        // Clear invalid data
-        localStorage.removeItem('user');
-        return null;
-      }
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch (error) {
+      console.error('Failed to parse user data:', error);
+      this.logout(); // Clear invalid data
+      return null;
     }
-    return null;
-  },
+  }
 
-  isAuthenticated: (): boolean => {
+  isAuthenticated(): boolean {
     return !!localStorage.getItem('accessToken');
-  },
+  }
 
-  isAdmin: (): boolean => {
-    const user = AuthService.getCurrentUser();
-    return user ? (user.role === 'admin' || (user.roles && user.roles.includes('admin'))) : false;
-  },
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user ? user.role === 'admin' || (user.roles && user.roles.includes('admin')) : false;
+  }
 
-  clearStorage: (): void => {
+  clearStorage(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     sessionStorage.clear();
-  },
+  }
 
-  createTestUser: async (): Promise<void> => {
+  async createTestUser(): Promise<void> {
     const testUser = {
       username: `test_user_${Date.now()}`,
       email: `test_user_${Date.now()}@example.com`,
@@ -109,12 +124,13 @@ const AuthService = {
     };
     
     try {
-      await AuthService.register(testUser);
+      await this.register(testUser);
     } catch (error) {
       console.error('Error creating test user:', error);
       throw error;
     }
   }
-};
+}
 
-export default AuthService;
+export const authService = new AuthService();
+export default authService;

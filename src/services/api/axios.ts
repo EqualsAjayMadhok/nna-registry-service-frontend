@@ -2,8 +2,13 @@ import axios, { InternalAxiosRequestConfig } from 'axios';
 
 // Create configurable axios instance for backend API
 const createApiClient = (baseURL: string) => {
+  // Remove /api suffix if present, as we'll add it consistently
+  const normalizedBaseURL = baseURL.endsWith('/api') 
+    ? baseURL.slice(0, -4) // Remove /api
+    : baseURL;
+  
   const api = axios.create({
-    baseURL,
+    baseURL: `${normalizedBaseURL}/api`,
     timeout: 30000, // 30 second timeout
     headers: {
       'Content-Type': 'application/json',
@@ -31,7 +36,11 @@ const createApiClient = (baseURL: string) => {
     (response) => response,
     (error) => {
       if (error.response) {
-        console.error('API Error Response:', error.response.data);
+        console.error('API Error Response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
         
         // Handle 401 Unauthorized - token expired or invalid
         if (error.response.status === 401) {
@@ -42,7 +51,8 @@ const createApiClient = (baseURL: string) => {
         }
         
         // Extract error message from response
-        const message = error.response.data?.message || 
+        const message = error.response.data?.error?.message || 
+                       error.response.data?.message || 
                        error.response.data?.error || 
                        'An error occurred';
         error.message = message;
