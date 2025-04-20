@@ -3,6 +3,7 @@
   "framework": "create-react-app",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "outputDirectory": "build",
   "env": {
     "REACT_APP_API_URL": "https://registry.reviz.dev/api",
     "REACT_APP_REAL_API_URL": "https://registry.reviz.dev/api",
@@ -12,7 +13,7 @@
   },
   "github": {
     "enabled": true,
-    "silent": true
+    "silent": false
   },
   "git": {
     "deploymentEnabled": {
@@ -52,10 +53,22 @@
       ]
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
