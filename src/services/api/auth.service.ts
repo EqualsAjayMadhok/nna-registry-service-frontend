@@ -32,7 +32,12 @@ export const AuthService = {
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
         return response.data.data;
       }
-      throw new Error(response.data.error || 'Registration failed');
+      // Handle error from successful response but with error data
+      const responseError = response.data.error as { message: string } | string;
+      if (typeof responseError === 'object' && responseError.message) {
+        throw new Error(responseError.message);
+      }
+      throw new Error(typeof responseError === 'string' ? responseError : 'Registration failed');
     } catch (error: any) {
       console.error('Registration error:', error);
       // Log the full error response for debugging
@@ -44,17 +49,16 @@ export const AuthService = {
         });
       }
       
-      // Try to extract the most specific error message
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      }
-      if (error.response?.status === 404) {
-        throw new Error('Registration service is not available. Please try again later.');
-      }
-      throw new Error(error.message || 'Registration failed. Please try again.');
+      // Extract error message from nested structure
+      const errorData = error.response?.data;
+      const errorMessage = 
+        (errorData?.error && typeof errorData.error === 'object' ? errorData.error.message : null) ||  // New backend format
+        errorData?.message ||         // Old format
+        (typeof errorData?.error === 'string' ? errorData.error : null) ||           // String error
+        error.message ||                         // Direct error message
+        'Registration failed. Please try again.'; // Fallback
+      
+      throw new Error(errorMessage);
     }
   },
 
