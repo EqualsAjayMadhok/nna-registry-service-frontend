@@ -1,49 +1,86 @@
 import { LoginRequest, RegisterRequest, User, AuthResponse } from '../../types/auth.types';
 import { ApiResponse } from '../../types/api.types';
-import api from './api';
+import api from './axios';
 
-export class AuthService {
-  private storage: Storage;
-
-  constructor(storage: Storage = window.localStorage) {
-    this.storage = storage;
-  }
-
-  async login(loginRequest: LoginRequest): Promise<AuthResponse> {
+export const AuthService = {
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
     try {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', loginRequest);
-      const { token, user } = response.data.data;
-      this.storage.setItem('accessToken', token);
-      this.storage.setItem('user', JSON.stringify(user));
-      return response.data.data;
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
+      if (response.data.success && response.data.data) {
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        return response.data.data;
+      }
+      throw new Error(response.data.error || 'Login failed');
     } catch (error: any) {
+      console.error('Login error:', error);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
-      } else if (error.response?.data?.error) {
+      }
+      if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       }
-      throw new Error('Login failed. Please try again.');
+      throw new Error(error.message || 'Login failed');
     }
-  }
+  },
 
-  async register(registerRequest: RegisterRequest): Promise<AuthResponse> {
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
     try {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', registerRequest);
-      const { token, user } = response.data.data;
-      this.storage.setItem('accessToken', token);
-      this.storage.setItem('user', JSON.stringify(user));
-      return response.data.data;
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
+      if (response.data.success && response.data.data) {
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        return response.data.data;
+      }
+      throw new Error(response.data.error || 'Registration failed');
     } catch (error: any) {
+      console.error('Registration error:', error);
+      // Log the full error response for debugging
+      if (error.response) {
+        console.error('Error response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      
+      // Try to extract the most specific error message
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
-      } else if (error.response?.data?.error) {
+      }
+      if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       }
-      throw new Error('Registration failed. Please try again.');
+      if (error.response?.status === 404) {
+        throw new Error('Registration service is not available. Please try again later.');
+      }
+      throw new Error(error.message || 'Registration failed. Please try again.');
     }
-  }
+  },
 
-  async getProfile(): Promise<User> {
+  logout: (): void => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+
+  getCurrentUser: (): any => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      return JSON.parse(userStr);
+    }
+    return null;
+  },
+
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('token');
+  },
+
+  isAdmin: (): boolean => {
+    const user = AuthService.getCurrentUser();
+    return user ? user.roles.includes('admin') : false;
+  },
+
+  getProfile: async (): Promise<User> => {
     try {
       const response = await api.get<ApiResponse<User>>('/auth/profile');
       
@@ -61,48 +98,15 @@ export class AuthService {
       }
       throw new Error('Failed to get profile. Please try again.');
     }
-  }
+  },
 
-  logout(): void {
-    this.storage.removeItem('accessToken');
-    this.storage.removeItem('user');
-  }
-
-  getCurrentUser(): User | null {
-    const userStr = this.storage.getItem('user');
-    if (!userStr) return null;
-    try {
-      return JSON.parse(userStr) as User;
-    } catch {
-      return null;
-    }
-  }
-
-  isAuthenticated(): boolean {
-    const token = this.storage.getItem('accessToken');
-    return token !== null;
-  }
-
-  isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    if (!user) return false;
-    
-    if (user.role === 'admin') return true;
-    
-    if (user.roles && Array.isArray(user.roles)) {
-      return user.roles.includes('admin');
-    }
-    
-    return false;
-  }
-
-  clearStorage(): void {
-    this.storage.removeItem('accessToken');
-    this.storage.removeItem('user');
+  clearStorage: (): void => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     sessionStorage.clear();
-  }
+  },
 
-  async createTestUser(): Promise<void> {
+  createTestUser: async (): Promise<void> => {
     const testUser = {
       username: `test_user_${Date.now()}`,
       email: `test_user_${Date.now()}@example.com`,
@@ -110,13 +114,13 @@ export class AuthService {
     };
     
     try {
-      await this.register(testUser);
+      await AuthService.register(testUser);
     } catch (error) {
       console.error('Error creating test user:', error);
       throw error;
     }
   }
-}
+};
 
-const authService = new AuthService();
+const authService = AuthService;
 export default authService;
