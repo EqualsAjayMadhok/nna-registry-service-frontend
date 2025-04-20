@@ -9,14 +9,19 @@ interface ApiConfig {
 }
 
 // Get configuration from environment variables with fallbacks
-// IMPORTANT: For production deployments, we always use the real API
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Helper to ensure URL has no trailing slash and includes /api
+const formatApiUrl = (url: string) => {
+  const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+  return `${baseUrl}/api`;
+};
 
 const config: ApiConfig = {
   // Force mock mode OFF for production
   useMockData: isProduction ? false : process.env.REACT_APP_USE_MOCK_DATA === 'true',
-  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
-  realApiUrl: process.env.REACT_APP_REAL_API_URL || 'http://localhost:8080/api'
+  apiUrl: formatApiUrl(process.env.REACT_APP_API_URL || 'http://localhost:3000'),
+  realApiUrl: formatApiUrl(process.env.REACT_APP_REAL_API_URL || 'http://localhost:8080')
 };
 
 // For development-only, allow overriding mock mode via localStorage
