@@ -32,6 +32,12 @@ import AssetService from '../services/api/asset.service';
 import { Asset, AssetSearchParams } from '../types/asset.types';
 import { PaginatedResponse } from '../types/api.types';
 
+interface PaginationState {
+  page: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
 const AssetList: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -40,9 +46,10 @@ const AssetList: React.FC = () => {
     page: 1,
     limit: 10,
   });
-  const [pagination, setPagination] = useState({
-    total: 0,
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
     totalPages: 1,
+    hasMore: false
   });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedLayer, setSelectedLayer] = useState<string>('');
@@ -60,22 +67,19 @@ const AssetList: React.FC = () => {
     fetchAssets();
   }, [searchParams]);
 
-  const fetchAssets = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchAssets = async (page: number = 1) => {
     try {
-      const response: PaginatedResponse<Asset> = await AssetService.getAssets(searchParams);
+      setLoading(true);
+      const response = await AssetService.getAssets({ page, limit: searchParams.limit });
       setAssets(response.items);
       setPagination({
-        total: response.total,
-        totalPages: response.totalPages,
+        page: response.page,
+        totalPages: Math.ceil(response.total / response.limit),
+        hasMore: response.hasMore
       });
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to fetch assets');
-      }
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+      setError('Failed to fetch assets');
     } finally {
       setLoading(false);
     }
