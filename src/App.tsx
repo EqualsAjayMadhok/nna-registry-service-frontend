@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import NotificationsProvider from './contexts/NotificationsContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DebugPanel from './components/common/DebugPanel';
 import { APP_VERSION } from './utils/version';
@@ -88,6 +89,7 @@ function App() {
               {/* Auth Pages */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               
               {/* Public Test Pages */}
               <Route path="/test/sequential-numbers" element={

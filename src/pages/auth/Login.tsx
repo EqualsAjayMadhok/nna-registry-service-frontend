@@ -133,6 +133,11 @@ const Login: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mt: 1 }}>
+              <Link component={RouterLink} to="/forgot-password" variant="body2">
+                Forgot password?
+              </Link>
+            </Box>
             <Button
               type="submit"
               fullWidth
