@@ -116,7 +116,7 @@ function isFileUploadOptions(callbacks: UploadCallbacks | FileUploadOptions): ca
   return 'onComplete' in callbacks && callbacks.onComplete?.length === 2;
 }
 
-class AssetService {
+export default class AssetService {
   private uploads = new Map<string, Upload>();
 
   /**
@@ -320,9 +320,9 @@ class AssetService {
               url: asset.files?.[0]?.url || '',
               uploadedAt: new Date().toISOString()
             };
-            (callbacks as FileUploadOptions).onComplete(fileData.id, fileData);
+            (callbacks as FileUploadOptions).onComplete?.(fileData.id, fileData);
           } else {
-            (callbacks as UploadCallbacks).onComplete(asset);
+            (callbacks as UploadCallbacks).onComplete?.(asset);
           }
         }
       } else {
@@ -334,9 +334,9 @@ class AssetService {
       upload.error = errorMessage;
       if (callbacks?.onError) {
         if ('onProgress' in callbacks) {
-          (callbacks as FileUploadOptions).onError(upload.id, errorMessage);
+          (callbacks as FileUploadOptions).onError?.(upload.id, errorMessage);
         } else {
-          (callbacks as UploadCallbacks).onError(errorMessage);
+          (callbacks as UploadCallbacks).onError?.(errorMessage);
         }
       }
     } finally {
@@ -521,20 +521,20 @@ class AssetService {
 
           try {
             const uploadId = await this.uploadFile(item.file, {
-              onProgress: (progress) => onItemProgress?.(item.id, progress),
-              onComplete: (asset) => {
-                results.successful.push(asset);
+              onProgress: (progressValue: number) => onItemProgress?.(item.id, progressValue),
+              onComplete: (assetData: Asset) => {
+                results.successful.push(assetData);
                 results.successCount++;
-                onItemComplete?.(item.id, asset);
+                onItemComplete?.(item.id, assetData);
               },
-              onError: (error) => {
+              onError: (errorMessage: string) => {
                 results.failed.push({
                   id: item.id,
                   file: item.file,
-                  error
+                  error: errorMessage
                 });
                 results.failureCount++;
-                onItemError?.(item.id, error);
+                onItemError?.(item.id, errorMessage);
               }
             });
           } catch (error) {
@@ -576,8 +576,6 @@ class AssetService {
     }
   }
 }
-
-export default new AssetService();
 
 
 
