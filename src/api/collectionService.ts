@@ -564,7 +564,7 @@ class CollectionService {
       total: filteredCollections.length,
       page,
       limit,
-      totalPages: Math.ceil(filteredCollections.length / limit)
+      hasMore: endIndex < filteredCollections.length
     };
   }
 }
