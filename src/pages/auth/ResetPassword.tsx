@@ -21,44 +21,47 @@ const ResetPassword: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
     setSuccess('');
+    setLoading(true);
 
-    // Validation
     if (!password || !confirmPassword) {
       setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
+      setLoading(false);
       return;
     }
 
-    if (!token) {
-      setError('Invalid reset token');
-      return;
-    }
-
-    setLoading(true);
     try {
-      const response = await authService.resetPassword({ token, password });
-      setSuccess(response.message);
+      const token = searchParams.get('token');
+      if (!token) {
+        setError('Invalid reset token');
+        setLoading(false);
+        return;
+      }
+
+      await authService.resetPassword({ token, password });
+      setSuccess('Password reset successful');
+      setLoading(false);
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while resetting your password');
-    } finally {
+    } catch (error: any) {
+      setError(error.message || 'Failed to reset password');
       setLoading(false);
     }
   };
@@ -86,14 +89,14 @@ const ResetPassword: React.FC = () => {
           <Typography component="h1" variant="h5">
             Reset Password
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }} width="100%">
+          <Box component="form" onSubmit={handleSubmit} role="form" sx={{ mt: 3 }} width="100%">
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 2 }} role="alert">
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ mb: 2 }}>
+              <Alert severity="success" sx={{ mb: 2 }} role="alert">
                 {success}
               </Alert>
             )}
@@ -108,7 +111,7 @@ const ResetPassword: React.FC = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
+              disabled={loading || success !== ''}
             />
             <TextField
               data-testid="confirm-password-input"
@@ -121,7 +124,7 @@ const ResetPassword: React.FC = () => {
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
+              disabled={loading || success !== ''}
             />
             <Button
               data-testid="reset-password-button"
@@ -129,7 +132,7 @@ const ResetPassword: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
+              disabled={loading || success !== ''}
             >
               {loading ? <CircularProgress size={24} /> : 'Reset Password'}
             </Button>

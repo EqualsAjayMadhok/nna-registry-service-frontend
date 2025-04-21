@@ -93,7 +93,7 @@ const ForgotPassword: React.FC = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit} role="form" noValidate sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
@@ -107,6 +107,7 @@ const ForgotPassword: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               placeholder="Enter your email address"
               error={!!error}
+              inputProps={{ 'data-testid': 'email-input' }}
             />
             <Button
               type="submit"
