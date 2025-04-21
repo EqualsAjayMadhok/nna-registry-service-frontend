@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import authService from '../../services/api/auth.service';
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -38,9 +39,9 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Implement password reset request
-      // For now, just show a success message
+      await authService.forgotPassword({ email });
       setSuccess('If an account exists with this email, you will receive password reset instructions.');
+      setEmail(''); // Clear the form
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -105,6 +106,7 @@ const ForgotPassword: React.FC = () => {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="Enter your email address"
+              error={!!error}
             />
             <Button
               type="submit"

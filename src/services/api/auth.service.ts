@@ -1,4 +1,4 @@
-import { LoginRequest, RegisterRequest, User, AuthResponse } from '../../types/auth.types';
+import { LoginRequest, RegisterRequest, User, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, ResetPasswordResponse } from '../../types/auth.types';
 import { ApiResponse } from '../../types/api.types';
 import api from './api';
 
@@ -122,6 +122,41 @@ export const AuthService = {
     } catch (error) {
       console.error('Error creating test user:', error);
       throw error;
+    }
+  },
+
+  forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
+    try {
+      const response = await api.post<ApiResponse<void>>('/auth/forgot-password', data);
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to send reset instructions');
+      }
+    } catch (error: any) {
+      console.error('Forgot password error:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error('Failed to send reset instructions. Please try again.');
+    }
+  },
+
+  resetPassword: async (data: ResetPasswordRequest): Promise<ResetPasswordResponse> => {
+    try {
+      const response = await api.post<ApiResponse<ResetPasswordResponse>>('/auth/reset-password', data);
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to reset password');
+      }
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error('Failed to reset password. Please try again.');
     }
   }
 };
