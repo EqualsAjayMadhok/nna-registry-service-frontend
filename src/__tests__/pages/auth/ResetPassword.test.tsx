@@ -39,7 +39,7 @@ describe('ResetPassword Component', () => {
     expect(screen.getByTestId('password-input')).toBeInTheDocument();
     expect(screen.getByTestId('confirm-password-input')).toBeInTheDocument();
     expect(screen.getByTestId('reset-password-button')).toBeInTheDocument();
-  }, 15000);
+  });
 
   it('shows validation error when submitting empty form', async () => {
     const user = userEvent.setup();
@@ -49,9 +49,10 @@ describe('ResetPassword Component', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Please fill in all fields');
-    }, { timeout: 5000 });
-  }, 15000);
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Please fill in all fields');
+    });
+  });
 
   it('shows error when passwords do not match', async () => {
     const user = userEvent.setup();
@@ -66,9 +67,10 @@ describe('ResetPassword Component', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Passwords do not match');
-    }, { timeout: 5000 });
-  }, 15000);
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Passwords do not match');
+    });
+  });
 
   it('shows error when password is too short', async () => {
     const user = userEvent.setup();
@@ -83,9 +85,10 @@ describe('ResetPassword Component', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Password must be at least 8 characters long');
-    }, { timeout: 5000 });
-  }, 15000);
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Password must be at least 8 characters long');
+    });
+  });
 
   it('successfully resets password and redirects to login', async () => {
     const user = userEvent.setup();
@@ -109,9 +112,10 @@ describe('ResetPassword Component', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Your password has been reset successfully');
-    }, { timeout: 5000 });
-  }, 15000);
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Your password has been reset successfully');
+    });
+  });
 
   it('shows error when reset fails', async () => {
     const user = userEvent.setup();
@@ -135,7 +139,8 @@ describe('ResetPassword Component', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
-    }, { timeout: 5000 });
-  }, 15000);
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(errorMessage);
+    });
+  });
 });

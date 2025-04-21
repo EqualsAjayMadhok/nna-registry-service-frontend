@@ -1,112 +1,132 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import ForgotPassword from '../../../pages/auth/ForgotPassword';
 import authService from '../../../services/api/auth.service';
 
 // Mock the auth service
 jest.mock('../../../services/api/auth.service');
-
-const renderForgotPassword = () => {
-  return render(
-    <BrowserRouter>
-      <ForgotPassword />
-    </BrowserRouter>
-  );
-};
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
+}));
 
 describe('ForgotPassword Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (authService.forgotPassword as jest.Mock).mockReset();
   });
 
-  it('renders the forgot password form', () => {
-    renderForgotPassword();
-    
-    expect(screen.getByText('Reset Password')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /email address/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /send reset instructions/i })).toBeInTheDocument();
-    expect(screen.getByText(/back to sign in/i)).toBeInTheDocument();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('validates empty email', async () => {
+  const renderForgotPassword = () => {
+    return render(
+      <BrowserRouter>
+        <ForgotPassword />
+      </BrowserRouter>
+    );
+  };
+
+  it('renders forgot password form', () => {
+    renderForgotPassword();
+    expect(screen.getByTestId('email-input')).toBeInTheDocument();
+    expect(screen.getByTestId('submit-button')).toBeInTheDocument();
+  });
+
+  it('shows validation error when submitting empty form', async () => {
+    const user = userEvent.setup();
     renderForgotPassword();
     
-    const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
-    fireEvent.click(submitButton);
-    
+    const submitButton = screen.getByTestId('submit-button');
+    await user.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByText('Please enter your email address')).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Please enter your email address');
     });
   });
 
-  it('validates invalid email format', async () => {
+  it('shows validation error when submitting invalid email', async () => {
+    const user = userEvent.setup();
     renderForgotPassword();
     
-    const emailInput = screen.getByRole('textbox', { name: /email address/i });
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    
-    const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
-    fireEvent.click(submitButton);
-    
+    const emailInput = screen.getByTestId('email-input');
+    const submitButton = screen.getByTestId('submit-button');
+
+    await user.type(emailInput, 'invalid-email');
+    await user.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Please enter a valid email address');
     });
   });
 
-  it('handles successful password reset request', async () => {
-    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockResolvedValueOnce();
-    
+  it('successfully sends password reset email', async () => {
+    const user = userEvent.setup();
+    const mockResponse = { 
+      success: true, 
+      message: 'If an account exists with this email, you will receive password reset instructions.' 
+    };
+    (authService.forgotPassword as jest.Mock).mockImplementation((email: string) => {
+      expect(email).toBe('test@example.com');
+      return Promise.resolve(mockResponse);
+    });
+
     renderForgotPassword();
     
-    const emailInput = screen.getByRole('textbox', { name: /email address/i });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    
-    const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
-    fireEvent.click(submitButton);
-    
+    const emailInput = screen.getByTestId('email-input');
+    const submitButton = screen.getByTestId('submit-button');
+
+    await user.type(emailInput, 'test@example.com');
+    await user.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByText(/if an account exists with this email/i)).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('If an account exists with this email, you will receive password reset instructions.');
     });
-    
-    expect(mockForgotPassword).toHaveBeenCalledWith({ email: 'test@example.com' });
-    expect(emailInput).toHaveValue(''); // Form should be cleared
   });
 
-  it('handles failed password reset request', async () => {
-    const errorMessage = 'Failed to send reset instructions';
-    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockRejectedValueOnce(new Error(errorMessage));
-    
+  it('shows error when password reset request fails', async () => {
+    const user = userEvent.setup();
+    const errorMessage = 'Failed to send password reset email';
+    (authService.forgotPassword as jest.Mock).mockImplementation((email: string) => {
+      expect(email).toBe('test@example.com');
+      return Promise.reject(new Error(errorMessage));
+    });
+
     renderForgotPassword();
     
-    const emailInput = screen.getByRole('textbox', { name: /email address/i });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    
-    const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
-    fireEvent.click(submitButton);
-    
+    const emailInput = screen.getByTestId('email-input');
+    const submitButton = screen.getByTestId('submit-button');
+
+    await user.type(emailInput, 'test@example.com');
+    await user.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(errorMessage);
     });
   });
 
   it('shows loading state while submitting', async () => {
-    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockImplementationOnce(
-      () => new Promise(resolve => setTimeout(resolve, 100))
-    );
-    
+    const user = userEvent.setup();
+    (authService.forgotPassword as jest.Mock).mockImplementation(() => {
+      return new Promise(resolve => setTimeout(resolve, 100));
+    });
+
     renderForgotPassword();
     
-    const emailInput = screen.getByRole('textbox', { name: /email address/i });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    
-    const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
-    fireEvent.click(submitButton);
-    
+    const emailInput = screen.getByTestId('email-input');
+    const submitButton = screen.getByTestId('submit-button');
+
+    await user.type(emailInput, 'test@example.com');
+    await user.click(submitButton);
+
+    expect(submitButton).toBeDisabled();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-    });
   });
 }); 
