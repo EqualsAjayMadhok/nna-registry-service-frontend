@@ -11,10 +11,15 @@ interface ApiConfig {
 // Get configuration from environment variables with fallbacks
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Helper to ensure URL has no trailing slash
+// Helper to ensure URL has no trailing slash and includes /api path
 const formatApiUrl = (url: string) => {
   // Remove trailing slash if present
-  return url.endsWith('/') ? url.slice(0, -1) : url;
+  let formattedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+  // Add /api if not already present
+  if (!formattedUrl.endsWith('/api')) {
+    formattedUrl += '/api';
+  }
+  return formattedUrl;
 };
 
 const config: ApiConfig = {
