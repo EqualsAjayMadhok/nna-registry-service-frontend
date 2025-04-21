@@ -1,15 +1,16 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { vi } from 'vitest';
+import { jest } from '@jest/globals';
 import ForgotPassword from '../../../pages/auth/ForgotPassword';
 import authService from '../../../services/api/auth.service';
 
 // Mock the auth service
-vi.mock('../../../services/api/auth.service', () => ({
+jest.mock('../../../services/api/auth.service', () => ({
+  __esModule: true,
   default: {
-    forgotPassword: vi.fn(),
-  },
+    forgotPassword: jest.fn()
+  }
 }));
 
 const renderForgotPassword = () => {
@@ -22,14 +23,14 @@ const renderForgotPassword = () => {
 
 describe('ForgotPassword Component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('renders the forgot password form', () => {
     renderForgotPassword();
     
     expect(screen.getByText('Reset Password')).toBeInTheDocument();
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /email address/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /send reset instructions/i })).toBeInTheDocument();
     expect(screen.getByText(/back to sign in/i)).toBeInTheDocument();
   });
@@ -40,27 +41,31 @@ describe('ForgotPassword Component', () => {
     const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
     fireEvent.click(submitButton);
     
-    expect(await screen.findByText('Please enter your email address')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Please enter your email address')).toBeInTheDocument();
+    });
   });
 
   it('validates invalid email format', async () => {
     renderForgotPassword();
     
-    const emailInput = screen.getByLabelText(/email address/i);
+    const emailInput = screen.getByRole('textbox', { name: /email address/i });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
     
     const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
     fireEvent.click(submitButton);
     
-    expect(await screen.findByText('Please enter a valid email address')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
+    });
   });
 
   it('handles successful password reset request', async () => {
-    vi.mocked(authService.forgotPassword).mockResolvedValueOnce();
+    (authService.forgotPassword as jest.Mock).mockResolvedValueOnce({ success: true });
     
     renderForgotPassword();
     
-    const emailInput = screen.getByLabelText(/email address/i);
+    const emailInput = screen.getByRole('textbox', { name: /email address/i });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     
     const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
@@ -76,11 +81,11 @@ describe('ForgotPassword Component', () => {
 
   it('handles failed password reset request', async () => {
     const errorMessage = 'Failed to send reset instructions';
-    vi.mocked(authService.forgotPassword).mockRejectedValueOnce(new Error(errorMessage));
+    (authService.forgotPassword as jest.Mock).mockRejectedValueOnce(new Error(errorMessage));
     
     renderForgotPassword();
     
-    const emailInput = screen.getByLabelText(/email address/i);
+    const emailInput = screen.getByRole('textbox', { name: /email address/i });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     
     const submitButton = screen.getByRole('button', { name: /send reset instructions/i });
@@ -92,11 +97,11 @@ describe('ForgotPassword Component', () => {
   });
 
   it('shows loading state while submitting', async () => {
-    vi.mocked(authService.forgotPassword).mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    (authService.forgotPassword as jest.Mock).mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
     
     renderForgotPassword();
     
-    const emailInput = screen.getByLabelText(/email address/i);
+    const emailInput = screen.getByRole('textbox', { name: /email address/i });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     
     const submitButton = screen.getByRole('button', { name: /send reset instructions/i });

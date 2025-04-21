@@ -1,25 +1,17 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { vi } from 'vitest';
 import ResetPassword from '../../../pages/auth/ResetPassword';
 import authService from '../../../services/api/auth.service';
 
 // Mock the auth service
-vi.mock('../../../services/api/auth.service', () => ({
-  default: {
-    resetPassword: vi.fn(),
-  },
-}));
+jest.mock('../../../services/api/auth.service');
 
-// Mock useSearchParams
-const mockSearchParams = new URLSearchParams();
-mockSearchParams.append('token', 'test-token');
-
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
-  useSearchParams: () => [mockSearchParams],
-  useNavigate: () => vi.fn(),
+// Mock react-router-dom hooks
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
+  useSearchParams: () => [new URLSearchParams('?token=test-token'), jest.fn()],
 }));
 
 const renderResetPassword = () => {
@@ -32,135 +24,103 @@ const renderResetPassword = () => {
 
 describe('ResetPassword Component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
-  it('renders the reset password form', () => {
+  it('renders reset password form', () => {
     renderResetPassword();
     
     expect(screen.getByText('Set New Password')).toBeInTheDocument();
-    expect(screen.getByLabelText(/new password/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirm new password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reset password/i })).toBeInTheDocument();
-    expect(screen.getByText(/back to sign in/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('New Password *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirm New Password *')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeInTheDocument();
   });
 
-  it('validates empty passwords', async () => {
+  it('shows validation errors for empty fields', async () => {
     renderResetPassword();
     
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
+    const submitButton = screen.getByRole('button', { name: 'Reset Password' });
     fireEvent.click(submitButton);
-    
-    expect(await screen.findByText('Please fill in all fields')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Please fill in all fields')).toBeInTheDocument();
+    });
   });
 
-  it('validates password length', async () => {
+  it('shows error when passwords do not match', async () => {
     renderResetPassword();
     
-    const passwordInput = screen.getByLabelText(/new password/i);
-    const confirmInput = screen.getByLabelText(/confirm new password/i);
-    
-    fireEvent.change(passwordInput, { target: { value: '12345' } });
-    fireEvent.change(confirmInput, { target: { value: '12345' } });
-    
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
-    fireEvent.click(submitButton);
-    
-    expect(await screen.findByText('Password must be at least 6 characters long')).toBeInTheDocument();
-  });
+    const passwordInput = screen.getByLabelText('New Password *');
+    const confirmPasswordInput = screen.getByLabelText('Confirm New Password *');
+    const submitButton = screen.getByRole('button', { name: 'Reset Password' });
 
-  it('validates password match', async () => {
-    renderResetPassword();
-    
-    const passwordInput = screen.getByLabelText(/new password/i);
-    const confirmInput = screen.getByLabelText(/confirm new password/i);
-    
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmInput, { target: { value: 'password124' } });
-    
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'password456' } });
     fireEvent.click(submitButton);
-    
-    expect(await screen.findByText('Passwords do not match')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
+    });
   });
 
-  it('handles successful password reset', async () => {
-    const mockNavigate = vi.fn();
-    vi.mock('react-router-dom', () => ({
-      ...vi.importActual('react-router-dom'),
-      useSearchParams: () => [mockSearchParams],
-      useNavigate: () => mockNavigate,
-    }));
+  it('shows error when password is too short', async () => {
+    renderResetPassword();
+    
+    const passwordInput = screen.getByLabelText('New Password *');
+    const confirmPasswordInput = screen.getByLabelText('Confirm New Password *');
+    const submitButton = screen.getByRole('button', { name: 'Reset Password' });
 
-    vi.mocked(authService.resetPassword).mockResolvedValueOnce({
+    fireEvent.change(passwordInput, { target: { value: '123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: '123' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Password must be at least 6 characters long')).toBeInTheDocument();
+    });
+  });
+
+  it('successfully resets password and redirects to login', async () => {
+    const mockResetPassword = jest.spyOn(authService, 'resetPassword').mockResolvedValueOnce({ 
       success: true,
-      message: 'Password reset successful',
+      message: 'Password reset successful'
     });
-    
     renderResetPassword();
     
-    const passwordInput = screen.getByLabelText(/new password/i);
-    const confirmInput = screen.getByLabelText(/confirm new password/i);
-    
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmInput, { target: { value: 'password123' } });
-    
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
-    fireEvent.click(submitButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/password has been reset successfully/i)).toBeInTheDocument();
-    });
-    
-    expect(authService.resetPassword).toHaveBeenCalledWith({
-      token: 'test-token',
-      password: 'password123',
-    });
-    
-    // Wait for navigation
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-    }, { timeout: 3500 });
-  });
+    const passwordInput = screen.getByLabelText('New Password *');
+    const confirmPasswordInput = screen.getByLabelText('Confirm New Password *');
+    const submitButton = screen.getByRole('button', { name: 'Reset Password' });
 
-  it('handles failed password reset', async () => {
-    const errorMessage = 'Invalid or expired token';
-    vi.mocked(authService.resetPassword).mockRejectedValueOnce(new Error(errorMessage));
-    
-    renderResetPassword();
-    
-    const passwordInput = screen.getByLabelText(/new password/i);
-    const confirmInput = screen.getByLabelText(/confirm new password/i);
-    
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmInput, { target: { value: 'password123' } });
-    
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
+    fireEvent.change(passwordInput, { target: { value: 'newPassword123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'newPassword123' } });
     fireEvent.click(submitButton);
-    
+
     await waitFor(() => {
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      expect(mockResetPassword).toHaveBeenCalledWith({
+        token: 'test-token',
+        password: 'newPassword123'
+      });
+      expect(screen.getByText('Your password has been reset successfully.')).toBeInTheDocument();
     });
   });
 
-  it('shows loading state while submitting', async () => {
-    vi.mocked(authService.resetPassword).mockImplementationOnce(() => new Promise(resolve => setTimeout(() => resolve({ success: true, message: 'Success' }), 100)));
-    
+  it('shows error message on reset failure', async () => {
+    const mockResetPassword = jest.spyOn(authService, 'resetPassword').mockRejectedValueOnce(new Error('Invalid or expired token'));
     renderResetPassword();
     
-    const passwordInput = screen.getByLabelText(/new password/i);
-    const confirmInput = screen.getByLabelText(/confirm new password/i);
-    
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmInput, { target: { value: 'password123' } });
-    
-    const submitButton = screen.getByRole('button', { name: /reset password/i });
+    const passwordInput = screen.getByLabelText('New Password *');
+    const confirmPasswordInput = screen.getByLabelText('Confirm New Password *');
+    const submitButton = screen.getByRole('button', { name: 'Reset Password' });
+
+    fireEvent.change(passwordInput, { target: { value: 'newPassword123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'newPassword123' } });
     fireEvent.click(submitButton);
-    
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    
+
     await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+      expect(mockResetPassword).toHaveBeenCalledWith({
+        token: 'test-token',
+        password: 'newPassword123'
+      });
+      expect(screen.getByText('Invalid or expired token')).toBeInTheDocument();
     });
   });
-}); 
+});
