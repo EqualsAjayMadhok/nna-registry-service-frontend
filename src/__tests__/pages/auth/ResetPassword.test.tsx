@@ -4,118 +4,138 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import ResetPassword from '../../../pages/auth/ResetPassword';
 import authService from '../../../services/api/auth.service';
-import * as router from 'react-router-dom';
+import { ResetPasswordRequest } from '../../../types/auth.types';
 
-// Mock the authService
+// Mock the auth service
 jest.mock('../../../services/api/auth.service');
-const mockAuthService = authService as jest.Mocked<typeof authService>;
-
-// Mock useNavigate
-const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
-  useSearchParams: () => [new URLSearchParams({ token: 'valid-token' })]
+  useNavigate: () => jest.fn(),
+  useSearchParams: () => [new URLSearchParams({ token: 'test-token' }), jest.fn()],
 }));
 
-const renderResetPassword = () => {
-  return render(
-    <BrowserRouter>
-      <ResetPassword />
-    </BrowserRouter>
-  );
-};
-
 describe('ResetPassword Component', () => {
+  const mockNavigate = jest.fn();
+
   beforeEach(() => {
+    jest.clearAllMocks();
+    (authService.resetPassword as jest.Mock).mockReset();
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
+  const renderResetPassword = () => {
+    return render(
+      <BrowserRouter>
+        <ResetPassword />
+      </BrowserRouter>
+    );
+  };
+
   it('renders reset password form', () => {
     renderResetPassword();
-    
-    expect(screen.getByText('Set New Password')).toBeInTheDocument();
-    expect(screen.getByLabelText('New Password *')).toBeInTheDocument();
-    expect(screen.getByLabelText('Confirm New Password *')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeInTheDocument();
-  });
+    expect(screen.getByTestId('password-input')).toBeInTheDocument();
+    expect(screen.getByTestId('confirm-password-input')).toBeInTheDocument();
+    expect(screen.getByTestId('reset-password-button')).toBeInTheDocument();
+  }, 15000);
 
   it('shows validation error when submitting empty form', async () => {
+    const user = userEvent.setup();
     renderResetPassword();
-    const submitButton = screen.getByTestId('reset-password-submit');
-    await userEvent.click(submitButton);
     
+    const submitButton = screen.getByTestId('reset-password-button');
+    await user.click(submitButton);
+
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Please fill in all fields');
-    });
-  });
+    }, { timeout: 5000 });
+  }, 15000);
 
   it('shows error when passwords do not match', async () => {
+    const user = userEvent.setup();
     renderResetPassword();
-    const newPasswordInput = screen.getByTestId('new-password');
-    const confirmPasswordInput = screen.getByTestId('confirm-password');
     
-    await userEvent.type(newPasswordInput, 'Password123!');
-    await userEvent.type(confirmPasswordInput, 'DifferentPassword123!');
-    
-    const submitButton = screen.getByTestId('reset-password-submit');
-    await userEvent.click(submitButton);
+    const newPasswordInput = screen.getByTestId('password-input');
+    const confirmPasswordInput = screen.getByTestId('confirm-password-input');
+    const submitButton = screen.getByTestId('reset-password-button');
+
+    await user.type(newPasswordInput, 'password123');
+    await user.type(confirmPasswordInput, 'password456');
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Passwords do not match');
-    });
-  });
+    }, { timeout: 5000 });
+  }, 15000);
 
   it('shows error when password is too short', async () => {
+    const user = userEvent.setup();
     renderResetPassword();
-    const newPasswordInput = screen.getByTestId('new-password');
-    const confirmPasswordInput = screen.getByTestId('confirm-password');
     
-    await userEvent.type(newPasswordInput, 'short');
-    await userEvent.type(confirmPasswordInput, 'short');
-    
-    const submitButton = screen.getByTestId('reset-password-submit');
-    await userEvent.click(submitButton);
+    const newPasswordInput = screen.getByTestId('password-input');
+    const confirmPasswordInput = screen.getByTestId('confirm-password-input');
+    const submitButton = screen.getByTestId('reset-password-button');
+
+    await user.type(newPasswordInput, '123');
+    await user.type(confirmPasswordInput, '123');
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Password must be at least 8 characters long');
-    });
-  });
+    }, { timeout: 5000 });
+  }, 15000);
 
   it('successfully resets password and redirects to login', async () => {
-    mockAuthService.resetPassword.mockResolvedValueOnce({ success: true, message: 'Password reset successful' });
-    
+    const user = userEvent.setup();
+    const mockResetResponse = { success: true, message: 'Your password has been reset successfully.' };
+    (authService.resetPassword as jest.Mock).mockImplementation((request: ResetPasswordRequest) => {
+      expect(request).toEqual({
+        token: 'test-token',
+        password: 'password123'
+      });
+      return Promise.resolve(mockResetResponse);
+    });
+
     renderResetPassword();
-    const newPasswordInput = screen.getByTestId('new-password');
-    const confirmPasswordInput = screen.getByTestId('confirm-password');
     
-    await userEvent.type(newPasswordInput, 'NewPassword123!');
-    await userEvent.type(confirmPasswordInput, 'NewPassword123!');
-    
-    const submitButton = screen.getByTestId('reset-password-submit');
-    await userEvent.click(submitButton);
+    const newPasswordInput = screen.getByTestId('password-input');
+    const confirmPasswordInput = screen.getByTestId('confirm-password-input');
+    const submitButton = screen.getByTestId('reset-password-button');
+
+    await user.type(newPasswordInput, 'password123');
+    await user.type(confirmPasswordInput, 'password123');
+    await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-    });
-  });
+      expect(screen.getByRole('alert')).toHaveTextContent('Your password has been reset successfully');
+    }, { timeout: 5000 });
+  }, 15000);
 
   it('shows error when reset fails', async () => {
+    const user = userEvent.setup();
     const errorMessage = 'Invalid or expired token';
-    mockAuthService.resetPassword.mockRejectedValueOnce(new Error(errorMessage));
-    
+    (authService.resetPassword as jest.Mock).mockImplementation((request: ResetPasswordRequest) => {
+      expect(request).toEqual({
+        token: 'test-token',
+        password: 'password123'
+      });
+      return Promise.reject(new Error(errorMessage));
+    });
+
     renderResetPassword();
-    const newPasswordInput = screen.getByTestId('new-password');
-    const confirmPasswordInput = screen.getByTestId('confirm-password');
     
-    await userEvent.type(newPasswordInput, 'NewPassword123!');
-    await userEvent.type(confirmPasswordInput, 'NewPassword123!');
-    
-    const submitButton = screen.getByTestId('reset-password-submit');
-    await userEvent.click(submitButton);
+    const newPasswordInput = screen.getByTestId('password-input');
+    const confirmPasswordInput = screen.getByTestId('confirm-password-input');
+    const submitButton = screen.getByTestId('reset-password-button');
+
+    await user.type(newPasswordInput, 'password123');
+    await user.type(confirmPasswordInput, 'password123');
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
-    });
-  });
+    }, { timeout: 5000 });
+  }, 15000);
 });

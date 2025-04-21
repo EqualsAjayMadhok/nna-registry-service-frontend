@@ -14,22 +14,21 @@ import {
 import authService from '../../services/api/auth.service';
 
 const ResetPassword: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setError('');
+    setSuccess('');
 
-    // Validate passwords
+    // Validation
     if (!password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
@@ -40,33 +39,25 @@ const ResetPassword: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
       return;
     }
 
     if (!token) {
-      setError('Invalid or missing reset token');
+      setError('Invalid reset token');
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await authService.resetPassword({
-        token,
-        password,
-      });
-
-      if (response.success) {
-        setSuccess('Your password has been reset successfully.');
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-      } else {
-        setError(response.message || 'Failed to reset password');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password');
+      const response = await authService.resetPassword({ token, password });
+      setSuccess(response.message);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while resetting your password');
     } finally {
       setLoading(false);
     }
@@ -93,46 +84,47 @@ const ResetPassword: React.FC = () => {
           }}
         >
           <Typography component="h1" variant="h5">
-            Set New Password
+            Reset Password
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }} width="100%">
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }} role="alert" data-testid="error-message">
+              <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ mb: 2 }} role="alert" data-testid="success-message">
+              <Alert severity="success" sx={{ mb: 2 }}>
                 {success}
               </Alert>
             )}
             <TextField
+              data-testid="password-input"
               margin="normal"
               required
               fullWidth
               name="password"
-              label="New Password"
+              label="New Password *"
               type="password"
               id="password"
-              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
             />
             <TextField
+              data-testid="confirm-password-input"
               margin="normal"
               required
               fullWidth
               name="confirmPassword"
-              label="Confirm New Password"
+              label="Confirm New Password *"
               type="password"
               id="confirmPassword"
-              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
             />
             <Button
+              data-testid="reset-password-button"
               type="submit"
               fullWidth
               variant="contained"
@@ -141,11 +133,9 @@ const ResetPassword: React.FC = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Reset Password'}
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
-              <Link component={RouterLink} to="/login" variant="body2">
-                Back to Sign In
-              </Link>
-            </Box>
+            <Link component={RouterLink} to="/login" variant="body2">
+              Back to Login
+            </Link>
           </Box>
         </Paper>
       </Box>
