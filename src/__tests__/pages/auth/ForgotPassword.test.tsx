@@ -1,17 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { jest } from '@jest/globals';
 import ForgotPassword from '../../../pages/auth/ForgotPassword';
 import authService from '../../../services/api/auth.service';
 
 // Mock the auth service
-jest.mock('../../../services/api/auth.service', () => ({
-  __esModule: true,
-  default: {
-    forgotPassword: jest.fn()
-  }
-}));
+jest.mock('../../../services/api/auth.service');
 
 const renderForgotPassword = () => {
   return render(
@@ -61,7 +55,7 @@ describe('ForgotPassword Component', () => {
   });
 
   it('handles successful password reset request', async () => {
-    (authService.forgotPassword as jest.Mock).mockResolvedValueOnce({ success: true });
+    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockResolvedValueOnce();
     
     renderForgotPassword();
     
@@ -75,13 +69,13 @@ describe('ForgotPassword Component', () => {
       expect(screen.getByText(/if an account exists with this email/i)).toBeInTheDocument();
     });
     
-    expect(authService.forgotPassword).toHaveBeenCalledWith({ email: 'test@example.com' });
+    expect(mockForgotPassword).toHaveBeenCalledWith({ email: 'test@example.com' });
     expect(emailInput).toHaveValue(''); // Form should be cleared
   });
 
   it('handles failed password reset request', async () => {
     const errorMessage = 'Failed to send reset instructions';
-    (authService.forgotPassword as jest.Mock).mockRejectedValueOnce(new Error(errorMessage));
+    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockRejectedValueOnce(new Error(errorMessage));
     
     renderForgotPassword();
     
@@ -97,7 +91,9 @@ describe('ForgotPassword Component', () => {
   });
 
   it('shows loading state while submitting', async () => {
-    (authService.forgotPassword as jest.Mock).mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    const mockForgotPassword = jest.spyOn(authService, 'forgotPassword').mockImplementationOnce(
+      () => new Promise(resolve => setTimeout(resolve, 100))
+    );
     
     renderForgotPassword();
     

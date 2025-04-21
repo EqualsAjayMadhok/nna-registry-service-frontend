@@ -97,12 +97,12 @@ const ResetPassword: React.FC = () => {
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 2 }} role="alert" data-testid="error-message">
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ mb: 2 }}>
+              <Alert severity="success" sx={{ mb: 2 }} role="alert" data-testid="success-message">
                 {success}
               </Alert>
             )}

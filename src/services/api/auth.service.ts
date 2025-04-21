@@ -2,13 +2,19 @@ import { LoginRequest, RegisterRequest, User, AuthResponse, ForgotPasswordReques
 import { ApiResponse } from '../../types/api.types';
 import api from './api';
 
-export const AuthService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+export class AuthService {
+  private storage: Storage;
+
+  constructor(storage: Storage = localStorage) {
+    this.storage = storage;
+  }
+
+  async login(data: LoginRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
       if (response.data.success && response.data.data) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        this.storage.setItem('accessToken', response.data.data.token);
+        this.storage.setItem('user', JSON.stringify(response.data.data.user));
         return response.data.data;
       }
       throw new Error(response.data.error || 'Login failed');
@@ -22,14 +28,14 @@ export const AuthService = {
       }
       throw new Error(error.message || 'Login failed');
     }
-  },
+  }
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
       if (response.data.success && response.data.data) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        this.storage.setItem('accessToken', response.data.data.token);
+        this.storage.setItem('user', JSON.stringify(response.data.data.user));
         return response.data.data;
       }
       // Handle error from successful response but with error data
@@ -60,31 +66,31 @@ export const AuthService = {
       
       throw new Error(errorMessage);
     }
-  },
+  }
 
-  logout: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  },
+  logout(): void {
+    this.storage.removeItem('accessToken');
+    this.storage.removeItem('user');
+  }
 
-  getCurrentUser: (): any => {
-    const userStr = localStorage.getItem('user');
+  getCurrentUser(): any {
+    const userStr = this.storage.getItem('user');
     if (userStr) {
       return JSON.parse(userStr);
     }
     return null;
-  },
+  }
 
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token');
-  },
+  isAuthenticated(): boolean {
+    return !!this.storage.getItem('accessToken');
+  }
 
-  isAdmin: (): boolean => {
-    const user = AuthService.getCurrentUser();
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
     return user ? user.roles.includes('admin') : false;
-  },
+  }
 
-  getProfile: async (): Promise<User> => {
+  async getProfile(): Promise<User> {
     try {
       const response = await api.get<ApiResponse<User>>('/auth/profile');
       
@@ -102,15 +108,14 @@ export const AuthService = {
       }
       throw new Error('Failed to get profile. Please try again.');
     }
-  },
+  }
 
-  clearStorage: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.clear();
-  },
+  clearStorage(): void {
+    this.storage.removeItem('accessToken');
+    this.storage.removeItem('user');
+  }
 
-  createTestUser: async (): Promise<void> => {
+  async createTestUser(): Promise<void> {
     const testUser = {
       username: `test_user_${Date.now()}`,
       email: `test_user_${Date.now()}@example.com`,
@@ -118,14 +123,14 @@ export const AuthService = {
     };
     
     try {
-      await AuthService.register(testUser);
+      await this.register(testUser);
     } catch (error) {
       console.error('Error creating test user:', error);
       throw error;
     }
-  },
+  }
 
-  forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
+  async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
     try {
       const response = await api.post<ApiResponse<void>>('/auth/forgot-password', data);
       if (!response.data.success) {
@@ -140,9 +145,9 @@ export const AuthService = {
       }
       throw new Error('Failed to send reset instructions. Please try again.');
     }
-  },
+  }
 
-  resetPassword: async (data: ResetPasswordRequest): Promise<ResetPasswordResponse> => {
+  async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
     try {
       const response = await api.post<ApiResponse<ResetPasswordResponse>>('/auth/reset-password', data);
       if (!response.data.success || !response.data.data) {
@@ -159,7 +164,7 @@ export const AuthService = {
       throw new Error('Failed to reset password. Please try again.');
     }
   }
-};
+}
 
-const authService = AuthService;
+const authService = new AuthService();
 export default authService;

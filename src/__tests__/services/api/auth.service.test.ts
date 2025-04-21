@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { LoginRequest, RegisterRequest, User, AuthResponse } from '../../../types/auth.types';
 import { ApiResponse } from '../../../types/api.types';
-import authService from '../../../services/api/auth.service';
+import { AuthService } from '../../../services/api/auth.service';
 import api from '../../../services/api/api';
 
 jest.mock('../../../services/api/api', () => ({
@@ -12,7 +12,7 @@ jest.mock('../../../services/api/api', () => ({
   }
 }));
 
-// Mock localStorage
+// Mock storage
 const mockStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
@@ -22,13 +22,9 @@ const mockStorage = {
   length: 0
 };
 
-// Override the storage property of the auth service
-Object.defineProperty(authService, 'storage', {
-  value: mockStorage,
-  writable: true
-});
-
 describe('AuthService', () => {
+  let authService: AuthService;
+  
   const mockUser: User = {
     id: '1',
     username: 'testuser',
@@ -43,6 +39,7 @@ describe('AuthService', () => {
     mockStorage.setItem.mockReset();
     mockStorage.removeItem.mockReset();
     mockStorage.clear.mockReset();
+    authService = new AuthService(mockStorage as Storage);
   });
 
   describe('login', () => {
