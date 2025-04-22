@@ -233,21 +233,10 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>((props, r
       // Start upload if uploadImmediately is true
       if (uploadImmediately) {
         upload.status = 'uploading';
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const controller = new AbortController();
-        upload.cancel = () => controller.abort();
-
-        axios.post<ApiResponse<Asset>>('/api/assets/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
-            const progress = progressEvent.total
-              ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              : 0;
-            
+        
+        // Use AssetService for upload
+        assetService.uploadFile(file, {
+          onProgress: (progress: number) => {
             newUploads.set(id, {
               ...upload,
               progress
@@ -258,41 +247,29 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>((props, r
               props.onUploadProgress(id, progress);
             }
           },
-          signal: controller.signal
-        } as any)
-          .then(response => {
-            if (response.data.success && response.data.data) {
-              newUploads.set(id, {
-                ...upload,
-                status: 'completed',
-                progress: 100,
-                response: response.data.data
-              });
-              setUploadState({ uploads: new Map(newUploads) });
-
-              if (props.onUploadComplete) {
-                props.onUploadComplete(id, response.data.data);
-              }
-            } else {
-              throw new Error(response.data.error || 'Upload failed');
-            }
-          })
-          .catch(error => {
-            if (error.name === 'CancelError') {
-              newUploads.set(id, {
-                ...upload,
-                status: 'cancelled'
-              });
-            } else {
-              newUploads.set(id, {
-                ...upload,
-                status: 'error',
-                error: error.message
-              });
-              handleUploadError(file, error);
-            }
+          onComplete: (asset: Asset) => {
+            newUploads.set(id, {
+              ...upload,
+              status: 'completed',
+              progress: 100,
+              response: asset
+            });
             setUploadState({ uploads: new Map(newUploads) });
-          });
+
+            if (props.onUploadComplete) {
+              props.onUploadComplete(id, asset);
+            }
+          },
+          onError: (error: string) => {
+            newUploads.set(id, {
+              ...upload,
+              status: 'error',
+              error: error
+            });
+            handleUploadError(file, error);
+            setUploadState({ uploads: new Map(newUploads) });
+          }
+        });
       }
     });
 
