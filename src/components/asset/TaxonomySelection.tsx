@@ -14,13 +14,13 @@ import {
   Tooltip
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { CategoryOption, SubcategoryOption, Category, Subcategory } from '../../types/taxonomy.types';
+import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
 // VERSION: ${new Date().toISOString()}
 // Importing ForcedSequentialNumber is not needed - using direct method calls instead
 import nnaRegistryService from '../../api/nnaRegistryService';
-import { getAlphabeticCode, generateHumanFriendlyName } from '../../api/codeMapping';
+import { generateAlphabeticCode } from '../../utils/nnaAddressing';
 
 interface TaxonomySelectionProps {
   layerCode: string;
@@ -382,7 +382,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip 
-                        label={getAlphabeticCode(layerCode, subcategory.code)}
+                        label={subcategory.code}
                         size="small" 
                         color="secondary" 
                         variant="outlined" 
