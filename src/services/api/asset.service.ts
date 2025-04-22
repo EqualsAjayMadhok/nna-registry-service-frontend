@@ -302,7 +302,7 @@ export class AssetService {
       // - Let Axios automatically set the Content-Type header with boundary
       // - Preserves API configuration headers (auth, etc.)
       // - Ensures correct multipart/form-data encoding
-      const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData);
+      const response = await api.post<ApiResponse<Asset>>('/v1/assets/upload', formData);
 
       if (response.data.success && response.data.data) {
         const asset = response.data.data;
