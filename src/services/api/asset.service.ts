@@ -300,6 +300,7 @@ export class AssetService {
 
       const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData, {
         headers: {
+          ...api.defaults.headers,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -329,6 +330,7 @@ export class AssetService {
         throw new Error(response.data.error || 'Upload failed');
       }
     } catch (error) {
+      console.error('Upload error:', error);
       upload.status = 'error';
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       upload.error = errorMessage;
