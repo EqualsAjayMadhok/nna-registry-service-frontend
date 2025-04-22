@@ -345,13 +345,15 @@ const AssetRegistration: React.FC = () => {
                 ...metadata,
                 name: humanFriendlyName || metadata?.name || 'Auto-generated NNA Name',
                 description: metadata?.description || '',
+                source: metadata?.source || 'ReViz',
                 tags: metadata?.tags || [],
+                layerSpecificData: metadata?.layerSpecificData || {},
               }}
               onFormChange={(data, isValid) => {
-                // Preserve the human-friendly name if we've already generated it
+                // Always use the human-friendly name from the taxonomy step
                 const updatedData = {
                   ...data,
-                  name: humanFriendlyName || data.name,
+                  name: humanFriendlyName,
                 };
                 setMetadata(updatedData);
                 setFormValid(isValid);
