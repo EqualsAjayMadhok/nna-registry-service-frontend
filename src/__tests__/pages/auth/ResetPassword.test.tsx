@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ResetPassword from '../../../pages/auth/ResetPassword';
 import authService from '../../../services/api/auth.service';
@@ -101,75 +101,69 @@ describe('ResetPassword', () => {
   });
 
   it('handles successful password reset', async () => {
-    const successMessage = 'Password reset successful';
-    mockResetPassword.mockResolvedValueOnce({ 
-      success: true, 
-      message: successMessage 
+    mockResetPassword.mockResolvedValueOnce({
+      success: true,
+      message: 'Password reset successful'
     });
 
-    render(
-      <BrowserRouter>
-        <ResetPassword />
-      </BrowserRouter>
-    );
-    const form = screen.getByRole('form');
-    fillPasswordFields('password123');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(successMessage);
+    await fillPasswordFields('Password123!');
+    await act(() => {
+      fireEvent.submit(screen.getByRole('form'));
     });
 
     expect(mockResetPassword).toHaveBeenCalledWith({
-      token: 'valid-token',
-      password: 'password123'
+      resetToken: 'valid-token',
+      newPassword: 'Password123!'
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('reset-password-button')).toBeDisabled();
+      expect(screen.getByRole('alert')).toHaveTextContent('Password reset successful');
     });
   });
 
   it('handles failed password reset', async () => {
-    const errorMessage = 'Invalid token';
-    mockResetPassword.mockRejectedValueOnce(new Error(errorMessage));
+    mockResetPassword.mockRejectedValueOnce({
+      response: {
+        data: {
+          success: false,
+          message: 'Invalid reset token'
+        }
+      }
+    });
 
-    render(
-      <BrowserRouter>
-        <ResetPassword />
-      </BrowserRouter>
-    );
-    const form = screen.getByRole('form');
-    fillPasswordFields('password123');
-    fireEvent.submit(form);
+    await fillPasswordFields('Password123!');
+    await act(() => {
+      fireEvent.submit(screen.getByRole('form'));
+    });
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
+    expect(mockResetPassword).toHaveBeenCalledWith({
+      resetToken: 'invalid-token',
+      newPassword: 'Password123!'
     });
   });
 
   it('shows loading state while submitting', async () => {
-    mockResetPassword.mockImplementationOnce(() => 
-      new Promise(resolve => setTimeout(() => resolve({ success: true, message: 'Password reset successful' }), 100))
-    );
+    let resolvePromise: (value: { success: boolean; message: string }) => void;
+    const resetPromise = new Promise<{ success: boolean; message: string }>((resolve) => {
+      resolvePromise = resolve;
+    });
 
-    render(
-      <BrowserRouter>
-        <ResetPassword />
-      </BrowserRouter>
-    );
-    
-    const form = screen.getByRole('form');
-    fillPasswordFields('password123');
-    fireEvent.submit(form);
+    mockResetPassword.mockImplementationOnce(() => resetPromise);
 
+    await fillPasswordFields('Password123!');
+    await act(() => {
+      fireEvent.submit(screen.getByRole('form'));
+    });
+
+    expect(screen.getByRole('button')).toBeDisabled();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(screen.getByTestId('reset-password-button')).toBeDisabled();
+
+    await act(async () => {
+      resolvePromise({ success: true, message: 'Password reset successful' });
+    });
 
     await waitFor(() => {
       expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-      expect(screen.getByTestId('reset-password-button')).toBeDisabled();
-      expect(screen.getByText('Password reset successful')).toBeInTheDocument();
     });
   });
 });

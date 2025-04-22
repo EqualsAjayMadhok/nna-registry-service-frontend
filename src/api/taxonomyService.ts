@@ -95,12 +95,12 @@ class TaxonomyService {
     }
 
     const layer = this.taxonomyData[layerCode];
-    if (!layer) {
+    if (!layer || typeof layer !== 'object' || !('name' in layer) || !('categories' in layer)) {
       return null;
     }
 
-    this.layerCache.set(layerCode, layer);
-    return layer;
+    this.layerCache.set(layerCode, layer as LayerInfo);
+    return layer as LayerInfo;
   }
 
   /**
@@ -125,10 +125,9 @@ class TaxonomyService {
       const category = layer.categories[categoryCode];
 
       // Use numeric index + 1 as a fallback numeric code if none exists in the data
-      const numericCode =
-        category.numericCode ||
-        parseInt(categoryCode, 10) ||
-        Object.keys(layer.categories).indexOf(categoryCode) + 1;
+      const numericCode = 
+        (category as any).numericCode || 
+        (parseInt(categoryCode, 10) || Object.keys(layer.categories).indexOf(categoryCode) + 1);
 
       categories.push({
         id: `${layerCode}.${categoryCode}`,
@@ -172,10 +171,9 @@ class TaxonomyService {
     for (const subcategoryCode in category.subcategories) {
       const subcategory = category.subcategories[subcategoryCode];
       // Use numeric index + 1 as a fallback numeric code if none exists in the data
-      const numericCode =
-        subcategory.numericCode ||
-        parseInt(subcategoryCode, 10) ||
-        Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
+      const numericCode = 
+        (subcategory as any).numericCode || 
+        (parseInt(subcategoryCode, 10) || Object.keys(category.subcategories).indexOf(subcategoryCode) + 1);
 
       subcategories.push({
         id: `${layerCode}.${category.code}.${subcategory.code}`,

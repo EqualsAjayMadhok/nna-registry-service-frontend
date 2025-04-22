@@ -54,7 +54,10 @@ const ResetPassword: React.FC = () => {
         return;
       }
 
-      await authService.resetPassword({ token, password });
+      const response = await authService.resetPassword({
+        resetToken: token,
+        newPassword: password
+      });
       setSuccess('Password reset successful');
       setLoading(false);
       setTimeout(() => {

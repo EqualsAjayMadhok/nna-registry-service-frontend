@@ -14,7 +14,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
+import { CategoryOption, SubcategoryOption, Category, Subcategory } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
 // VERSION: ${new Date().toISOString()}
@@ -52,6 +52,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   const [sequentialNumber, setSequentialNumber] = useState<number>(1);
   const [isUnique, setIsUnique] = useState<boolean>(true);
   const [checkingUniqueness, setCheckingUniqueness] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch categories when layer changes
   useEffect(() => {
@@ -243,16 +244,35 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     }
   };
 
-  const handleSubcategoryChange = (event: SelectChangeEvent<string>, isDoubleClick: boolean = false) => {
-    const subcategoryCode = event.target.value;
+  const handleSubcategoryChange = async (event: SelectChangeEvent<string>, isDoubleClick: boolean = false) => {
+    if (isProcessing) return;
     
-    // Find the selected subcategory
-    const selectedSubcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
+    setIsProcessing(true);
+    try {
+      const subcategoryCode = event.target.value;
+      const selectedSubcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
+      
+      if (selectedSubcategory) {
+        setSequentialNumber(1);
+        if (!isDoubleClick) {
+          await onSubcategorySelect(selectedSubcategory, false);
+        }
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDoubleClick = async (e: React.MouseEvent, subcategory: SubcategoryOption) => {
+    if (isProcessing) return;
     
-    if (selectedSubcategory) {
-      // Reset sequential number when subcategory changes
-      setSequentialNumber(1);
-      onSubcategorySelect(selectedSubcategory, isDoubleClick);
+    e.preventDefault();
+    setIsProcessing(true);
+    try {
+      console.log(`Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`);
+      await onSubcategorySelect(subcategory, true);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -354,10 +374,8 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
               <MenuItem 
                 key={subcategory.code} 
                 value={subcategory.code} 
-                onDoubleClick={() => {
-                  console.log(`Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`);
-                  onSubcategorySelect(subcategory, true);
-                }}
+                onDoubleClick={(e) => handleDoubleClick(e, subcategory)}
+                disabled={isProcessing}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                   <Typography>{subcategory.name}</Typography>
