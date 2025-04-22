@@ -298,13 +298,8 @@ export class AssetService {
       const formData = new FormData();
       formData.append('file', upload.file);
 
-      // Let the browser set the correct Content-Type header with boundary
-      const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData, {
-        headers: {
-          // Remove Content-Type to let the browser set it with boundary
-          'Content-Type': undefined
-        }
-      });
+      // Don't set any headers - let axios handle it automatically for FormData
+      const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData);
 
       if (response.data.success && response.data.data) {
         const asset = response.data.data;
