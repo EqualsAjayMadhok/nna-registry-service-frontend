@@ -298,7 +298,7 @@ export class AssetService {
       const formData = new FormData();
       formData.append('file', upload.file);
 
-      const response = await axios.post<ApiResponse<Asset>>('/api/assets/upload', formData, {
+      const response = await axios.post<ApiResponse<Asset>>('/assets/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
