@@ -22,10 +22,12 @@ import {
 } from '@mui/icons-material';
 import { useDropzone, FileRejection, DropEvent, Accept } from 'react-dropzone';
 import { styled } from '@mui/material/styles';
-import { FileUpload, FileUploadOptions, FileUploadResponse } from '../../types/asset.types';
+import { FileUpload, FileUploadOptions, FileUploadResponse, Asset } from '../../types/asset.types';
+import { ApiResponse } from '../../types/api.types';
 import assetService from '../../services/api/asset.service';
 import FilePreview from './FilePreview';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 const UploadBox = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -202,7 +204,104 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>((props, r
     fileRejections: FileRejection[],
     event: DropEvent
   ) => {
-    // ... existing code ...
+    // Handle file rejections
+    if (fileRejections.length > 0) {
+      const errors = fileRejections.map(rejection => {
+        const error = rejection.errors[0];
+        return `${rejection.file.name}: ${error.message}`;
+      });
+      setError(errors.join('\n'));
+      return;
+    }
+
+    // Clear any existing errors
+    setError(null);
+
+    // Create upload states for each file
+    const newUploads = new Map(uploadState.uploads);
+    acceptedFiles.forEach(file => {
+      const id = uuidv4();
+      const upload: SingleUploadState = {
+        id,
+        file,
+        status: 'pending',
+        progress: 0,
+        startTime: Date.now()
+      };
+      newUploads.set(id, upload);
+
+      // Start upload if uploadImmediately is true
+      if (uploadImmediately) {
+        upload.status = 'uploading';
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const controller = new AbortController();
+        upload.cancel = () => controller.abort();
+
+        axios.post<ApiResponse<Asset>>('/api/assets/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
+            const progress = progressEvent.total
+              ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              : 0;
+            
+            newUploads.set(id, {
+              ...upload,
+              progress
+            });
+            setUploadState({ uploads: new Map(newUploads) });
+
+            if (props.onUploadProgress) {
+              props.onUploadProgress(id, progress);
+            }
+          },
+          signal: controller.signal
+        } as any)
+          .then(response => {
+            if (response.data.success && response.data.data) {
+              newUploads.set(id, {
+                ...upload,
+                status: 'completed',
+                progress: 100,
+                response: response.data.data
+              });
+              setUploadState({ uploads: new Map(newUploads) });
+
+              if (props.onUploadComplete) {
+                props.onUploadComplete(id, response.data.data);
+              }
+            } else {
+              throw new Error(response.data.error || 'Upload failed');
+            }
+          })
+          .catch(error => {
+            if (error.name === 'CancelError') {
+              newUploads.set(id, {
+                ...upload,
+                status: 'cancelled'
+              });
+            } else {
+              newUploads.set(id, {
+                ...upload,
+                status: 'error',
+                error: error.message
+              });
+              handleUploadError(file, error);
+            }
+            setUploadState({ uploads: new Map(newUploads) });
+          });
+      }
+    });
+
+    setUploadState({ uploads: newUploads });
+
+    // Notify parent component
+    if (props.onFilesAdded) {
+      props.onFilesAdded(acceptedFiles);
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive: dropzoneIsDragActive } = useDropzone({
@@ -247,21 +346,85 @@ const FileUploader = forwardRef<FileUploaderHandle, FileUploaderProps>((props, r
 
   return (
     <Box>
-      <Box {...getRootProps()} sx={{ /* styles */ }}>
+      <UploadBox {...getRootProps()}>
         <input {...getInputProps()} />
-        <Typography variant="body1">
-          {dropzoneIsDragActive ? 'Drop files here' : 'Drag and drop files here, or click to select files'}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Accepted file types: {Object.keys(accept).join(', ')}
-        </Typography>
-      </Box>
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <CloudUploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            {props.uploadLabel || (dropzoneIsDragActive ? 'Drop files here' : 'Drag and drop files here, or click to select files')}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Accepted file types: {Object.keys(accept).join(', ')}
+          </Typography>
+        </Box>
+      </UploadBox>
+
       {error && (
-        <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+        <Alert severity="error" sx={{ mt: 2 }}>
           {error}
-        </Typography>
+        </Alert>
       )}
+
       {/* File list and upload progress UI */}
+      {Array.from(uploadState.uploads.values()).map((upload) => (
+        <Paper key={upload.id} sx={{ mt: 2, p: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={4}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <AttachFileIcon sx={{ mr: 1 }} />
+                <Typography variant="body2" noWrap>
+                  {upload.file.name}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ width: '100%', mr: 1 }}>
+                  <StyledLinearProgress
+                    variant="determinate"
+                    value={upload.progress}
+                    color={
+                      upload.status === 'completed' ? 'success' :
+                      upload.status === 'error' ? 'error' :
+                      upload.status === 'cancelled' ? 'warning' : 'primary'
+                    }
+                  />
+                </Box>
+                <Box sx={{ minWidth: 35 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    {upload.progress}%
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {upload.status === 'uploading' && (
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      if (upload.cancel) {
+                        upload.cancel();
+                      }
+                    }}
+                  >
+                    <CancelIcon />
+                  </IconButton>
+                )}
+                {upload.status === 'completed' && (
+                  <CheckCircleIcon color="success" />
+                )}
+                {upload.status === 'error' && (
+                  <ErrorIcon color="error" />
+                )}
+                {upload.status === 'cancelled' && (
+                  <CloseIcon color="warning" />
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ))}
     </Box>
   );
 });
