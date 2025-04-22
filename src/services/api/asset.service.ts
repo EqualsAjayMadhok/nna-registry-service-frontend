@@ -298,10 +298,11 @@ export class AssetService {
       const formData = new FormData();
       formData.append('file', upload.file);
 
+      // Let the browser set the correct Content-Type header with boundary
       const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData, {
         headers: {
-          ...api.defaults.headers,
-          'Content-Type': 'multipart/form-data'
+          // Remove Content-Type to let the browser set it with boundary
+          'Content-Type': undefined
         }
       });
 
