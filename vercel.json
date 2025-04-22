@@ -10,7 +10,14 @@
   },
   "git": {
     "deploymentEnabled": {
-      "main": true
+      "main": true,
+      "preview": false
     }
+  },
+  "github": {
+    "enabled": true,
+    "silent": true,
+    "autoAlias": true,
+    "productionBranch": "main"
   }
 }
