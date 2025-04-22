@@ -298,7 +298,10 @@ export class AssetService {
       const formData = new FormData();
       formData.append('file', upload.file);
 
-      // Don't set any headers - let axios handle it automatically for FormData
+      // FormData handling:
+      // - Let Axios automatically set the Content-Type header with boundary
+      // - Preserves API configuration headers (auth, etc.)
+      // - Ensures correct multipart/form-data encoding
       const response = await api.post<ApiResponse<Asset>>('/assets/upload', formData);
 
       if (response.data.success && response.data.data) {
