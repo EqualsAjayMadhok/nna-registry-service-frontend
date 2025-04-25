@@ -72,33 +72,39 @@ function App() {
           <NotificationsProvider>
             <Router>
               <Routes>
-              {/* Auth Pages */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* Main Application (Protected Routes) */}
-              <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                
-                {/* Asset Routes */}
-                <Route path="/assets" element={<AssetList />} />
-                <Route path="/assets/new" element={<AssetRegistration />} />
-                <Route path="/assets/batch" element={<BatchUploadPage />} />
-                <Route path="/assets/organize" element={<OrganizeAssetsPage />} />
-                <Route path="/assets/analytics" element={<AssetAnalyticsDashboard />} />
-                <Route path="/assets/edit/:id" element={<UpdateAssetPage />} />
-                <Route path="/assets/:id" element={<AssetDetail />} />
-                <Route path="/taxonomy" element={<TaxonomyPage />} />
-                
-                {/* Collections Routes */}
-                <Route path="/collections" element={<CollectionsPage />} />
-                <Route path="/collections/:id" element={<CollectionDetailPage />} />
-              </Route>
-              
-              {/* 404 Page */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Auth Pages */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+
+                {/* Main Application (Protected Routes) */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Navigate to="/dashboard" />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+
+                  {/* Asset Routes */}
+                  <Route path="/assets" element={<AssetList />} />
+                  <Route path="/assets/new" element={<AssetRegistration />} />
+                  <Route path="/assets/batch" element={<BatchUploadPage />} />
+                  <Route path="/assets/organize" element={<OrganizeAssetsPage />} />
+                  <Route path="/assets/analytics" element={<AssetAnalyticsDashboard />} />
+                  <Route path="/assets/edit/:id" element={<UpdateAssetPage />} />
+                  <Route path="/assets/:id" element={<AssetDetail />} />
+                  <Route path="/taxonomy" element={<TaxonomyPage />} />
+
+                  {/* Collections Routes */}
+                  <Route path="/collections" element={<CollectionsPage />} />
+                  <Route path="/collections/:id" element={<CollectionDetailPage />} />
+                </Route>
+
+                {/* 404 Page */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </Router>
           </NotificationsProvider>
         </AuthProvider>
@@ -106,5 +112,7 @@ function App() {
     </ThemeProvider>
   );
 }
+
+// trigger deployment
 
 export default App;

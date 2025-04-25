@@ -115,6 +115,7 @@ gsutil -m setmeta -h "Cache-Control:no-cache, no-store" gs://your-bucket-name/in
 #### Steps
 
 1. Manual deployment:
+
    - Go to Netlify dashboard
    - Click "New site from Git" or drag and drop the `build` folder
    - Follow the prompts to complete deployment
@@ -133,6 +134,7 @@ netlify deploy --prod --dir=build
 ```
 
 3. Environment variables:
+
    - Set environment variables in the Netlify dashboard under site settings
 
 4. Create a `netlify.toml` file for more configuration:
@@ -159,7 +161,7 @@ netlify deploy --prod --dir=build
 #### Steps for NNA Registry Service
 
 1. **Updated vercel.json Configuration**:
-   
+
    We've created an updated `vercel.json` configuration file with embedded environment variables:
 
    ```json
@@ -187,6 +189,7 @@ netlify deploy --prod --dir=build
 2. **Vercel Dashboard Deployment (Recommended)**:
 
    a. Push your latest code to GitHub:
+
    ```bash
    git add .
    git commit -m "Update Vercel configuration"
@@ -194,25 +197,29 @@ netlify deploy --prod --dir=build
    ```
 
    b. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-      - Click "Add New..." > "Project"
-      - Import your GitHub repository
-      - Select the repository containing the NNA Registry Service
+
+   - Click "Add New..." > "Project"
+   - Import your GitHub repository
+   - Select the repository containing the NNA Registry Service
 
    c. Configure project settings:
-      - Framework Preset: Create React App
-      - Root Directory: `./` (leave as default)
-      - Build and Output Settings: (leave defaults)
+
+   - Framework Preset: Create React App
+   - Root Directory: `./` (leave as default)
+   - Build and Output Settings: (leave defaults)
 
    d. Environment Variables:
-      Manually add these environment variables:
-      - `REACT_APP_API_URL`: https://nna-registry-service-backend.vercel.app/api
-      - `REACT_APP_ENV`: production
-      - `REACT_APP_USE_MOCK_DATA`: true
-      - `GENERATE_SOURCEMAP`: false
+   Manually add these environment variables:
+
+   - `REACT_APP_API_URL`: https://nna-registry-service-backend.vercel.app/api
+   - `REACT_APP_ENV`: production
+   - `REACT_APP_USE_MOCK_DATA`: true
+   - `GENERATE_SOURCEMAP`: false
 
    e. Click "Deploy"
-      - Vercel will build and deploy your application
-      - Once complete, you'll get a deployment URL to share
+
+   - Vercel will build and deploy your application
+   - Once complete, you'll get a deployment URL to share
 
 3. **CLI Deployment (Alternative)**:
 
@@ -232,13 +239,15 @@ netlify deploy --prod --dir=build
 4. **Post-Deployment Steps**:
 
    a. Test the application:
-      - Verify all pages and components display correctly
-      - Test the NNA taxonomy visualization functionality
-      - Verify the asset registration workflow
-      - Check that Upload Training Data button is working properly
+
+   - Verify all pages and components display correctly
+   - Test the NNA taxonomy visualization functionality
+   - Verify the asset registration workflow
+   - Check that Upload Training Data button is working properly
 
    b. Share the URL with team members:
-      - The URL will be in the format: https://nna-registry-service.vercel.app
+
+   - The URL will be in the format: https://nna-registry-service.vercel.app
 
    c. (Optional) Set up custom domain in Vercel Dashboard
 
@@ -325,7 +334,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-deploy:
@@ -337,25 +346,25 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run tests
         run: npm test
-        
+
       - name: Build
         run: npm run build:prod
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-          
-      # Deploy to GCS example  
+
+      # Deploy to GCS example
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-          
+
       - name: Deploy to GCS
         run: |
           gsutil -m cp -r build/* gs://your-bucket-name/
@@ -366,6 +375,7 @@ jobs:
 For production deployments, consider adding:
 
 1. **Monitoring tools**:
+
    - Google Analytics
    - Sentry for error tracking
    - Lighthouse for performance auditing
@@ -378,6 +388,7 @@ For production deployments, consider adding:
 ## Security Considerations
 
 1. Configure secure headers:
+
    - Content-Security-Policy
    - X-XSS-Protection
    - X-Content-Type-Options
