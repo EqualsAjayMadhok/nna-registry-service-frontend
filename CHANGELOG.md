@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1] - 2024-04-26
+### Changed
+- CI/CD Configuration
+  - Removed auto-deploy.yml workflow
+  - Added build.yml for automated testing
+  - Simplified deployment to use Vercel's native integration
+  - Resolved workflow conflicts
+
+# Changelog
+
 ## [0.2.0] - 2024-04-26
 ### Added
 - Vercel deployment integration
