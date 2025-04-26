@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+      - stable-frontend
+
 
 env:
   REACT_APP_API_URL: 'https://registry.reviz.dev/api'
