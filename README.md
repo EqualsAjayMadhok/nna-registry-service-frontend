@@ -1,3 +1,6 @@
+## Deployment Test
+Last deployment test: April 26, 2024
+
 # NNA Registry Service Frontend
 
 This is the frontend application for the NNA Registry Service, built with React, TypeScript, and Material UI. The application provides a user interface for managing digital assets within the NNA Framework.
