@@ -1,4 +1,9 @@
+# NNA Registry Service
+
 ## Deployment Test
+Last deployment test: April 26, 2024 12:45 PM PST
+Deployment Status: Connected to Vercel
+
 Last deployment test: April 26, 2024
 
 # NNA Registry Service Frontend
