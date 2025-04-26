@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - stable-frontend
+
   pull_request:
     branches:
       - main
