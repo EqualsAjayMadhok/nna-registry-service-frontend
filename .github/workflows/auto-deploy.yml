@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - stable-frontend
-
   pull_request:
     branches:
       - main
       - stable-frontend
-
 
 env:
   REACT_APP_API_URL: 'https://registry.reviz.dev/api'
@@ -38,7 +36,11 @@ jobs:
           REACT_APP_REAL_API_URL: ${{ env.REACT_APP_REAL_API_URL }}
           
       - name: Deploy to Production
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: |
+          github.event_name == 'push' && (
+            github.ref == 'refs/heads/main' ||
+            github.ref == 'refs/heads/stable-frontend'
+          )
         run: |
           # Add your deployment commands here
           echo "Deploying to production..."
