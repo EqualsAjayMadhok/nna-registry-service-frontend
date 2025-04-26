@@ -1,3 +1,9 @@
+# NNA Registry Service Frontend
+
+Version: 0.2.0
+Deployment Status: Active
+Last Update: Sat Apr 26 12:51:34 MDT 2025
+
 # NNA Registry Service
 
 ## Deployment Test
