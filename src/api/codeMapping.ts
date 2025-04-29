@@ -6,7 +6,7 @@
 // Category code mappings (numeric to alphabetic)
 export const categoryCodeMap: Record<string, Record<string, string>> = {
   // Songs layer (G)
-  'G': {
+  G: {
     '001': 'POP', // Pop
     '002': 'ROC', // Rock
     '003': 'HIP', // Hip Hop
@@ -29,7 +29,7 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '020': 'SKA', // Ska
   },
   // Stars layer (S)
-  'S': {
+  S: {
     '001': 'POP', // Pop
     '002': 'ROC', // Rock
     '003': 'HIP', // Hip Hop
@@ -47,7 +47,7 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '015': 'CHF', // Chef
   },
   // Looks layer (L)
-  'L': {
+  L: {
     '001': 'FAS', // Fashion
     '002': 'OUT', // Outfits
     '003': 'COS', // Costumes
@@ -56,7 +56,7 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '006': 'MAK', // Makeup
   },
   // Moves layer (M)
-  'M': {
+  M: {
     '001': 'DNC', // Dance
     '002': 'CHR', // Choreography
     '003': 'PER', // Performance
@@ -65,7 +65,7 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '006': 'ACT', // Action
   },
   // Worlds layer (W)
-  'W': {
+  W: {
     '001': 'STG', // Stage
     '002': 'SCN', // Scenes
     '003': 'LOC', // Locations
@@ -74,7 +74,7 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '006': 'BKG', // Backgrounds
   },
   // Branded layer (B)
-  'B': {
+  B: {
     '001': 'PRD', // Products
     '002': 'LOG', // Logos
     '003': 'BND', // Brands
@@ -82,14 +82,14 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '005': 'SPO', // Sponsorships
   },
   // Personalize layer (P)
-  'P': {
+  P: {
     '001': 'FAC', // Faces
     '002': 'BOD', // Bodies
     '003': 'VOC', // Voices
     '004': 'PER', // Personalities
   },
   // Training Data layer (T)
-  'T': {
+  T: {
     '001': 'PRM', // Prompts
     '002': 'IMG', // Images
     '003': 'VID', // Videos
@@ -97,27 +97,28 @@ export const categoryCodeMap: Record<string, Record<string, string>> = {
     '005': 'DAT', // Datasets
   },
   // Composite layer (C)
-  'C': {
+  C: {
     '001': 'SCN', // Scenes
-    '002': 'PRF', // Performances 
+    '002': 'PRF', // Performances
     '003': 'VID', // Videos
     '004': 'MIX', // Mixes
   },
   // Rights layer (R)
-  'R': {
+  R: {
     '001': 'LIC', // Licenses
     '002': 'CPY', // Copyrights
     '003': 'TRM', // Terms
     '004': 'ATR', // Attribution
     '005': 'PRV', // Provenance
-  }
+  },
 };
 
 // Subcategory code mappings for common subcategories
 export const subCategoryCodeMap: Record<string, Record<string, Record<string, string>>> = {
   // Songs layer subcategories
-  'G': {
-    '001': { // Pop
+  G: {
+    '001': {
+      // Pop
       '001': 'BAS', // Base
       '002': 'GLB', // Global_Pop
       '003': 'TNP', // Teen_Pop
@@ -130,7 +131,8 @@ export const subCategoryCodeMap: Record<string, Record<string, Record<string, st
       '010': 'PRK', // Pop_Rock
       '011': 'ALT', // Alt_Pop
     },
-    '002': { // Rock
+    '002': {
+      // Rock
       '001': 'BAS', // Base
       '002': 'CLS', // Classic_Rock
       '003': 'MOD', // Modern_Rock
@@ -142,11 +144,12 @@ export const subCategoryCodeMap: Record<string, Record<string, Record<string, st
       '009': 'FLK', // Folk_Rock
       '010': 'ARN', // Arena_Rock
       '011': 'GRG', // Garage_Rock
-    }
+    },
   },
   // Stars layer subcategories
-  'S': {
-    '001': { // Pop
+  S: {
+    '001': {
+      // Pop
       '001': 'BAS', // Base
       '002': 'DVA', // Pop_Diva_Female_Stars
       '003': 'IDL', // Pop_Idol_Female_Stars
@@ -154,14 +157,15 @@ export const subCategoryCodeMap: Record<string, Record<string, Record<string, st
       '005': 'SVL', // Pop_Solo_Vocalist
       '006': 'GRP', // Pop_Group
     },
-    '004': { // Actor
+    '004': {
+      // Actor
       '001': 'BAS', // Base
       '002': 'MOV', // Movie_Actor
       '003': 'TVS', // TV_Series_Actor
       '004': 'VOI', // Voice_Actor
       '005': 'STG', // Stage_Actor
-    }
-  }
+    },
+  },
 };
 
 /**
@@ -178,14 +182,14 @@ export function getAlphabeticCode(
 ): string {
   // Convert category code
   const categoryAlpha = categoryCodeMap[layerCode]?.[categoryCode];
-  
+
   if (!subcategoryCode) {
     return categoryAlpha || categoryCode;
   }
-  
+
   // Convert subcategory code if provided
   const subcategoryAlpha = subCategoryCodeMap[layerCode]?.[categoryCode]?.[subcategoryCode];
-  
+
   return subcategoryAlpha || subcategoryCode;
 }
 
@@ -201,12 +205,12 @@ export function generateHumanFriendlyName(
   layerCode: string,
   categoryCode: string,
   subcategoryCode: string,
-  sequentialNumber: number
+  sequentialNumber: string
 ): string {
   const categoryAlpha = getAlphabeticCode(layerCode, categoryCode);
   const subcategoryAlpha = getAlphabeticCode(layerCode, categoryCode, subcategoryCode);
   const seqStr = sequentialNumber.toString().padStart(3, '0');
-  
+
   return `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${seqStr}`;
 }
 
@@ -222,7 +226,7 @@ export function generateMachineFriendlyAddress(
   layerCode: string,
   categoryCode: string,
   subcategoryCode: string,
-  sequentialNumber: number
+  sequentialNumber: string
 ): string {
   const seqStr = sequentialNumber.toString().padStart(3, '0');
   return `${layerCode}.${categoryCode}.${subcategoryCode}.${seqStr}`;
