@@ -25,7 +25,7 @@ interface NNAAddressPreviewProps {
   layerCode: string;
   categoryCode: string;
   subcategoryCode: string;
-  sequentialNumber: number;
+  sequentialNumber: string;
   subcategoryNumericCode?: string;
   isUnique?: boolean;
   checkingUniqueness?: boolean;
@@ -53,7 +53,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
 
   // Generate the addresses whenever inputs change
   useEffect(() => {
-    if (!layerCode || !categoryCode || !subcategoryCode || sequentialNumber <= 0) {
+    if (!layerCode || !categoryCode || !subcategoryCode || sequentialNumber) {
       setIsValid(false);
       return;
     }
@@ -246,7 +246,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         
         {renderAddressPart(
           'Sequence',
-          sequentialNumber.toString().padStart(3, '0'),
+          sequentialNumber,
           'Unique sequential number within the taxonomy path'
         )}
       </Grid>

@@ -11,24 +11,29 @@ import {
   Alert,
   Paper,
   Chip,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
-import nnaRegistryService from '../../api/nnaRegistryService';
-import { getAlphabeticCode, generateHumanFriendlyName } from '../../api/codeMapping';
+import { getAlphabeticCode } from '../../api/codeMapping';
+import api from '../../services/api/api';
 
 interface TaxonomySelectionProps {
   layerCode: string;
   onCategorySelect: (category: CategoryOption) => void;
   onSubcategorySelect: (subcategory: SubcategoryOption, isDoubleClick?: boolean) => void;
   selectedCategoryCode?: string;
-  categoryName?: string;
   subcategoryNumericCode?: string;
   selectedSubcategoryCode?: string;
-  onNNAAddressChange?: (humanFriendlyName: string, machineFriendlyAddress: string, sequentialNumber: number) => void;
+  categoryName?: string;
+  subcategoryName?: string;
+  onNNAAddressChange?: (
+    humanFriendlyName: string,
+    machineFriendlyAddress: string,
+    sequentialNumber: number
+  ) => void;
 }
 
 const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
@@ -37,18 +42,20 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   onSubcategorySelect,
   selectedCategoryCode,
   categoryName,
+  subcategoryName,
   selectedSubcategoryCode,
   subcategoryNumericCode,
-  onNNAAddressChange
+  onNNAAddressChange,
 }) => {
   console.log(categoryName, 'categoryName');
-  
+
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [sequentialNumber, setSequentialNumber] = useState<number>(1);
   const [isUnique, setIsUnique] = useState<boolean>(true);
+  const [sequential, setSequential] = useState('001');
   const [checkingUniqueness, setCheckingUniqueness] = useState<boolean>(false);
 
   // Fetch categories when layer changes
@@ -63,8 +70,6 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         setLoading(true);
         const categoryOptions = taxonomyService.getCategories(layerCode);
 
-        console.log(categoryOptions, 'ewfwe');
-        
         setCategories(categoryOptions);
         setError(null);
       } catch (err) {
@@ -77,6 +82,22 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     fetchCategories();
   }, [layerCode]);
 
+  const fetchSequential = async () => {
+    try {
+      console.log(layerCode, 'layerCode');
+
+      const response = await api.post<{ sequential: string }>('/assets/new/sequential', {
+        layer: layerCode,
+        category: categoryName,
+        subcategory: subcategoryName,
+      });
+
+      setSequential(response.data.sequential);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // Fetch subcategories when category changes
   useEffect(() => {
     const fetchSubcategories = async () => {
@@ -87,9 +108,12 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       try {
         setLoading(true);
-        const subcategoryOptions = taxonomyService.getSubcategories(layerCode, selectedCategoryCode);
+        const subcategoryOptions = taxonomyService.getSubcategories(
+          layerCode,
+          selectedCategoryCode
+        );
         console.log(subcategoryOptions, 'subcategoryOptions');
-        
+
         setSubcategories(subcategoryOptions);
         setError(null);
       } catch (err) {
@@ -111,75 +135,10 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       try {
         setCheckingUniqueness(true);
-        
-        // Get category and subcategory names
-        const category = categories.find(c => c.code === selectedCategoryCode);
-        const subcategory = subcategories.find(s => s.code === selectedSubcategoryCode);
-        
-        if (!category || !subcategory) {
-          console.error('Could not find category or subcategory');
-          return;
-        }
-        
-        // Generate human-friendly name using registry service
-        const humanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-          layerCode,
-          category.name,
-          subcategory.name,
-          sequentialNumber
-        );
-        
-        // Check if it already exists
-        const exists = await taxonomyService.checkNNAAddressExists(humanFriendlyName);
-        
-        if (exists) {
-          // If address exists, try to get the next available number
-          const nextNumber = taxonomyService.getNextSequentialNumber(
-            layerCode,
-            selectedCategoryCode,
-            selectedSubcategoryCode,
-            [sequentialNumber]
-          );
-          
-          setSequentialNumber(nextNumber);
-          setIsUnique(false);
-          
-          // Generate updated human-friendly name with new sequential number
-          const updatedHumanFriendlyName = nnaRegistryService.generateHumanFriendlyName(
-            layerCode,
-            category.name,
-            subcategory.name,
-            nextNumber
-          );
-          
-          // Generate machine-friendly address with new sequential number
-          const updatedMachineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
-            layerCode,
-            category.name,
-            subcategory.name,
-            nextNumber
-          );
-          
-          // Notify parent component of the address change
-          if (onNNAAddressChange) {
-            onNNAAddressChange(updatedHumanFriendlyName, updatedMachineFriendlyAddress, nextNumber);
-          }
-        } else {
-          setIsUnique(true);
-          
-          // Generate machine-friendly address
-          const machineFriendlyAddress = nnaRegistryService.generateMachineFriendlyAddress(
-            layerCode,
-            category.name,
-            subcategory.name,
-            sequentialNumber
-          );
-          
-          // Notify parent component of the address change
-          if (onNNAAddressChange) {
-            onNNAAddressChange(humanFriendlyName, machineFriendlyAddress, sequentialNumber);
-          }
-        }
+
+        await fetchSequential();
+
+        setIsUnique(true);
       } catch (err) {
         console.error('Error checking address uniqueness:', err);
       } finally {
@@ -188,14 +147,20 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     };
 
     checkAddressUniqueness();
-  }, [layerCode, selectedCategoryCode, selectedSubcategoryCode, sequentialNumber, onNNAAddressChange]);
+  }, [
+    layerCode,
+    selectedCategoryCode,
+    selectedSubcategoryCode,
+    sequentialNumber,
+    onNNAAddressChange,
+  ]);
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const categoryCode = event.target.value;
-    
+
     // Find the selected category
     const selectedCategory = categories.find(cat => cat.code === categoryCode);
-    
+
     if (selectedCategory) {
       // Reset sequential number when category changes
       setSequentialNumber(1);
@@ -203,12 +168,15 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     }
   };
 
-  const handleSubcategoryChange = (event: SelectChangeEvent<string>, isDoubleClick: boolean = false) => {
+  const handleSubcategoryChange = (
+    event: SelectChangeEvent<string>,
+    isDoubleClick: boolean = false
+  ) => {
     const subcategoryCode = event.target.value;
-    
+
     // Find the selected subcategory
     const selectedSubcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
-    
+
     if (selectedSubcategory) {
       // Reset sequential number when subcategory changes
       setSequentialNumber(1);
@@ -217,11 +185,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   };
 
   if (!layerCode) {
-    return (
-      <Alert severity="info">
-        Please select a layer first
-      </Alert>
-    );
+    return <Alert severity="info">Please select a layer first</Alert>;
   }
 
   return (
@@ -249,11 +213,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
               top: '50%',
               right: 16,
               marginTop: '-12px',
-              zIndex: 1
+              zIndex: 1,
             }}
           />
         )}
-        
+
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel id="category-select-label">Category</InputLabel>
           <Select
@@ -267,27 +231,27 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             <MenuItem value="">
               <em>Select a category</em>
             </MenuItem>
-            {categories.map((category) => (
+            {categories.map(category => (
               <MenuItem key={category.code} value={category.code}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Typography>{category.name}</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
-                      <Chip 
+                      <Chip
                         label={category.categoryCodeName}
-                        size="small" 
-                        color="primary" 
-                        variant="outlined" 
-                        sx={{ ml: 1, mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }} 
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{ ml: 1, mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }}
                       />
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
-                      <Chip 
-                        label={category.code} 
-                        size="small" 
-                        color="default" 
-                        variant="outlined" 
-                        sx={{ fontSize: '0.7rem' }} 
+                      <Chip
+                        label={category.code}
+                        size="small"
+                        color="default"
+                        variant="outlined"
+                        sx={{ fontSize: '0.7rem' }}
                       />
                     </Tooltip>
                   </Box>
@@ -304,40 +268,49 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             id="subcategory-select"
             value={selectedSubcategoryCode || ''}
             label="Subcategory"
-            onChange={(e) => handleSubcategoryChange(e, false)}
+            onChange={e => handleSubcategoryChange(e, false)}
             disabled={loading || !selectedCategoryCode || subcategories.length === 0}
           >
             <MenuItem value="">
               <em>Select a subcategory</em>
             </MenuItem>
-            {subcategories.map((subcategory) => (
-              <MenuItem 
-                key={subcategory.code} 
-                value={subcategory.code} 
+            {subcategories.map(subcategory => (
+              <MenuItem
+                key={subcategory.code}
+                value={subcategory.code}
                 onDoubleClick={() => {
-                  console.log(`Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`);
+                  console.log(
+                    `Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`
+                  );
                   onSubcategorySelect(subcategory, true);
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                  }}
+                >
                   <Typography>{subcategory.name}</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
-                      <Chip 
+                      <Chip
                         label={getAlphabeticCode(layerCode, subcategory.code)}
-                        size="small" 
-                        color="secondary" 
-                        variant="outlined" 
-                        sx={{ mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }} 
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                        sx={{ mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }}
                       />
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
-                      <Chip 
-                        label={subcategory.subcategoryCode} 
-                        size="small" 
-                        color="default" 
-                        variant="outlined" 
-                        sx={{ fontSize: '0.7rem' }} 
+                      <Chip
+                        label={subcategory.subcategoryCode}
+                        size="small"
+                        color="default"
+                        variant="outlined"
+                        sx={{ fontSize: '0.7rem' }}
                       />
                     </Tooltip>
                   </Box>
@@ -354,20 +327,28 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                 Selected Taxonomy:
               </Typography>
               <Typography>
-                {taxonomyService.getTaxonomyPath(layerCode, selectedCategoryCode, subcategoryNumericCode) || 'Invalid selection'}
+                {taxonomyService.getTaxonomyPath(
+                  layerCode,
+                  selectedCategoryCode,
+                  subcategoryNumericCode
+                ) || 'Invalid selection'}
               </Typography>
             </Box>
-            
+
             {/* NNA Address Preview */}
             <NNAAddressPreview
               layerCode={layerCode}
               subcategoryNumericCode={subcategoryNumericCode}
               categoryCode={selectedCategoryCode}
               subcategoryCode={selectedSubcategoryCode}
-              sequentialNumber={sequentialNumber}
+              sequentialNumber={sequential}
               isUnique={isUnique}
               checkingUniqueness={checkingUniqueness}
-              validationError={!selectedCategoryCode || !selectedSubcategoryCode ? 'Incomplete taxonomy selection' : undefined}
+              validationError={
+                !selectedCategoryCode || !selectedSubcategoryCode
+                  ? 'Incomplete taxonomy selection'
+                  : undefined
+              }
             />
           </>
         )}

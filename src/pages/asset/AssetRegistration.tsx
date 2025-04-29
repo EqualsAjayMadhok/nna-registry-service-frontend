@@ -203,7 +203,9 @@ const AssetRegistration: React.FC = () => {
         description: metadata.description,
         tags: metadata.tags,
         metadata: {
-          components: metadata?.layerSpecificData?.components?.map(item => item.value),
+          components: Object.values(metadata?.layerSpecificData as any).flatMap((items: any) =>
+            items.map((item: any) => item.value)
+          ),
           source: metadata.source,
           isTrainable: metadata.trainingData?.isTrainable || false,
           trainingDescription: metadata.trainingData?.trainingDescription || '',
@@ -288,6 +290,8 @@ const AssetRegistration: React.FC = () => {
             <TaxonomySelection
               subcategoryNumericCode={subcategoryNumericCode}
               layerCode={layerCode}
+              subcategoryName={subcategoryName}
+              categoryName={categoryName}
               selectedCategoryCode={categoryCode}
               selectedSubcategoryCode={subcategoryCode}
               onCategorySelect={category => {

@@ -12,11 +12,9 @@ import {
   Paper,
   InputAdornment,
   Button,
-  Autocomplete,
-  Stack,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { ComponentForm } from './ComponentsForm';
+import { LayersForm } from './LayersForm';
 
 interface MetadataFormProps {
   layerCode: string;
@@ -39,7 +37,7 @@ export interface AssetMetadata {
   tags: string[];
   // Layer-specific metadata fields
   layerSpecificData?: Record<string, any> & {
-    components?: Array<{
+    components?:Array<{
       value: string;
       title: string;
     }>;
@@ -113,7 +111,7 @@ const createValidationSchema = (layerCode: string) => {
 const renderLayerSpecificFields = (layerCode: string, control: any, errors: any) => {
   switch (layerCode) {
     case 'C':
-      return <ComponentForm control={control} />;
+      return <LayersForm control={control} />;
     case 'G': // Songs
       return (
         <Grid container spacing={2}>
@@ -337,7 +335,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({ layerCode, onFormChange, in
 
   React.useEffect(() => {
     onFormChange(formValues, isValid);
-  }, [isValid]);
+  }, [formValues.description, isValid]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
